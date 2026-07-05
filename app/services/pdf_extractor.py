@@ -8,8 +8,14 @@ table structures common in insurance policy documents.
 
 import io
 import logging
-
 import fitz  # PyMuPDF
+
+try:
+    from pdf2image import convert_from_bytes
+    import pytesseract
+    OCR_AVAILABLE = True
+except ImportError:
+    OCR_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +55,30 @@ def extract_text_from_pdf(pdf_bytes: bytes) -> str:
             all_text.append(f"--- Page {page_num + 1} ---\n{text.strip()}")
 
     doc.close()
-
-    if not all_text:
-        raise ValueError("PDF contains no extractable text (may be scanned/image-only)")
-
+    
     full_text = "\n\n".join(all_text)
 
-    logger.info(
-        f"PDF extraction: {doc.page_count} pages, "
-        f"{len(full_text)} characters extracted"
-    )
+    # ── Fallback to OCR if less than 50 characters were extracted ──
+    if len(full_text.strip()) < 50:
+        if not OCR_AVAILABLE:
+            logger.warning("PDF has very little text and OCR dependencies are not installed.")
+            raise ValueError("PDF contains no extractable text (may be scanned). Please install OCR dependencies or paste text manually.")
+        
+        logger.info("PDF contains very little text. Attempting Tesseract OCR fallback...")
+        try:
+            images = convert_from_bytes(pdf_bytes, dpi=200)
+            ocr_text_list = []
+            for i, img in enumerate(images):
+                page_text = pytesseract.image_to_string(img)
+                ocr_text_list.append(f"--- Page {i + 1} (OCR) ---\n{page_text.strip()}")
+            full_text = "\n\n".join(ocr_text_list)
+            
+            if len(full_text.strip()) < 50:
+                 raise ValueError("OCR extraction also yielded no meaningful text.")
+        except Exception as e:
+            logger.error(f"OCR fallback failed: {e}")
+            raise ValueError("PDF contains no extractable text and OCR fallback failed. Please paste text manually.")
+
+    logger.info(f"PDF extraction successful. {len(full_text)} characters extracted")
 
     return full_text

@@ -32,25 +32,27 @@ class TaskType(str, Enum):
 
 _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     TaskType.EXTRACTION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "cerebras", "model": "llama3.1-8b"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.TOOL_CALLING: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "cerebras", "model": "llama3.1-8b"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.LEGAL_WRITING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "gemini", "model": "gemini-2.5-pro"}, # Best for long-form reasoning
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
     ],
     TaskType.EXPLANATION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.CHAT: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "cerebras", "model": "llama3.1-8b"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
 }
 

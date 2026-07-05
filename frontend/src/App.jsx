@@ -5,6 +5,7 @@ import ClaimEvaluator from './pages/ClaimEvaluator'
 import ChatAssistant from './pages/ChatAssistant'
 import PolicyUpload from './pages/PolicyUpload'
 import AuthPage from './pages/AuthPage'
+import Dashboard from './pages/Dashboard'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
 function ProtectedRoute({ children }) {
@@ -33,6 +34,9 @@ function AppContent() {
           <nav className="navbar-links">
             <NavLink to="/" className={location.pathname === '/' ? 'active' : ''}>
               Home
+            </NavLink>
+            <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
+              Dashboard
             </NavLink>
             <NavLink to="/policy" className={({ isActive }) => isActive ? 'active' : ''}>
               Policy Upload
@@ -66,6 +70,11 @@ function AppContent() {
         <Route path="/auth" element={<AuthPage />} />
         
         {/* Protected Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
         <Route path="/policy" element={
           <ProtectedRoute>
             <PolicyUpload onPolicyParsed={setPolicyProfile} />

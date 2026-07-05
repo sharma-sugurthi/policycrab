@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.api.router import api_router
+from app.database import init_db
+from app.models import db_models # load models
 
 # Configure logging
 logging.basicConfig(
@@ -39,6 +41,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"   Knowledge Base connection failed: {e}")
 
+    # Initialize SQLAlchemy database tables
+    try:
+        await init_db()
+        logger.info("   SQLAlchemy Database: Initialized ✅")
+    except Exception as e:
+        logger.error(f"   SQLAlchemy Database initialization failed: {e}")
+
     yield
 
     logger.info(f"👋 Shutting down {settings.app_name}")
@@ -61,7 +70,7 @@ app = FastAPI(
 # ── CORS Middleware ───────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.parsed_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

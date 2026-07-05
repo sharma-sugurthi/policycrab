@@ -9,6 +9,7 @@ from app.config import settings
 from app.api.policy_routes import router as policy_router
 from app.api.claim_routes import router as claim_router
 from app.api.chat_routes import router as chat_router
+from app.api.history_routes import router as history_router
 
 api_router = APIRouter()
 
@@ -16,6 +17,7 @@ api_router = APIRouter()
 api_router.include_router(policy_router)
 api_router.include_router(claim_router)
 api_router.include_router(chat_router)
+api_router.include_router(history_router)
 
 
 @api_router.get("/health", tags=["System"])

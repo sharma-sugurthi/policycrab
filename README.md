@@ -10,20 +10,20 @@ Upload your policy → Evaluate your claim → Get a regulatory-backed appeal le
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React + Vite, Framer Motion |
-| Backend | FastAPI + LangGraph |
-| AI | Google Gemini (multi-LLM router) |
-| Database | Supabase (PostgreSQL + pgvector) |
-| Auth | Supabase Auth |
+| Frontend | React + Vite, Framer Motion, Vanilla CSS (PolicyCrab branded) |
+| Backend | FastAPI, LangGraph, LangChain, PyMuPDF, Pytesseract, SQLAlchemy, asyncpg |
+| Database & Auth | Supabase (PostgreSQL pgvector, Auth JWT) |
+| LLM Providers | Google Gemini, Groq, Cerebras |
 | RAG | 46-chunk knowledge base (ERISA, ACA, NSA, Medicare, HIPAA) |
 
-## Features
+## Key Features
 
-- 📋 **Policy Upload** — Paste text or upload a PDF SBC/EOB
-- ⚡ **Claim Evaluation** — Deterministic deductible → coinsurance → OOP max waterfall
-- ⚖️ **Appeal Generation** — RAG-powered appeal letters citing federal regulations
-- 💬 **AI Chat** — Domain-restricted insurance Q&A with citation tracking
-- 🔒 **Auth** — Supabase email/password authentication
+1. **AI Policy Ingestion (RAG):** Extracts complex SBC/EOB terms into a normalized deterministic schema. Includes OCR fallback for scanned images.
+2. **Deterministic Adjudication Engine:** Accurately calculates patient responsibilities (deductibles, coinsurance, OOP maximums, NSA protections) with exact math, preventing LLM hallucination on numbers.
+3. **Automated ERISA Appeals:** If a claim is denied, the engine triggers an autonomous agent to draft a formal, legally grounded appeal letter using federal guidelines.
+4. **Interactive AI Advocate:** A chat assistant that references the user's specific policy and claim to answer regulatory questions.
+5. **Multi-LLM Routing:** Intelligently routes basic extraction to fast models (Groq Llama 3) and complex reasoning/writing to high-quality models (Gemini 2.5 Pro).
+6. **Secure Auth & History:** Powered by Supabase JWTs and SQLAlchemy, users can save and revisit past policies and claim evaluations.
 
 ## Regulatory Frameworks
 

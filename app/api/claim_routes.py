@@ -4,9 +4,12 @@ Claim API Routes — evaluate claims and calculate costs.
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
+from app.database import get_db
+from app.models.db_models import UserClaim
 
 router = APIRouter(prefix="/api/claim", tags=["Claims"])
 
@@ -36,7 +39,11 @@ class ClaimEvaluationResponse(BaseModel):
 
 
 @router.post("/evaluate", response_model=ClaimEvaluationResponse)
-async def evaluate_claim(request: ClaimEvaluationRequest, user: dict = Depends(get_current_user)):
+async def evaluate_claim(
+    request: ClaimEvaluationRequest, 
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
     """
     Evaluate a patient's healthcare claim through the full pipeline.
 
@@ -71,7 +78,7 @@ async def evaluate_claim(request: ClaimEvaluationRequest, user: dict = Depends(g
         explanations = result.get("explanations", {})
         explanation = explanations.get("appeal") or explanations.get("calculation") or explanations.get("intake")
 
-        return ClaimEvaluationResponse(
+        response = ClaimEvaluationResponse(
             success=bool(result.get("claim_case")),
             claim_case=result.get("claim_case"),
             cost_breakdown=result.get("cost_breakdown"),
@@ -80,6 +87,19 @@ async def evaluate_claim(request: ClaimEvaluationRequest, user: dict = Depends(g
             route_decision=result.get("route_decision"),
             errors=result.get("errors", []),
         )
+
+        if response.success:
+            db_claim = UserClaim(
+                user_id=user["id"],
+                claim_description=request.claim_description,
+                cost_breakdown_json=response.cost_breakdown,
+                appeal_output_json=response.appeal_output,
+                route_decision=response.route_decision
+            )
+            db.add(db_claim)
+            await db.commit()
+
+        return response
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Claim evaluation failed: {str(e)}")
