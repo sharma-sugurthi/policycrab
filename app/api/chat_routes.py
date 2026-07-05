@@ -4,10 +4,11 @@ Chat API Routes — WebSocket-based interactive Q&A.
 
 import json
 import logging
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from langchain_core.messages import HumanMessage
 
 from app.agents.graph import get_chat_graph
+from app.api.auth import get_current_user
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ async def chat_websocket(websocket: WebSocket):
 
 
 @router.post("/api/chat/message", tags=["Chat"])
-async def chat_message(request: dict):
+async def chat_message(request: dict, user: dict = Depends(get_current_user)):
     """
     HTTP POST alternative for chat (for clients that don't support WebSocket).
 

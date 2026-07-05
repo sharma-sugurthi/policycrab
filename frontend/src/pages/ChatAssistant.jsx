@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useAuth } from '../contexts/AuthContext'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function ChatAssistant({ policyProfile, costBreakdown }) {
+  const { session } = useAuth()
   const [messages, setMessages] = useState([
     { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
   ])
@@ -25,7 +27,10 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       const history = messages.filter(m => m.role === 'user').map(m => m.content)
       const res = await fetch('/api/chat/message', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
         body: JSON.stringify({ message: userMsg, history, policy_profile: policyProfile, cost_breakdown: costBreakdown }),
       })
       const data = await res.json()

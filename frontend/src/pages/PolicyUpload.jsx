@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useAuth } from '../contexts/AuthContext'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function PolicyUpload({ onPolicyParsed }) {
+  const { session } = useAuth()
   const [policyText, setPolicyText] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -25,12 +27,16 @@ export default function PolicyUpload({ onPolicyParsed }) {
         formData.append('file', selectedFile)
         res = await fetch('/api/policy/upload-pdf', { 
           method: 'POST', 
+          headers: { 'Authorization': `Bearer ${session?.access_token}` },
           body: formData 
         })
       } else {
         res = await fetch('/api/policy/upload', { 
           method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`
+          }, 
           body: JSON.stringify({ policy_text: policyText }) 
         })
       }

@@ -536,6 +536,29 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
   100% { transform: translateX(2px) rotate(10deg); }
 }
 
+/* ── Auth Forms ───────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.75rem;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #09090b;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+}
+
+.input::placeholder {
+  color: #a1a1aa;
+}
+
 /* ── Animations ───────────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes slideUp {

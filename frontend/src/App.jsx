@@ -1,14 +1,24 @@
-import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom'
 import { useState } from 'react'
 import Home from './pages/Home'
 import ClaimEvaluator from './pages/ClaimEvaluator'
 import ChatAssistant from './pages/ChatAssistant'
 import PolicyUpload from './pages/PolicyUpload'
+import AuthPage from './pages/AuthPage'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 
-export default function App() {
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><span className="spinner" /></div>
+  if (!user) return <Navigate to="/auth" replace />
+  return children
+}
+
+function AppContent() {
   const [policyProfile, setPolicyProfile] = useState(null)
   const [costBreakdown, setCostBreakdown] = useState(null)
   const location = useLocation()
+  const { user, signOut } = useAuth()
 
   return (
     <>
@@ -35,11 +45,16 @@ export default function App() {
             </NavLink>
           </nav>
 
-          <div className="navbar-status">
-            {policyProfile ? (
-              <div className="badge badge-success">✅ Policy Loaded</div>
+          <div className="navbar-status" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {user ? (
+              <>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#3f3f46' }}>{user.email}</span>
+                <button onClick={signOut} className="btn btn-ghost" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>Sign Out</button>
+              </>
             ) : (
-              <div className="badge badge-zinc">No Policy</div>
+              <NavLink to="/auth" className="btn btn-red" style={{ padding: '0.5rem 1.25rem', fontSize: '0.8125rem' }}>
+                Sign In
+              </NavLink>
             )}
           </div>
         </div>
@@ -48,10 +63,33 @@ export default function App() {
       {/* ── Main ──────────────────────────────────── */}
       <Routes>
         <Route path="/" element={<Home policyProfile={policyProfile} costBreakdown={costBreakdown} />} />
-        <Route path="/policy" element={<PolicyUpload onPolicyParsed={setPolicyProfile} />} />
-        <Route path="/claim" element={<ClaimEvaluator policyProfile={policyProfile} onResult={setCostBreakdown} />} />
-        <Route path="/chat" element={<ChatAssistant policyProfile={policyProfile} costBreakdown={costBreakdown} />} />
+        <Route path="/auth" element={<AuthPage />} />
+        
+        {/* Protected Routes */}
+        <Route path="/policy" element={
+          <ProtectedRoute>
+            <PolicyUpload onPolicyParsed={setPolicyProfile} />
+          </ProtectedRoute>
+        } />
+        <Route path="/claim" element={
+          <ProtectedRoute>
+            <ClaimEvaluator policyProfile={policyProfile} onResult={setCostBreakdown} />
+          </ProtectedRoute>
+        } />
+        <Route path="/chat" element={
+          <ProtectedRoute>
+            <ChatAssistant policyProfile={policyProfile} costBreakdown={costBreakdown} />
+          </ProtectedRoute>
+        } />
       </Routes>
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }

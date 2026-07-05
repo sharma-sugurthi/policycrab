@@ -4,11 +4,12 @@ Supports both raw text paste and PDF file upload.
 """
 
 import logging
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel, Field
 
 from app.agents.graph import get_policy_ingestion_graph
 from app.services.pdf_extractor import extract_text_from_pdf
+from app.api.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
 
 
 @router.post("/upload", response_model=PolicyUploadResponse)
-async def upload_policy_text(request: PolicyUploadRequest):
+async def upload_policy_text(request: PolicyUploadRequest, user: dict = Depends(get_current_user)):
     """
     Upload raw SBC/EOB text for AI-powered policy extraction.
     """
@@ -82,7 +83,7 @@ async def upload_policy_text(request: PolicyUploadRequest):
 
 
 @router.post("/upload-pdf", response_model=PolicyUploadResponse)
-async def upload_policy_pdf(file: UploadFile = File(...)):
+async def upload_policy_pdf(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
     """
     Upload a PDF file (SBC, EOB, or policy summary) for AI-powered extraction.
 

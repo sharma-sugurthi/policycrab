@@ -2,10 +2,11 @@
 Claim API Routes — evaluate claims and calculate costs.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from app.agents.graph import get_claim_evaluation_graph
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/api/claim", tags=["Claims"])
 
@@ -35,7 +36,7 @@ class ClaimEvaluationResponse(BaseModel):
 
 
 @router.post("/evaluate", response_model=ClaimEvaluationResponse)
-async def evaluate_claim(request: ClaimEvaluationRequest):
+async def evaluate_claim(request: ClaimEvaluationRequest, user: dict = Depends(get_current_user)):
     """
     Evaluate a patient's healthcare claim through the full pipeline.
 

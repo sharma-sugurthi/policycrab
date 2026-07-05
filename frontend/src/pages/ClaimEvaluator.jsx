@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useAuth } from '../contexts/AuthContext'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function ClaimEvaluator({ policyProfile, onResult }) {
+  const { session } = useAuth()
   const navigate = useNavigate()
   const [claimText, setClaimText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,7 +18,14 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
     if (claimText.trim().length < 20) { setError('Please describe the claim in more detail.'); return }
     setLoading(true); setError(null); setResult(null)
     try {
-      const res = await fetch('/api/claim/evaluate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ claim_description: claimText, policy_profile: policyProfile }) })
+      const res = await fetch('/api/claim/evaluate', { 
+        method: 'POST', 
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        }, 
+        body: JSON.stringify({ claim_description: claimText, policy_profile: policyProfile }) 
+      })
       const data = await res.json()
       if (data.success && data.cost_breakdown) { setResult(data); onResult(data.cost_breakdown) }
       else { setError(data.errors?.join(', ') || 'Evaluation failed') }
