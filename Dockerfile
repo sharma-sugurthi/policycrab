@@ -12,12 +12,17 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+# HuggingFace requires running as non-root user (UID 1000)
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
+
 # Copy requirements and install
-COPY requirements.txt .
+COPY --chown=user ./requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application
-COPY . .
+COPY --chown=user . .
 
 # HuggingFace Spaces exposes port 7860 by default
 EXPOSE 7860
