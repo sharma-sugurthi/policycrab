@@ -12,6 +12,9 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from app.agents.state import AgentState
 from app.services.llm_router import get_llm, TaskType, generate_embedding
 from app.services.supabase_client import search_knowledge_base
+from app.tools.provider_search import ProviderSearchTool
+from app.tools.network_status import NetworkStatusTool
+from langchain_core.messages import ToolMessage
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +38,14 @@ TONE: Empathetic, clear, actionable. The patient is likely stressed about a medi
 or denial. Be supportive while being accurate.
 
 FORMAT: Keep responses concise (under 250 words unless the question requires detail).
-Use bullet points for lists. Bold key terms."""
+Use bullet points for lists. Bold key terms.
+
+TOOLS:
+You have access to tools to search the US NPI registry for real healthcare providers.
+If a user asks about doctors, hospitals, or network status, use your tools!
+1. Always use `search_us_healthcare_providers` to find the provider first.
+2. If they ask if the provider is in-network, immediately pass the NPI to `check_provider_network_status`.
+3. Present the findings clearly to the user."""
 
 
 async def chat_node(state: AgentState) -> dict:
@@ -93,7 +103,8 @@ async def chat_node(state: AgentState) -> dict:
             )
 
         # ── Generate response ─────────────────────────────────────
-        llm = get_llm(TaskType.CHAT, temperature=0.4)
+        tools = [ProviderSearchTool(), NetworkStatusTool()]
+        llm = get_llm(TaskType.CHAT, temperature=0.4).bind_tools(tools)
 
         # Build conversation history (keep last 10 messages for context)
         chat_messages = [SystemMessage(content=CHAT_SYSTEM_PROMPT + rag_context + pipeline_context)]
@@ -103,10 +114,41 @@ async def chat_node(state: AgentState) -> dict:
                     chat_messages.append(HumanMessage(content=msg.content))
                 elif msg.type == "ai":
                     chat_messages.append(AIMessage(content=msg.content))
+                elif msg.type == "tool":
+                    chat_messages.append(ToolMessage(content=msg.content, tool_call_id=msg.tool_call_id))
             else:
                 chat_messages.append(HumanMessage(content=str(msg)))
 
-        response = await llm.ainvoke(chat_messages)
+        # Tool execution loop (max 3 steps)
+        max_steps = 3
+        current_step = 0
+        while current_step < max_steps:
+            response = await llm.ainvoke(chat_messages)
+            chat_messages.append(response)
+
+            if not response.tool_calls:
+                break
+
+            for tool_call in response.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                
+                try:
+                    if tool_name == "search_us_healthcare_providers":
+                        tool_result = ProviderSearchTool().invoke(tool_args)
+                    elif tool_name == "check_provider_network_status":
+                        tool_result = NetworkStatusTool().invoke(tool_args)
+                    else:
+                        tool_result = f"Error: Unknown tool {tool_name}"
+                except Exception as e:
+                    tool_result = f"Error executing {tool_name}: {e}"
+
+                chat_messages.append(ToolMessage(
+                    content=str(tool_result),
+                    tool_call_id=tool_call["id"]
+                ))
+            
+            current_step += 1
 
         logger.info(f"Agent 5: Chat response generated ({len(response.content)} chars)")
 
