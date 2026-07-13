@@ -84,10 +84,48 @@ async def policy_ingestion_node(state: AgentState) -> dict:
         # Validate through Pydantic
         policy = PolicyProfile(**policy_data)
 
+        # ── Post-extraction sanity checks ─────────────────────
+        warnings = []
+        ded = policy.in_network_deductible_individual
+        oop = policy.in_network_oop_max_individual
+        coins = policy.in_network_coinsurance
+
+        if ded is not None and (ded < 0 or ded > 20000):
+            warnings.append(f"In-network deductible (${ded:,.0f}) is outside the typical $0–$20,000 range — please verify.")
+        if oop is not None and (oop < 0 or oop > 50000):
+            warnings.append(f"In-network OOP max (${oop:,.0f}) is outside the typical $0–$50,000 range — please verify.")
+        if ded is not None and oop is not None and oop < ded:
+            warnings.append(f"OOP max (${oop:,.0f}) is less than deductible (${ded:,.0f}) — this is unusual. Please verify.")
+        if coins is not None and (coins < 0 or coins > 1):
+            warnings.append(f"Coinsurance ({coins}) should be between 0.0 and 1.0 — please verify.")
+
+        copay = policy.copay_schedule
+        if copay:
+            for field_name, val in [
+                ("primary_care", copay.primary_care),
+                ("specialist", copay.specialist),
+                ("emergency_room", copay.emergency_room),
+            ]:
+                if val is not None and val > 1000:
+                    warnings.append(f"Copay for {field_name} (${val:,.0f}) seems high — please verify.")
+
+        # Confidence scoring
+        if len(warnings) == 0:
+            confidence = "HIGH"
+        elif len(warnings) <= 2:
+            confidence = "MEDIUM"
+        else:
+            confidence = "LOW"
+
+        if warnings:
+            logger.warning(f"Agent 1: Extraction warnings ({confidence}): {warnings}")
+
         logger.info(f"Agent 1: Successfully extracted policy: {policy.plan_name} ({policy.carrier_name})")
 
         return {
             "policy_profile": policy.model_dump(),
+            "extraction_warnings": warnings,
+            "extraction_confidence": confidence,
             "current_phase": "ingestion",
             "errors": state.get("errors", []),
         }

@@ -183,27 +183,46 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                   </button>
                 </div>
               ) : (
-                claims.map(c => (
-                  <div key={c.id} className="card dashboard-history-card">
-                    <div className="dashboard-card-header">
-                      <span className={`badge ${c.route_decision === 'denied' ? 'badge-danger' : 'badge-success'}`}>
-                        {c.route_decision === 'denied' ? 'Denied' : 'Approved'}
-                      </span>
-                      <span>{new Date(c.created_at).toLocaleDateString()}</span>
-                    </div>
-                    <p className="dashboard-claim-description">&quot;{c.claim_description}&quot;</p>
-                    <div className="dashboard-cost-row">
-                      <span>Patient responsibility</span>
-                      <strong>${c.cost_breakdown?.total_patient_responsibility?.toLocaleString?.() || c.cost_breakdown?.total_patient_responsibility || 0}</strong>
-                    </div>
-                    {c.appeal_output?.appeal_deadline && (
-                      <div className="dashboard-cost-row">
-                        <span>Appeal deadline</span>
-                        <strong>{new Date(c.appeal_output.appeal_deadline).toLocaleDateString()}</strong>
+                claims.map(c => {
+                  // Compute deadline urgency
+                  let urgencyClass = '', urgencyLabel = '', daysLeft = null
+                  if (c.appeal_output?.appeal_deadline) {
+                    const dl = new Date(c.appeal_output.appeal_deadline)
+                    const today = new Date()
+                    today.setHours(0,0,0,0); dl.setHours(0,0,0,0)
+                    daysLeft = Math.ceil((dl - today) / 86400000)
+                    if (daysLeft <= 0) { urgencyClass = 'expired'; urgencyLabel = `⚫ Expired ${Math.abs(daysLeft)}d ago` }
+                    else if (daysLeft <= 7) { urgencyClass = 'critical'; urgencyLabel = `🔴 ${daysLeft}d — File NOW` }
+                    else if (daysLeft <= 30) { urgencyClass = 'urgent'; urgencyLabel = `🟠 ${daysLeft}d remaining` }
+                    else if (daysLeft <= 90) { urgencyClass = 'moderate'; urgencyLabel = `🟡 ${daysLeft}d remaining` }
+                    else { urgencyClass = 'standard'; urgencyLabel = `🟢 ${daysLeft}d remaining` }
+                  }
+
+                  return (
+                    <div key={c.id} className="card dashboard-history-card">
+                      <div className="dashboard-card-header">
+                        <span className={`badge ${c.route_decision === 'denied' ? 'badge-danger' : 'badge-success'}`}>
+                          {c.route_decision === 'denied' ? 'Denied' : 'Approved'}
+                        </span>
+                        <span>{new Date(c.created_at).toLocaleDateString()}</span>
                       </div>
-                    )}
-                  </div>
-                ))
+                      <p className="dashboard-claim-description">&quot;{c.claim_description}&quot;</p>
+                      <div className="dashboard-cost-row">
+                        <span>Patient responsibility</span>
+                        <strong>${c.cost_breakdown?.total_patient_responsibility?.toLocaleString?.() || c.cost_breakdown?.total_patient_responsibility || 0}</strong>
+                      </div>
+                      {c.appeal_output?.appeal_deadline && (
+                        <>
+                          <div className="dashboard-cost-row">
+                            <span>Appeal deadline</span>
+                            <strong>{new Date(c.appeal_output.appeal_deadline).toLocaleDateString()}</strong>
+                          </div>
+                          <div className={`deadline-urgency ${urgencyClass}`}>{urgencyLabel}</div>
+                        </>
+                      )}
+                    </div>
+                  )
+                })
               )}
             </div>
           </motion.div>

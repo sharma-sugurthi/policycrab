@@ -4,6 +4,8 @@ FROM python:3.12-slim
 # Set working directory
 WORKDIR /app
 
+ENV PYTHONUNBUFFERED=1
+
 # Install system dependencies (for Tesseract OCR)
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \

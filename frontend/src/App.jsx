@@ -8,6 +8,10 @@ import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
+// ── localStorage keys ────────────────────────────────────────
+const LS_POLICY_KEY = 'policycrab_policy_profile'
+const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
+
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><span className="spinner" /></div>
@@ -15,8 +19,52 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+// ── Disclaimer Banner ────────────────────────────────────────
+function DisclaimerBanner() {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem(LS_DISCLAIMER_KEY)
+    if (!dismissed) setVisible(true)
+  }, [])
+
+  const dismiss = () => {
+    localStorage.setItem(LS_DISCLAIMER_KEY, '1')
+    setVisible(false)
+  }
+
+  if (!visible) return null
+
+  return (
+    <div className="disclaimer-banner" role="alert" aria-live="polite">
+      <span className="disclaimer-icon">⚠️</span>
+      <p className="disclaimer-text">
+        <strong>Not legal or medical advice.</strong> PolicyCrab is an informational tool only.
+        Always verify calculations with your insurer and consult a licensed professional for legal or medical decisions.
+        Use at your own risk.
+      </p>
+      <button
+        onClick={dismiss}
+        className="disclaimer-close"
+        aria-label="Dismiss disclaimer"
+        title="Dismiss"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
 function AppContent() {
-  const [policyProfile, setPolicyProfile] = useState(null)
+  // ── Restore policy from localStorage on mount ────────────
+  const [policyProfile, setPolicyProfileState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(LS_POLICY_KEY)
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
   const [costBreakdown, setCostBreakdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
@@ -25,6 +73,21 @@ function AppContent() {
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [location.pathname])
+
+  // Persist policy to localStorage whenever it changes
+  const setPolicyProfile = (profile) => {
+    setPolicyProfileState(profile)
+    if (profile) {
+      try { localStorage.setItem(LS_POLICY_KEY, JSON.stringify(profile)) } catch {}
+    } else {
+      localStorage.removeItem(LS_POLICY_KEY)
+    }
+  }
+
+  const clearPolicy = () => {
+    setPolicyProfile(null)
+    setCostBreakdown(null)
+  }
 
   const navItems = [
     ['/', 'Home'],
@@ -41,6 +104,9 @@ function AppContent() {
 
   return (
     <>
+      {/* ── Disclaimer Banner ───────────────────────────────── */}
+      <DisclaimerBanner />
+
       {/* ── Navbar ─────────────────────────────────── */}
       <header className="navbar">
         <div className="navbar-inner">
@@ -48,6 +114,20 @@ function AppContent() {
             <img src="/logo.png" alt="PolicyCrab Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
             <span>PolicyCrab</span>
           </NavLink>
+
+          {/* Loaded policy pill */}
+          {policyProfile && (
+            <div className="navbar-policy-pill" title={`${policyProfile.carrier_name} — ${policyProfile.plan_type}`}>
+              <span className="navbar-policy-dot" />
+              <span className="navbar-policy-name">{policyProfile.plan_name || 'Policy Loaded'}</span>
+              <button
+                onClick={clearPolicy}
+                className="navbar-policy-clear"
+                aria-label="Clear loaded policy"
+                title="Clear policy"
+              >✕</button>
+            </div>
+          )}
 
           <nav className="navbar-links" aria-label="Primary navigation">
             {navItems.map(([to, label]) => (

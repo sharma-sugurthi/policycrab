@@ -1,7 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { apiFetch } from '../lib/api'
+import { jsPDF } from 'jspdf'
+
+const PROGRESS_STEPS = [
+  { label: 'Normalizing claim' },
+  { label: 'Running cost engine' },
+  { label: 'Routing framework' },
+  { label: 'Drafting appeal' },
+]
+
+const DENIAL_REASONS = [
+  ['', '— Select denial reason —'],
+  ['MEDICAL_NECESSITY', 'Medical Necessity (CO-50)'],
+  ['PRIOR_AUTH_MISSING', 'Prior Auth Missing (PR-243)'],
+  ['TIMELY_FILING', 'Timely Filing (CO-29)'],
+  ['NOT_COVERED', 'Not Covered (Exclusion)'],
+  ['OUT_OF_NETWORK_DENIAL', 'Out-of-Network Denial'],
+  ['NSA_BALANCE_BILLING', 'Balance Billing (NSA)'],
+  ['OTHER', 'Other'],
+]
+
+const APPEAL_LEVELS = [
+  { title: 'Internal Appeal', desc: 'First-level appeal directly to your insurer. Deadline varies by framework.' },
+  { title: 'External Review (IRO)', desc: 'Independent Review Organization reviews the denial. Required for ACA/state-regulated plans.' },
+  { title: 'State DOI Complaint', desc: 'File a formal complaint with your State Department of Insurance.' },
+  { title: 'Federal Court / ERISA Lawsuit', desc: 'Last resort for ERISA plans after exhausting administrative remedies.' },
+]
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
@@ -10,6 +36,8 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
   const [claimText, setClaimText] = useState('')
   const [allowedAmount, setAllowedAmount] = useState('')
   const [loading, setLoading] = useState(false)
+  const [progressStep, setProgressStep] = useState(0)
+  const progressTimer = useRef(null)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [providerSearch, setProviderSearch] = useState({ city: '', state: '', last_name: '', taxonomy_description: '', is_facility: false })
@@ -18,6 +46,36 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
   const [networkChecks, setNetworkChecks] = useState({})
   const [providerError, setProviderError] = useState(null)
   const [letterActionStatus, setLetterActionStatus] = useState('')
+  const [guidedOpen, setGuidedOpen] = useState(false)
+  const [guided, setGuided] = useState({ date_of_service: '', provider_name: '', denial_date: '', denial_reason: '', carc_code: '' })
+
+  // Progress step auto-advance during loading
+  useEffect(() => {
+    if (loading) {
+      setProgressStep(0)
+      let step = 0
+      progressTimer.current = setInterval(() => {
+        step += 1
+        if (step < PROGRESS_STEPS.length) setProgressStep(step)
+        else clearInterval(progressTimer.current)
+      }, 3000)
+    } else {
+      clearInterval(progressTimer.current)
+      setProgressStep(0)
+    }
+    return () => clearInterval(progressTimer.current)
+  }, [loading])
+
+  const buildFromGuided = () => {
+    const parts = []
+    if (guided.date_of_service) parts.push(`Date of service: ${guided.date_of_service}.`)
+    if (guided.provider_name) parts.push(`Provider: ${guided.provider_name}.`)
+    if (guided.denial_reason) parts.push(`Denial reason: ${DENIAL_REASONS.find(d => d[0] === guided.denial_reason)?.[1] || guided.denial_reason}.`)
+    if (guided.carc_code) parts.push(`CARC/RARC code: ${guided.carc_code}.`)
+    if (guided.denial_date) parts.push(`Denial date: ${guided.denial_date}.`)
+    if (parts.length) setClaimText(prev => (prev ? prev + '\n\n' : '') + parts.join(' '))
+    setGuidedOpen(false)
+  }
 
   const buildAppealLetterExport = () => {
     if (!result?.appeal_output?.appeal_letter) return ''
@@ -66,10 +124,78 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
     setLetterActionStatus('Downloaded appeal letter')
   }
 
+  const handleDownloadPDF = () => {
+    if (!result?.appeal_output?.appeal_letter) return
+    const appeal = result.appeal_output
+    const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+    const margin = 60
+    const pageW = doc.internal.pageSize.getWidth()
+    const maxW = pageW - margin * 2
+    let y = margin
+
+    // Header
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(16)
+    doc.setTextColor(220, 38, 38)
+    doc.text('PolicyCrab — Appeal Letter', margin, y)
+    y += 24
+    doc.setDrawColor(220, 38, 38)
+    doc.setLineWidth(1.5)
+    doc.line(margin, y, pageW - margin, y)
+    y += 20
+
+    // Meta
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.setTextColor(100)
+    doc.text(`Framework: ${appeal.appeal_framework || 'N/A'}`, margin, y)
+    y += 14
+    const dl = appeal.appeal_deadline ? new Date(appeal.appeal_deadline).toLocaleDateString() : 'N/A'
+    doc.text(`Appeal Deadline: ${dl}${appeal.days_remaining != null ? ` (${appeal.days_remaining} days remaining)` : ''}`, margin, y)
+    y += 14
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y)
+    y += 24
+
+    // Body
+    doc.setFont('times', 'normal')
+    doc.setFontSize(11)
+    doc.setTextColor(30)
+    const lines = doc.splitTextToSize(appeal.appeal_letter, maxW)
+    const pageH = doc.internal.pageSize.getHeight()
+    for (const line of lines) {
+      if (y > pageH - 80) { doc.addPage(); y = margin }
+      doc.text(line, margin, y)
+      y += 15
+    }
+
+    // Signature placeholder
+    y += 30
+    if (y > pageH - 100) { doc.addPage(); y = margin }
+    doc.setDrawColor(180)
+    doc.setLineWidth(0.5)
+    doc.line(margin, y, margin + 200, y)
+    y += 14
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(9)
+    doc.setTextColor(100)
+    doc.text('Patient Signature / Date', margin, y)
+    y += 30
+
+    // Footer disclaimer
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.setTextColor(150)
+    doc.text('DISCLAIMER: This letter was generated by PolicyCrab for informational purposes only. Not legal or medical advice.', margin, pageH - 30)
+
+    const date = new Date().toISOString().slice(0, 10)
+    doc.save(`policycrab-appeal-letter-${date}.pdf`)
+    setLetterActionStatus('Downloaded PDF')
+  }
+
   const handleEvaluate = async () => {
     if (!policyProfile) { setError('Upload a policy first.'); return }
     if (claimText.trim().length < 20) { setError('Please describe the claim in more detail.'); return }
-    setLoading(true); setError(null); setResult(null); setLetterActionStatus('')
+    setLoading(true); setError(null); setResult(null); setLetterActionStatus(''); setProgressStep(0)
     try {
       const res = await apiFetch('/claim/evaluate', { 
         method: 'POST', 
@@ -309,9 +435,61 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                 ))}
               </div>
 
+              {/* ── Guided Form ────────────── */}
+              <div className="guided-form-panel">
+                <div className={`guided-form-header${guidedOpen ? ' open' : ''}`} onClick={() => setGuidedOpen(o => !o)}>
+                  <span className="guided-form-title">📝 Guided Intake Fields <span style={{ fontSize: '0.6875rem', color: '#a1a1aa', fontWeight: 500 }}>(optional)</span></span>
+                  <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>{guidedOpen ? '▲' : '▼'}</span>
+                </div>
+                {guidedOpen && (
+                  <div className="guided-form-body">
+                    <div className="guided-field">
+                      <label>Date of Service</label>
+                      <input className="input" type="date" value={guided.date_of_service} onChange={e => setGuided(p => ({ ...p, date_of_service: e.target.value }))} />
+                    </div>
+                    <div className="guided-field">
+                      <label>Provider Name</label>
+                      <input className="input" placeholder="e.g., Dr. Smith" value={guided.provider_name} onChange={e => setGuided(p => ({ ...p, provider_name: e.target.value }))} />
+                    </div>
+                    <div className="guided-field">
+                      <label>Denial Date</label>
+                      <input className="input" type="date" value={guided.denial_date} onChange={e => setGuided(p => ({ ...p, denial_date: e.target.value }))} />
+                    </div>
+                    <div className="guided-field">
+                      <label>Denial Reason</label>
+                      <select value={guided.denial_reason} onChange={e => setGuided(p => ({ ...p, denial_reason: e.target.value }))}>
+                        {DENIAL_REASONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      </select>
+                    </div>
+                    <div className="guided-field">
+                      <label>CARC / RARC Code</label>
+                      <input className="input" placeholder="e.g., CO-50" value={guided.carc_code} onChange={e => setGuided(p => ({ ...p, carc_code: e.target.value }))} />
+                    </div>
+                    <div className="guided-form-build">
+                      <button className="btn btn-ghost" type="button" onClick={buildFromGuided}>Add to Claim Description →</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button className="btn btn-red" onClick={handleEvaluate} disabled={loading || !policyProfile || claimText.trim().length < 20} style={{ width: '100%' }}>
                 {loading ? <><span className="spinner" /> Evaluating Pipeline...</> : '⚡ Run Evaluation'}
               </button>
+
+              {/* ── Progress Stepper ────────── */}
+              {loading && (
+                <div className="claim-progress" style={{ marginTop: '1rem' }}>
+                  <span className="claim-progress-title">Pipeline Progress</span>
+                  <div className="claim-progress-steps">
+                    {PROGRESS_STEPS.map((s, i) => (
+                      <div key={i} className={`progress-step${i < progressStep ? ' done' : i === progressStep ? ' active' : ''}`}>
+                        <div className="progress-step-dot">{i < progressStep ? '✓' : i + 1}</div>
+                        <span className="progress-step-label">{s.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.8125rem', fontWeight: 500 }}>
@@ -418,11 +596,51 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                       <div className="appeal-letter-actions">
                         {letterActionStatus && <span>{letterActionStatus}</span>}
                         <button type="button" className="btn btn-ghost" onClick={handleCopyAppealLetter}>Copy Letter</button>
-                        <button type="button" className="btn btn-red" onClick={handleDownloadAppealLetter}>Download .txt</button>
+                        <button type="button" className="btn btn-ghost" onClick={handleDownloadAppealLetter}>Download .txt</button>
+                        <button type="button" className="btn btn-red" onClick={handleDownloadPDF}>Download PDF</button>
                       </div>
                     </div>
                     <div className="appeal-letter">{result.appeal_output.appeal_letter}</div>
+
+                    {/* ── Next Steps ────────── */}
+                    {result.appeal_output.recommended_next_steps?.length > 0 && (
+                      <div style={{ marginTop: '1.5rem' }}>
+                        <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>Recommended Next Steps</h4>
+                        <ul className="next-steps-list">
+                          {result.appeal_output.recommended_next_steps.map((step, i) => (
+                            <li key={i} className="next-step-item">
+                              <span className="next-step-num">{i + 1}</span>
+                              <span>{step}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </motion.div>
+                )}
+
+                {/* ── Appeal Roadmap ────────── */}
+                {result.appeal_output && (
+                  <div className="appeal-roadmap">
+                    <div className="appeal-roadmap-header">
+                      <div className="feature-icon red">🗺️</div>
+                      <h4>Multi-Level Appeal Roadmap</h4>
+                    </div>
+                    <div className="appeal-roadmap-body">
+                      {APPEAL_LEVELS.map((level, i) => (
+                        <div key={i} className={`roadmap-level${i === 0 ? ' active' : ''}`}>
+                          <span className="roadmap-level-num">{i + 1}</span>
+                          <div className="roadmap-level-info">
+                            <h5>{level.title}</h5>
+                            <p>{level.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <p style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                        The appeal letter above is for Level 1 (Internal Appeal). If denied again, escalate to the next level.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </>
             ) : (

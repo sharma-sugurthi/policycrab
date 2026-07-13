@@ -325,13 +325,13 @@ export default function Home({ policyProfile }) {
 
       {/* ═══════════════ FOOTER ═══════════════ */}
       <footer style={{ background: '#09090b', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '2rem 0' }}>
-        <div className="main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
             <img src="/logo.png" alt="PolicyCrab" style={{ width: '20px', height: '20px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
             <span style={{ fontWeight: 800, fontSize: '1rem', color: '#fff', letterSpacing: '-0.02em' }}>PolicyCrab</span>
           </div>
-          <p style={{ fontSize: '0.75rem', color: '#52525b', fontWeight: 500 }}>
-            AI-powered US health insurance claims engine
+          <p style={{ fontSize: '0.6875rem', color: '#52525b', fontWeight: 500, maxWidth: '36rem', lineHeight: 1.5, textAlign: 'right' }}>
+            Not legal or medical advice. For informational purposes only. Always verify with your insurer and consult a licensed professional. Use at your own risk.
           </p>
         </div>
       </footer>

@@ -37,6 +37,8 @@ class PolicyUploadResponse(BaseModel):
     policy_profile: dict | None = None
     explanation: str | None = None
     extracted_text: str | None = None
+    extraction_warnings: list[str] = []
+    extraction_confidence: str | None = None
     errors: list[str] = []
 
 
@@ -56,6 +58,8 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
         "current_phase": "ingestion",
         "route_decision": "",
         "errors": [],
+        "extraction_warnings": [],
+        "extraction_confidence": None,
         "explanations": {},
     }
 
@@ -66,6 +70,8 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
             success=True,
             policy_profile=result["policy_profile"],
             explanation=result.get("explanations", {}).get("ingestion"),
+            extraction_warnings=result.get("extraction_warnings", []),
+            extraction_confidence=result.get("extraction_confidence"),
             errors=result.get("errors", []),
         )
     else:

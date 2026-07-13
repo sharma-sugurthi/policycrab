@@ -6,6 +6,7 @@ Evaluates eligibility, estimates costs, and drafts formal appeals.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,6 +29,11 @@ async def lifespan(app: FastAPI):
     logger.info(f"   Supabase: {settings.supabase_url}")
     logger.info(f"   LLM Fast: {settings.llm_fast_model}")
     logger.info(f"   LLM Quality: {settings.llm_quality_model}")
+
+    if os.environ.get("LANGCHAIN_TRACING_V2") == "true":
+        logger.info(f"   Observability: LangSmith tracing ENABLED (Project: {os.environ.get('LANGCHAIN_PROJECT', 'default')}) ✅")
+    else:
+        logger.info("   Observability: LangSmith tracing DISABLED ⚠️")
 
     # Validate critical connections on startup
     try:
@@ -69,3 +75,8 @@ app.add_middleware(
 
 # ── Include API Routes ────────────────────────────────────────────
 app.include_router(api_router)
+
+@app.get("/health", tags=["system"])
+async def health_check():
+    """Simple health check endpoint for Render/HuggingFace deployment monitors."""
+    return {"status": "ok", "service": "policycrab-backend"}

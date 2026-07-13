@@ -74,6 +74,8 @@ async def evaluate_claim(
         "current_phase": "intake",
         "route_decision": "",
         "errors": [],
+        "extraction_warnings": [],
+        "extraction_confidence": None,
         "explanations": {},
     }
 

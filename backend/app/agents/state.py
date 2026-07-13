@@ -41,5 +41,9 @@ class AgentState(TypedDict):
     # ── Error Handling ────────────────────────────────────────────
     errors: list[str]
 
+    # ── Extraction Quality (populated by Policy Ingestion Agent) ──
+    extraction_warnings: list[str]       # Sanity-check warnings for extracted fields
+    extraction_confidence: str | None    # "HIGH", "MEDIUM", or "LOW"
+
     # ── Explanations (populated by Explanation Agent) ─────────────
     explanations: dict[str, str]    # phase → plain English explanation
