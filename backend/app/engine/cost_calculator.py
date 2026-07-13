@@ -219,9 +219,18 @@ def calculate_cost(
     if copay_amount > 0:
         cpt = claim.cpt_code.upper().strip()
         desc = claim.cpt_description.lower()
-        copay_can_replace_waterfall = (
-            not claim.is_emergency
-            and (
+
+        # Emergency visits: NSA/EMTALA mandate in-network cost-sharing treatment.
+        # The deductible + coinsurance waterfall already applies — do not stack copay.
+        if claim.is_emergency:
+            notes.append(
+                f"Copay waived: Emergency visit — deductible + coinsurance waterfall applies "
+                f"instead of stacking ${copay_amount:,.2f} copay (NSA/EMTALA)."
+            )
+            patient_total = standard_patient_total
+
+        else:
+            copay_can_replace_waterfall = (
                 cpt.startswith("992")
                 or cpt.startswith("908")
                 or cpt.startswith("909")
@@ -229,22 +238,21 @@ def calculate_cost(
                 or "therapy" in desc
                 or "psychiatr" in desc
             )
-        )
 
-        if copay_can_replace_waterfall and copay_amount < standard_patient_total:
-            notes.append(
-                f"Copay protection: ${copay_amount:,.2f} used for this visit category "
-                "instead of stacking deductible and coinsurance, because the parsed plan "
-                "does not prove both should apply. Verify this against the SBC/EOB."
-            )
-            applied_to_deductible = 0.0
-            coinsurance_amount = 0.0
-            patient_total = copay_amount
-        else:
-            notes.append(
-                f"Copay: ${copay_amount:,.2f} applied for this service category."
-            )
-            patient_total = standard_patient_total + copay_amount
+            if copay_can_replace_waterfall and copay_amount < standard_patient_total:
+                notes.append(
+                    f"Copay protection: ${copay_amount:,.2f} used for this visit category "
+                    "instead of stacking deductible and coinsurance, because the parsed plan "
+                    "does not prove both should apply. Verify this against the SBC/EOB."
+                )
+                applied_to_deductible = 0.0
+                coinsurance_amount = 0.0
+                patient_total = copay_amount
+            else:
+                notes.append(
+                    f"Copay: ${copay_amount:,.2f} applied for this service category."
+                )
+                patient_total = standard_patient_total + copay_amount
     else:
         patient_total = standard_patient_total
 
