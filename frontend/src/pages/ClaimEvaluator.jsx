@@ -48,6 +48,50 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
   const [letterActionStatus, setLetterActionStatus] = useState('')
   const [guidedOpen, setGuidedOpen] = useState(false)
   const [guided, setGuided] = useState({ date_of_service: '', provider_name: '', denial_date: '', denial_reason: '', carc_code: '' })
+  const [eobFile, setEobFile] = useState(null)
+  const [eobLoading, setEobLoading] = useState(false)
+  const [eobResult, setEobResult] = useState(null)
+  const [eobError, setEobError] = useState(null)
+
+  const handleEobUpload = async () => {
+    if (!eobFile) return
+    setEobLoading(true); setEobResult(null); setEobError(null)
+    try {
+      const formData = new FormData()
+      formData.append('file', eobFile)
+      const res = await apiFetch('/eob/parse', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.success && data.extracted) {
+        setEobResult(data.extracted)
+      } else {
+        setEobError(data.detail || 'EOB extraction failed.')
+      }
+    } catch (err) {
+      setEobError(`Network error: ${err.message}`)
+    } finally {
+      setEobLoading(false)
+    }
+  }
+
+  const prefillFromEob = (eob) => {
+    const parts = []
+    if (eob.date_of_service) parts.push(`Date of service: ${eob.date_of_service}.`)
+    if (eob.provider_name) parts.push(`Provider: ${eob.provider_name}.`)
+    if (eob.facility_name) parts.push(`Facility: ${eob.facility_name}.`)
+    if (eob.cpt_code) parts.push(`CPT code: ${eob.cpt_code}${eob.cpt_description ? ` (${eob.cpt_description})` : ''}.`)
+    if (eob.icd_10_code) parts.push(`ICD-10: ${eob.icd_10_code}${eob.icd_10_description ? ` (${eob.icd_10_description})` : ''}.`)
+    if (eob.billed_amount) parts.push(`Billed amount: $${eob.billed_amount.toLocaleString()}.`)
+    if (eob.allowed_amount) parts.push(`Allowed amount (per EOB): $${eob.allowed_amount.toLocaleString()}.`)
+    if (eob.denial_reason_text) parts.push(`Denial reason: ${eob.denial_reason_text}.`)
+    if (eob.denial_carc_code) parts.push(`CARC code: ${eob.denial_carc_code}.`)
+    if (eob.denial_date) parts.push(`Denial date: ${eob.denial_date}.`)
+    setClaimText(parts.join(' '))
+    if (eob.allowed_amount) setAllowedAmount(String(eob.allowed_amount))
+    if (eob.date_of_service) setGuided(p => ({ ...p, date_of_service: eob.date_of_service || '' }))
+    if (eob.provider_name) setGuided(p => ({ ...p, provider_name: eob.provider_name || '' }))
+    if (eob.denial_date) setGuided(p => ({ ...p, denial_date: eob.denial_date || '' }))
+    if (eob.denial_carc_code) setGuided(p => ({ ...p, carc_code: eob.denial_carc_code || '' }))
+  }
 
   // Progress step auto-advance during loading
   useEffect(() => {
@@ -401,6 +445,84 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                   <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#09090b' }}>Claim Details</h3>
                   <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Describe the service, diagnosis, and billing</p>
                 </div>
+              </div>
+
+              {/* ── EOB Upload Panel ───────────── */}
+              <div className="guided-form-panel" style={{ marginBottom: '1rem' }}>
+                <div className={`guided-form-header${eobResult ? ' open' : ''}`}
+                  onClick={() => !eobResult && document.getElementById('eob-upload-input').click()}
+                  style={{ cursor: eobResult ? 'default' : 'pointer' }}
+                >
+                  <span className="guided-form-title">
+                    📄 Upload EOB PDF
+                    <span style={{ fontSize: '0.6875rem', color: '#a1a1aa', fontWeight: 500 }}> — auto-fill from your Explanation of Benefits</span>
+                  </span>
+                  {eobFile && !eobResult && (
+                    <button
+                      type="button"
+                      className="btn btn-red"
+                      style={{ padding: '0.375rem 0.875rem', fontSize: '0.75rem' }}
+                      onClick={e => { e.stopPropagation(); handleEobUpload() }}
+                      disabled={eobLoading}
+                    >
+                      {eobLoading ? <><span className="spinner" /> Parsing...</> : 'Extract Fields'}
+                    </button>
+                  )}
+                  {!eobFile && <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 600 }}>Click to select PDF</span>}
+                </div>
+                <input
+                  id="eob-upload-input"
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={e => { setEobFile(e.target.files[0] || null); setEobResult(null); setEobError(null) }}
+                />
+                {eobFile && !eobResult && (
+                  <div style={{ padding: '0.75rem 1rem', fontSize: '0.8125rem', color: '#52525b', display: 'flex', alignItems: 'center', gap: '0.5rem', borderTop: '1px solid #f4f4f5' }}>
+                    📄 <strong>{eobFile.name}</strong>
+                    <button type="button" onClick={() => setEobFile(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#a1a1aa', cursor: 'pointer', fontSize: '0.75rem' }}>✕ Remove</button>
+                  </div>
+                )}
+                {eobError && (
+                  <div style={{ padding: '0.75rem 1rem', fontSize: '0.8125rem', color: '#dc2626', borderTop: '1px solid #fecaca', background: '#fef2f2' }}>❌ {eobError}</div>
+                )}
+                {eobResult && (
+                  <div style={{ padding: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                      {[
+                        ['Date of Service', eobResult.date_of_service, eobResult.confidence?.date_of_service],
+                        ['Provider', eobResult.provider_name, 'high'],
+                        ['Facility', eobResult.facility_name, 'high'],
+                        ['CPT Code', eobResult.cpt_code, eobResult.confidence?.cpt_code],
+                        ['ICD-10', eobResult.icd_10_code, 'high'],
+                        ['Billed Amount', eobResult.billed_amount != null ? `$${Number(eobResult.billed_amount).toLocaleString()}` : null, eobResult.confidence?.billed_amount],
+                        ['Allowed Amount', eobResult.allowed_amount != null ? `$${Number(eobResult.allowed_amount).toLocaleString()}` : null, eobResult.confidence?.allowed_amount],
+                        ['Patient Responsibility', eobResult.patient_responsibility != null ? `$${Number(eobResult.patient_responsibility).toLocaleString()}` : null, 'high'],
+                        ['CARC Code', eobResult.denial_carc_code, eobResult.confidence?.denial_carc_code],
+                        ['Denial Date', eobResult.denial_date, 'high'],
+                      ].filter(([, val]) => val != null).map(([label, val, conf]) => (
+                        <div key={label} style={{ background: '#fafafa', border: '1px solid #f4f4f5', borderRadius: '0.625rem', padding: '0.5rem 0.75rem' }}>
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.1rem', display: 'flex', justifyContent: 'space-between' }}>
+                            {label}
+                            {conf === 'low' && <span style={{ color: '#d97706', fontSize: '0.6rem' }}>⚠ verify</span>}
+                          </div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#09090b' }}>{val}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {eobResult.denial_reason_text && (
+                      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem', padding: '0.75rem 1rem', fontSize: '0.8125rem', color: '#dc2626', marginBottom: '1rem' }}>
+                        <strong>Denial reason:</strong> {eobResult.denial_reason_text}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                      <button type="button" className="btn btn-red" style={{ flex: 1 }} onClick={() => prefillFromEob(eobResult)}>
+                        ✅ Pre-fill Claim Description →
+                      </button>
+                      <button type="button" className="btn btn-ghost" onClick={() => { setEobResult(null); setEobFile(null) }}>Clear</button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <textarea value={claimText} onChange={e => setClaimText(e.target.value)}

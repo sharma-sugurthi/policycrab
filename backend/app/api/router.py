@@ -11,6 +11,7 @@ from app.api.claim_routes import router as claim_router
 from app.api.chat_routes import router as chat_router
 from app.api.history_routes import router as history_router
 from app.api.provider_routes import router as provider_router
+from app.api.eob_routes import router as eob_router
 from app.security.rate_limit import rate_limit
 from app.api.auth import get_current_user
 
@@ -23,6 +24,7 @@ api_router.include_router(claim_router)
 api_router.include_router(chat_router)
 api_router.include_router(history_router)
 api_router.include_router(provider_router)
+api_router.include_router(eob_router)
 
 
 @api_router.get("/health", tags=["System"])
