@@ -9,3 +9,4 @@ coverage==7.15.0
 # Local CLI tooling, not shipped in production images
 fastapi-cli==0.0.28
 fastapi-cloud-cli==0.22.1
+flake8==7.1.1
