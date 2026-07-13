@@ -37,6 +37,7 @@ jobs:
         SUPABASE_URL: "https://mock.supabase.co"
         SUPABASE_SERVICE_KEY: "mock_key"
         SUPABASE_ANON_KEY: "mock_key"
+        GEMINI_API_KEY: "mock_key"
       run: |
         pytest tests/
 
