@@ -8,6 +8,7 @@ appeal framework. This is pure logic — no LLM involvement.
 from app.models.enums import AppealFramework, PlanLegalClassification
 from app.models.policy import PolicyProfile
 from app.models.claim import ClaimCase
+from app.engine.state_profiles import get_state_summary, get_state_external_review_deadline
 
 
 def route_to_appeal_framework(
@@ -127,3 +128,33 @@ def get_appeal_framework_details(framework: AppealFramework) -> dict:
         },
     }
     return details.get(framework, {})
+
+
+def get_state_enriched_context(
+    policy: PolicyProfile,
+    framework: AppealFramework,
+) -> dict:
+    """
+    Return state-specific regulatory context for a given plan and framework.
+    Used to enrich appeal letter prompts and API responses.
+
+    For ERISA self-funded plans, state law is preempted — returns a note explaining this.
+    For fully insured and ACA plans, returns full state profile.
+    """
+    state = policy.state or "XX"
+
+    if framework == AppealFramework.ERISA_FEDERAL:
+        return {
+            "note": (
+                f"ERISA self-funded plan — {state} state insurance law is PREEMPTED. "
+                "Federal ERISA governs exclusively. State DOI has no jurisdiction over this plan."
+            ),
+            "state_code": state,
+            "erisa_preempted": True,
+        }
+
+    state_summary = get_state_summary(state)
+    return {
+        **state_summary,
+        "erisa_preempted": False,
+    }

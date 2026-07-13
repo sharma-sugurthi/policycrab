@@ -7,6 +7,7 @@ using the applicable legal framework's timeline requirements.
 
 from datetime import date, timedelta
 from app.models.enums import AppealFramework
+from app.engine.state_profiles import get_state_external_review_deadline
 
 
 # ── Deadline Rules by Framework ───────────────────────────────────
@@ -55,9 +56,13 @@ def _add_business_days(start_date: date, business_days: int) -> date:
 def calculate_appeal_deadline(
     framework: AppealFramework,
     denial_date: date,
+    state_code: str | None = None,
 ) -> dict:
     """
     Calculate the appeal filing deadline based on the applicable framework.
+
+    For STATE_EXTERNAL_REVIEW, uses the state-specific deadline from the
+    state registry when state_code is provided, instead of the generic 120-day default.
 
     Returns:
         dict with deadline date, days remaining, framework details,
@@ -66,6 +71,18 @@ def calculate_appeal_deadline(
     rule = _DEADLINE_RULES.get(framework)
     if not rule:
         raise ValueError(f"Unknown appeal framework: {framework}")
+
+    # Override calendar_days with state-specific deadline for state-regulated plans
+    if framework == AppealFramework.STATE_EXTERNAL_REVIEW and state_code:
+        state_deadline = get_state_external_review_deadline(state_code)
+        rule = {
+            **rule,
+            "calendar_days": state_deadline,
+            "description": (
+                f"{rule['description'].split('(')[0].strip()} "
+                f"({state_code} state-specific: {state_deadline} calendar days)"
+            ),
+        }
 
     if "business_days" in rule:
         deadline_date = _add_business_days(denial_date, rule["business_days"])

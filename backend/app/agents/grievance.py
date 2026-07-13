@@ -15,7 +15,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from app.agents.state import AgentState
 from app.services.llm_router import get_llm, TaskType, generate_embedding
 from app.services.supabase_client import search_knowledge_base
-from app.engine.regulatory_router import route_to_appeal_framework, get_appeal_framework_details
+from app.engine.regulatory_router import route_to_appeal_framework, get_appeal_framework_details, get_state_enriched_context
 from app.engine.deadline_calculator import calculate_appeal_deadline
 from app.models.policy import PolicyProfile
 from app.models.claim import ClaimCase, CostBreakdown
@@ -75,7 +75,12 @@ async def grievance_node(state: AgentState) -> dict:
 
         # ── Step 2: Calculate deadline ────────────────────────────
         denial_date = claim.denial_date or date.today()
-        deadline_info = calculate_appeal_deadline(framework, denial_date)
+        deadline_info = calculate_appeal_deadline(
+            framework, denial_date, state_code=policy.state
+        )
+
+        # ── Step 2b: State-specific regulatory context ────────────
+        state_ctx = get_state_enriched_context(policy, framework)
 
         # ── Step 3: RAG retrieval — get relevant regulations ──────
         denial_reason = claim.denial_reason or (cost.denial_reason if cost else None) or DenialReason.OTHER
@@ -123,7 +128,25 @@ async def grievance_node(state: AgentState) -> dict:
             f"- Governing Law: {framework_details.get('governing_law', 'N/A')}\n"
             f"- Deadline: {deadline_info['deadline_date']} ({deadline_info['days_remaining']} days remaining)\n"
             f"- Urgency: {deadline_info['urgency']}\n"
+            f"\nSTATE-SPECIFIC REGULATORY CONTEXT ({policy.state or 'N/A'}):\n"
         )
+
+        # Append state context fields that are relevant
+        if state_ctx.get('erisa_preempted'):
+            case_summary += f"- {state_ctx['note']}\n"
+        else:
+            case_summary += (
+                f"- External Review Org: {state_ctx.get('external_review_org', 'N/A')}\n"
+                f"- External Review Deadline: {state_ctx.get('external_review_deadline_days', 'N/A')} days\n"
+                f"- External Review Note: {state_ctx.get('external_review_note', 'N/A')}\n"
+            )
+            if state_ctx.get('state_surprise_billing_law'):
+                case_summary += f"- State Surprise Billing Law: {state_ctx['state_surprise_billing_law']}\n"
+                case_summary += f"  Details: {state_ctx['state_surprise_billing_notes']}\n"
+            if state_ctx.get('notable_mandates'):
+                case_summary += "- Notable State Mandates:\n"
+                for m in state_ctx['notable_mandates'][:3]:
+                    case_summary += f"  • {m}\n"
 
         messages = [
             SystemMessage(content=APPEAL_DRAFTING_PROMPT),
