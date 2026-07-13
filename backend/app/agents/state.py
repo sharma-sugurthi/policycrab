@@ -30,6 +30,7 @@ class AgentState(TypedDict):
     # ── Structured Pipeline Data ──────────────────────────────────
     policy_profile: dict | None     # PolicyProfile as dict (serializable)
     claim_case: dict | None         # ClaimCase as dict
+    allowed_amount: float | None    # EOB allowed amount supplied by the user, if available
     cost_breakdown: dict | None     # CostBreakdown as dict
     appeal_output: dict | None      # AppealOutput as dict
 

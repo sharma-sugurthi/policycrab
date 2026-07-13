@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://<YOUR-HUGGINGFACE-SPACE-URL>/api/:path*"
+      "destination": "https://new27-policycrab-backend.hf.space/api/:path*"
     },
     {
       "source": "/(.*)",

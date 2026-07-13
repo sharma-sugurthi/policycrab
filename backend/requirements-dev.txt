@@ -1,0 +1,11 @@
+-r requirements.txt
+
+# Tests and coverage
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+coverage==7.15.0
+
+# Local CLI tooling, not shipped in production images
+fastapi-cli==0.0.28
+fastapi-cloud-cli==0.22.1

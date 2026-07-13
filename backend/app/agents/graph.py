@@ -45,10 +45,38 @@ async def cost_calculation_node(state: AgentState) -> dict:
     policy = PolicyProfile(**state["policy_profile"])
     claim = ClaimCase(**state["claim_case"])
 
-    # Use 60% of billed amount as default allowed amount (typical PPO discount)
-    allowed_amount = claim.billed_amount * 0.60
+    supplied_allowed_amount = state.get("allowed_amount")
+    if supplied_allowed_amount is not None and supplied_allowed_amount > claim.billed_amount:
+        return {
+            "claim_case": claim.model_dump(mode="json"),
+            "cost_breakdown": None,
+            "route_decision": "error",
+            "current_phase": "calculation",
+            "errors": state.get("errors", []) + [
+                "Allowed amount cannot be greater than the billed amount. Enter the allowed amount exactly as shown on the EOB, or leave it blank for an estimate."
+            ],
+        }
+
+    if supplied_allowed_amount is None:
+        allowed_amount = claim.billed_amount
+        allowed_amount_source = "billed_amount_estimate"
+    else:
+        allowed_amount = supplied_allowed_amount
+        allowed_amount_source = "eob"
 
     cost = calculate_cost(policy, claim, allowed_amount=allowed_amount)
+    cost.allowed_amount_source = allowed_amount_source
+
+    if allowed_amount_source == "billed_amount_estimate":
+        cost.calculation_notes.insert(
+            0,
+            "ESTIMATE ONLY: No EOB allowed amount was provided. The calculator used the billed amount as a conservative placeholder, not a negotiated insurer rate. Do not use this estimate for financial planning.",
+        )
+    else:
+        cost.calculation_notes.insert(
+            0,
+            "Allowed amount supplied by the user from an EOB/ERA or insurer document.",
+        )
 
     # Determine route decision based on cost calculation result
     if cost.claim_status == ClaimStatus.DENIED:

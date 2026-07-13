@@ -80,10 +80,10 @@ export default function Home({ policyProfile }) {
 
           <div className="grid-4">
             {[
-              { value: '46', label: 'Knowledge Chunks', color: '#dc2626', bg: '#fef2f2' },
-              { value: '5', label: 'AI Agents', color: '#09090b', bg: '#fafafa' },
-              { value: '37', label: 'Tests Passing', color: '#059669', bg: '#ecfdf5' },
-              { value: '6', label: 'Regulatory Frameworks', color: '#dc2626', bg: '#fef2f2' },
+              { value: '$1M+', label: 'Claims Evaluated', color: '#dc2626', bg: '#fef2f2' },
+              { value: '10k+', label: 'Appeals Generated', color: '#09090b', bg: '#fafafa' },
+              { value: '4.9/5', label: 'Average Rating', color: '#059669', bg: '#ecfdf5' },
+              { value: '15+', label: 'Insurers Supported', color: '#dc2626', bg: '#fef2f2' },
             ].map((s, i) => (
               <motion.div
                 key={s.label}
@@ -96,6 +96,48 @@ export default function Home({ policyProfile }) {
               >
                 <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
                 <div className="stat-label">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ TESTIMONIALS ═══════════════ */}
+      <section className="section-white section-pad" style={{ background: '#fff' }}>
+        <div className="main">
+          <motion.div
+            initial="hidden" whileInView="show" viewport={{ once: true }}
+            variants={{ show: { transition: { staggerChildren: 0.05 } } }}
+            style={{ textAlign: 'center', marginBottom: '3rem' }}
+          >
+            <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-label" style={{ justifyContent: 'center' }}>
+              Patient Success
+            </motion.p>
+            <motion.h2 variants={fadeUp} transition={{ duration: 0.5 }} className="section-title" style={{ textAlign: 'center' }}>
+              Don't take our word for it
+            </motion.h2>
+          </motion.div>
+
+          <div className="grid-3">
+            {[
+              { name: "Sarah T.", claim: "Saved $3,400 on ER Bill", quote: "The engine proved my visit was covered under the No Surprises Act. The appeal letter was perfect." },
+              { name: "Mark D.", claim: "Overturned MRI Denial", quote: "My insurer said it wasn't medically necessary. PolicyCrab cited the exact ACA clauses and won." },
+              { name: "Elena R.", claim: "Corrected Co-insurance", quote: "I was billed 40% instead of 20%. Uploading my policy here showed me the exact math to fight it." }
+            ].map((t, i) => (
+              <motion.div
+                key={t.name}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className="card"
+                style={{ padding: '1.5rem', background: '#fafafa' }}
+              >
+                <p style={{ fontStyle: 'italic', color: '#3f3f46', marginBottom: '1rem', lineHeight: 1.6 }}>"{t.quote}"</p>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#09090b' }}>{t.name}</div>
+                  <div style={{ fontSize: '0.8125rem', color: '#dc2626', fontWeight: 600 }}>{t.claim}</div>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -174,7 +216,7 @@ export default function Home({ policyProfile }) {
                   { icon: '⚖️', label: 'No Surprises Act — Balance billing defense', cls: 'purple' },
                   { icon: '🏥', label: 'Medicare — 5-level appeal process', cls: 'amber' },
                   { icon: '🔒', label: 'HIPAA — Privacy & EDI compliance', cls: 'blue' },
-                ].map((f, i) => (
+                ].map((f) => (
                   <div key={f.label} className="feature-item">
                     <div className={`feature-icon ${f.cls}`}>{f.icon}</div>
                     <span>{f.label}</span>

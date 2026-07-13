@@ -30,9 +30,9 @@ _DEADLINE_RULES: dict[AppealFramework, dict] = {
         "urgency_note": "Expedited review available in 72 hours if standard timeline could jeopardize health",
     },
     AppealFramework.NSA_IDR: {
-        "calendar_days": 30,
+        "business_days": 30,
         "description": "No Surprises Act: 30 business days open negotiation period from initial payment/denial",
-        "urgency_note": "This is the provider's deadline to initiate IDR — patient cost-sharing is already capped",
+        "urgency_note": "This is the provider's deadline to initiate IDR; patient cost-sharing is already capped",
     },
     AppealFramework.STATE_DOI_COMPLAINT: {
         "calendar_days": 365,
@@ -40,6 +40,16 @@ _DEADLINE_RULES: dict[AppealFramework, dict] = {
         "urgency_note": "File as early as possible — regulatory investigations can take months",
     },
 }
+
+
+def _add_business_days(start_date: date, business_days: int) -> date:
+    current = start_date
+    remaining = business_days
+    while remaining > 0:
+        current += timedelta(days=1)
+        if current.weekday() < 5:
+            remaining -= 1
+    return current
 
 
 def calculate_appeal_deadline(
@@ -57,7 +67,15 @@ def calculate_appeal_deadline(
     if not rule:
         raise ValueError(f"Unknown appeal framework: {framework}")
 
-    deadline_date = denial_date + timedelta(days=rule["calendar_days"])
+    if "business_days" in rule:
+        deadline_date = _add_business_days(denial_date, rule["business_days"])
+        days_allowed = rule["business_days"]
+        days_label = "business_days_allowed"
+    else:
+        deadline_date = denial_date + timedelta(days=rule["calendar_days"])
+        days_allowed = rule["calendar_days"]
+        days_label = "calendar_days_allowed"
+
     today = date.today()
     days_remaining = (deadline_date - today).days
 
@@ -98,7 +116,8 @@ def calculate_appeal_deadline(
         "framework": framework.value,
         "denial_date": denial_date.isoformat(),
         "deadline_date": deadline_date.isoformat(),
-        "calendar_days_allowed": rule["calendar_days"],
+        days_label: days_allowed,
+        "calendar_days_allowed": (deadline_date - denial_date).days,
         "days_remaining": days_remaining,
         "urgency": urgency,
         "urgency_message": urgency_message,

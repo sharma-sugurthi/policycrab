@@ -23,11 +23,12 @@ class TestDeadlineCalculation:
         assert result["deadline_date"] == "2025-04-30"
         assert result["calendar_days_allowed"] == 60
 
-    def test_nsa_30_days(self):
+    def test_nsa_30_business_days(self):
         denial = date(2025, 6, 1)
         result = calculate_appeal_deadline(AppealFramework.NSA_IDR, denial)
-        assert result["deadline_date"] == "2025-07-01"
-        assert result["calendar_days_allowed"] == 30
+        assert result["deadline_date"] == "2025-07-11"
+        assert result["business_days_allowed"] == 30
+        assert result["calendar_days_allowed"] == 40
 
     def test_state_review_120_days(self):
         denial = date(2025, 1, 1)

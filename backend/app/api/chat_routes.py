@@ -4,14 +4,44 @@ Chat API Routes — WebSocket-based interactive Q&A.
 
 import json
 import logging
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from langchain_core.messages import HumanMessage
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
+from langchain_core.messages import AIMessage, HumanMessage
 
 from app.agents.graph import get_chat_graph
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_current_websocket_user
+from app.security.rate_limit import RateLimitRule, check_rate_limit, rate_limit, websocket_identity
+from app.services.user_data import clear_user_chat, get_user_chat, upsert_user_chat
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
+
+CHAT_HTTP_RATE_LIMIT = rate_limit("chat:http", max_requests=20, window_seconds=60)
+CHAT_WS_MESSAGE_LIMIT = RateLimitRule("chat:websocket", max_requests=30, window_seconds=60)
+
+
+def _stored_messages_to_langchain(messages: list[dict]) -> list:
+    converted = []
+    for message in messages:
+        role = message.get("role")
+        content = message.get("content", "")
+        if not content:
+            continue
+        if role == "user":
+            converted.append(HumanMessage(content=content))
+        elif role == "ai":
+            converted.append(AIMessage(content=content))
+    return converted
+
+
+def _langchain_messages_to_stored(messages: list) -> list[dict]:
+    stored = []
+    for message in messages:
+        msg_type = getattr(message, "type", None)
+        if msg_type == "human":
+            stored.append({"role": "user", "content": message.content})
+        elif msg_type == "ai":
+            stored.append({"role": "ai", "content": message.content})
+    return stored
 
 
 @router.websocket("/api/chat")
@@ -23,17 +53,26 @@ async def chat_websocket(websocket: WebSocket):
     - Client sends: {"message": "user's question", "policy_profile": {...} (optional)}
     - Server responds: {"response": "AI answer", "error": null}
     """
+    try:
+        user = get_current_websocket_user(websocket)
+    except Exception:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await websocket.accept()
-    logger.info("Chat WebSocket: Connection opened")
+    ws_identity = websocket_identity(user)
+    chat = get_user_chat(user["id"])
+    logger.info("Chat WebSocket: Authenticated connection opened for user %s", user.get("id"))
 
     # Persistent state across the conversation
     conversation_state = {
-        "messages": [],
+        "messages": _stored_messages_to_langchain(chat.get("messages", []) if chat else []),
         "raw_policy_text": "",
         "raw_claim_text": "",
-        "policy_profile": None,
+        "policy_profile": (chat or {}).get("policy_profile_json"),
         "claim_case": None,
-        "cost_breakdown": None,
+        "allowed_amount": None,
+        "cost_breakdown": (chat or {}).get("cost_breakdown_json"),
         "appeal_output": None,
         "current_phase": "chat",
         "route_decision": "",
@@ -45,6 +84,12 @@ async def chat_websocket(websocket: WebSocket):
         while True:
             # Receive message from client
             data = await websocket.receive_text()
+            try:
+                check_rate_limit(ws_identity, CHAT_WS_MESSAGE_LIMIT)
+            except Exception as exc:
+                detail = getattr(exc, "detail", "Rate limit exceeded. Please wait and try again.")
+                await websocket.send_json({"response": None, "error": detail})
+                continue
 
             try:
                 payload = json.loads(data)
@@ -72,16 +117,39 @@ async def chat_websocket(websocket: WebSocket):
             graph = get_chat_graph()
             result = await graph.ainvoke(conversation_state)
 
-            # Update conversation state with new messages
-            conversation_state["messages"] = result.get("messages", conversation_state["messages"])
+            # Extract the new AI messages and append them to our persistent history.
+            # The graph uses add_messages, so result["messages"] contains ALL messages
+            # (old + new). We need to find the new ones and add them to our state.
+            result_messages = result.get("messages", [])
+            # The new AI response is the last message(s) added by the graph
+            new_ai_messages = [
+                m for m in result_messages 
+                if hasattr(m, 'type') and m.type == "ai" 
+                and m not in conversation_state["messages"]
+            ]
+            
+            if new_ai_messages:
+                conversation_state["messages"].extend(new_ai_messages)
+                response_text = new_ai_messages[-1].content
+            else:
+                # Fallback: get the last AI message from the full result
+                all_ai = [m for m in result_messages if hasattr(m, 'type') and m.type == "ai"]
+                response_text = all_ai[-1].content if all_ai else "I couldn't generate a response."
+                # Sync state with full result to avoid drift
+                conversation_state["messages"] = result_messages
 
-            # Extract the latest AI response
-            ai_messages = [m for m in conversation_state["messages"] if hasattr(m, 'type') and m.type == "ai"]
-            response_text = ai_messages[-1].content if ai_messages else "I couldn't generate a response."
+            stored_after = _langchain_messages_to_stored(conversation_state["messages"])
+            upsert_user_chat(
+                user["id"],
+                stored_after,
+                policy_profile=conversation_state.get("policy_profile"),
+                cost_breakdown=conversation_state.get("cost_breakdown"),
+            )
 
             await websocket.send_json({
                 "response": response_text,
                 "error": None,
+                "messages": stored_after,
             })
 
     except WebSocketDisconnect:
@@ -97,8 +165,26 @@ async def chat_websocket(websocket: WebSocket):
             pass
 
 
+@router.get("/api/chat/session", tags=["Chat"])
+async def get_chat_session(user: dict = Depends(get_current_user)):
+    chat = get_user_chat(user["id"])
+    if not chat:
+        return {"messages": [], "policy_profile": None, "cost_breakdown": None}
+    return {
+        "messages": chat.get("messages") or [],
+        "policy_profile": chat.get("policy_profile_json"),
+        "cost_breakdown": chat.get("cost_breakdown_json"),
+    }
+
+
+@router.delete("/api/chat/session", tags=["Chat"])
+async def delete_chat_session(user: dict = Depends(get_current_user)):
+    clear_user_chat(user["id"])
+    return {"success": True}
+
+
 @router.post("/api/chat/message", tags=["Chat"])
-async def chat_message(request: dict, user: dict = Depends(get_current_user)):
+async def chat_message(request: dict, user: dict = Depends(get_current_user), _: None = Depends(CHAT_HTTP_RATE_LIMIT)):
     """
     HTTP POST alternative for chat (for clients that don't support WebSocket).
 
@@ -108,18 +194,22 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user)):
     if not user_message.strip():
         return {"response": "Please type a question.", "error": None}
 
-    # Build state from request
-    history = request.get("history", [])
-    messages = [HumanMessage(content=msg) for msg in history]
+    chat = get_user_chat(user["id"])
+    stored_messages = chat.get("messages", []) if chat else []
+    messages = _stored_messages_to_langchain(stored_messages)
     messages.append(HumanMessage(content=user_message))
+
+    policy_profile = request.get("policy_profile") or (chat or {}).get("policy_profile_json")
+    cost_breakdown = request.get("cost_breakdown") or (chat or {}).get("cost_breakdown_json")
 
     state = {
         "messages": messages,
         "raw_policy_text": "",
         "raw_claim_text": "",
-        "policy_profile": request.get("policy_profile"),
+        "policy_profile": policy_profile,
         "claim_case": request.get("claim_case"),
-        "cost_breakdown": request.get("cost_breakdown"),
+        "allowed_amount": request.get("allowed_amount"),
+        "cost_breakdown": cost_breakdown,
         "appeal_output": None,
         "current_phase": "chat",
         "route_decision": "",
@@ -133,8 +223,10 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user)):
 
         ai_messages = [m for m in result.get("messages", []) if hasattr(m, 'type') and m.type == "ai"]
         response_text = ai_messages[-1].content if ai_messages else "I couldn't generate a response."
+        stored_after = _langchain_messages_to_stored(result.get("messages", []))
+        upsert_user_chat(user["id"], stored_after, policy_profile=policy_profile, cost_breakdown=cost_breakdown)
 
-        return {"response": response_text, "error": None}
+        return {"response": response_text, "error": None, "messages": stored_after}
 
     except Exception as e:
         logger.error(f"Chat HTTP error: {e}", exc_info=True)

@@ -23,9 +23,65 @@ from app.models.enums import (
 )
 
 
-# ACA federal OOP max ceiling (2025 values — update annually)
-ACA_OOP_MAX_INDIVIDUAL_2025 = 9_200.00
-ACA_OOP_MAX_FAMILY_2025 = 18_400.00
+# ACA federal OOP max ceiling for plan year 2026.
+# Source: CMS/HHS Notice of Benefit and Payment Parameters for 2026.
+ACA_OOP_MAX_INDIVIDUAL_2026 = 10_600.00
+ACA_OOP_MAX_FAMILY_2026 = 21_200.00
+
+
+def _determine_copay(policy: PolicyProfile, claim: ClaimCase) -> float:
+    """
+    Determine the applicable copay by mapping the claim's CPT code
+    to the correct tier in the policy's CopaySchedule.
+    
+    CPT code ranges follow AMA conventions:
+    - 99201-99215: Office/outpatient E&M (PCP and specialist visits)
+    - 99281-99285: Emergency department visits
+    - 99241-99245: Consultations (specialist)
+    - 99381-99397: Preventive visits
+    - 90000-90999: Psychiatric/therapy
+    - Prescription drugs are identified by HCPCS J-codes
+    """
+    copay = policy.copay_schedule
+    cpt = claim.cpt_code.upper().strip()
+    desc = claim.cpt_description.lower()
+
+    # Emergency Room
+    if cpt.startswith("9928") or "emergency" in desc or "er visit" in desc:
+        return copay.emergency_room
+
+    # Urgent Care
+    if "urgent care" in desc:
+        return copay.urgent_care
+
+    # Specialty Rx (HCPCS J-codes are injectable/infusion drugs)
+    if cpt.startswith("J"):
+        return copay.specialty_rx
+
+    # Psychiatry / Therapy
+    if cpt.startswith("908") or cpt.startswith("909") or "therapy" in desc or "psychiatr" in desc:
+        return copay.specialist
+
+    # Preventive care visits (typically $0 copay under ACA, but use schedule)
+    if cpt.startswith("9938") or cpt.startswith("9939"):
+        return copay.primary_care
+
+    # Office visits — determine PCP vs Specialist
+    if cpt.startswith("992"):
+        # 99201-99215 are standard office visits
+        # Specialist keywords in description
+        specialist_keywords = [
+            "specialist", "cardio", "ortho", "neuro", "derma", "gastro",
+            "oncol", "pulmon", "endocrin", "rheumat", "urolog", "surgeon",
+        ]
+        if any(kw in desc for kw in specialist_keywords):
+            return copay.specialist
+        return copay.primary_care
+
+    # Surgical and hospital-based procedures typically don't have copays
+    # (they go through deductible + coinsurance waterfall)
+    return 0.0
+
 
 
 def calculate_cost(
@@ -156,14 +212,41 @@ def calculate_cost(
             f"= ${coinsurance_amount:,.2f} patient responsibility."
         )
 
-    # ── Copay (if applicable) ─────────────────────────────────────
-    # Note: copay handling depends on plan design. Some plans apply copay
-    # instead of coinsurance for certain visit types. For now, copay = 0
-    # unless explicitly provided. This can be enhanced per plan rules.
-    copay_amount = 0.0
+    # ── Copay (category-based from CopaySchedule) ──────────────────
+    copay_amount = _determine_copay(policy, claim)
+    standard_patient_total = applied_to_deductible + coinsurance_amount
 
-    # ── Step 6: Calculate totals ──────────────────────────────────
-    patient_total = applied_to_deductible + coinsurance_amount + copay_amount
+    if copay_amount > 0:
+        cpt = claim.cpt_code.upper().strip()
+        desc = claim.cpt_description.lower()
+        copay_can_replace_waterfall = (
+            not claim.is_emergency
+            and (
+                cpt.startswith("992")
+                or cpt.startswith("908")
+                or cpt.startswith("909")
+                or "urgent care" in desc
+                or "therapy" in desc
+                or "psychiatr" in desc
+            )
+        )
+
+        if copay_can_replace_waterfall and copay_amount < standard_patient_total:
+            notes.append(
+                f"Copay protection: ${copay_amount:,.2f} used for this visit category "
+                "instead of stacking deductible and coinsurance, because the parsed plan "
+                "does not prove both should apply. Verify this against the SBC/EOB."
+            )
+            applied_to_deductible = 0.0
+            coinsurance_amount = 0.0
+            patient_total = copay_amount
+        else:
+            notes.append(
+                f"Copay: ${copay_amount:,.2f} applied for this service category."
+            )
+            patient_total = standard_patient_total + copay_amount
+    else:
+        patient_total = standard_patient_total
 
     # ── Step 7: OOP Max Cap ───────────────────────────────────────
     oop_remaining = max(oop_max_total - policy.oop_met, 0)
@@ -181,10 +264,10 @@ def calculate_cost(
     insurer_payout = effective_allowed - patient_total
 
     # ── Validate against ACA OOP ceiling ──────────────────────────
-    if policy.in_network_oop_max_individual > ACA_OOP_MAX_INDIVIDUAL_2025:
+    if policy.in_network_oop_max_individual > ACA_OOP_MAX_INDIVIDUAL_2026:
         notes.append(
             f"⚠️ WARNING: Plan OOP max (${policy.in_network_oop_max_individual:,.2f}) "
-            f"exceeds ACA federal ceiling (${ACA_OOP_MAX_INDIVIDUAL_2025:,.2f}). "
+            f"exceeds ACA federal ceiling (${ACA_OOP_MAX_INDIVIDUAL_2026:,.2f}). "
             f"This may indicate a non-compliant or grandfathered plan."
         )
 

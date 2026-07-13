@@ -12,8 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.api.router import api_router
-from app.database import init_db
-from app.models import db_models # load models
 
 # Configure logging
 logging.basicConfig(
@@ -40,13 +38,6 @@ async def lifespan(app: FastAPI):
         logger.info(f"   Knowledge Base: {count} chunks loaded ✅")
     except Exception as e:
         logger.error(f"   Knowledge Base connection failed: {e}")
-
-    # Initialize SQLAlchemy database tables
-    try:
-        await init_db()
-        logger.info("   SQLAlchemy Database: Initialized ✅")
-    except Exception as e:
-        logger.error(f"   SQLAlchemy Database initialization failed: {e}")
 
     yield
 

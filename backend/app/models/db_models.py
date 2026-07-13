@@ -1,24 +1,6 @@
-from sqlalchemy import Column, String, DateTime, JSON, Text, ForeignKey
-from sqlalchemy.sql import func
-from app.database import Base
-import uuid
+"""Legacy SQLAlchemy models removed.
 
-class UserPolicy(Base):
-    __tablename__ = "user_policies"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, index=True, nullable=False) # Auth user ID
-    policy_profile_json = Column(JSON, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class UserClaim(Base):
-    __tablename__ = "user_claims"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, index=True, nullable=False)
-    policy_id = Column(String, ForeignKey("user_policies.id"), nullable=True)
-    claim_description = Column(Text, nullable=False)
-    cost_breakdown_json = Column(JSON, nullable=True)
-    appeal_output_json = Column(JSON, nullable=True)
-    route_decision = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+UserPolicy and UserClaim are now represented by Supabase tables created in
+supabase/migrations/002_create_user_data_tables.sql and accessed through
+app.services.user_data.
+"""

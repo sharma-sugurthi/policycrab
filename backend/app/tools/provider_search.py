@@ -12,6 +12,7 @@ class ProviderSearchInput(BaseModel):
     city: Optional[str] = Field(None, description="City where the provider is located (e.g., 'Chicago').")
     state: Optional[str] = Field(None, description="2-letter State abbreviation (e.g., 'IL').")
     taxonomy_description: Optional[str] = Field(None, description="Optional. Medical specialty (e.g., 'Cardiology', 'Pediatrics'). It will substring match.")
+    is_facility: bool = Field(False, description="Set to True if searching for a hospital/clinic instead of an individual doctor.")
     limit: int = Field(5, description="Number of results to return. Max 10.")
 
 class ProviderSearchTool(BaseTool):
@@ -30,6 +31,7 @@ class ProviderSearchTool(BaseTool):
         city: Optional[str] = None,
         state: Optional[str] = None,
         taxonomy_description: Optional[str] = None,
+        is_facility: bool = False,
         limit: int = 5
     ) -> str:
         """Execute the search against the NPPES API."""
@@ -37,7 +39,11 @@ class ProviderSearchTool(BaseTool):
             return "Error: You must provide at least one search parameter (name, city, state, or specialty)."
 
         base_url = "https://npiregistry.cms.hhs.gov/api/"
-        params = {"version": "2.1", "limit": 50} # Fetch more so we can filter locally
+        params = {
+            "version": "2.1", 
+            "limit": 100, # Fetch up to 100 so we have enough to filter locally
+            "enumeration_type": "NPI-2" if is_facility else "NPI-1"
+        } 
         
         if first_name: params["first_name"] = first_name
         if last_name: params["last_name"] = last_name

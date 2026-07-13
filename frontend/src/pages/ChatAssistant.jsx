@@ -1,11 +1,29 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
+import { apiFetch } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
+function renderMessageContent(content) {
+  const lines = content.split('\n')
+  return lines.map((line, lineIndex) => {
+    const parts = line.split(/(\*\*.*?\*\*)/g)
+    return (
+      <span key={lineIndex}>
+        {parts.map((part, partIndex) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={partIndex}>{part.slice(2, -2)}</strong>
+          }
+          return <span key={partIndex}>{part}</span>
+        })}
+        {lineIndex < lines.length - 1 ? <br /> : null}
+      </span>
+    )
+  })
+}
+
+
 export default function ChatAssistant({ policyProfile, costBreakdown }) {
-  const { session } = useAuth()
   const [messages, setMessages] = useState([
     { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
   ])
@@ -14,6 +32,35 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
   const messagesEndRef = useRef(null)
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadChatSession() {
+      try {
+        const res = await apiFetch('/chat/session')
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && data.messages?.length > 0) setMessages(data.messages)
+      } catch (err) {
+        console.error('Failed to load chat session', err)
+      }
+    }
+
+    loadChatSession()
+    return () => { cancelled = true }
+  }, [])
+
+  const handleClearChat = async () => {
+    try {
+      await apiFetch('/chat/session', { method: 'DELETE' })
+    } catch (err) {
+      console.error('Failed to clear chat session', err)
+    }
+    setMessages([
+      { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
+    ])
+  }
 
   const handleSend = async (e) => {
     e.preventDefault()
@@ -24,17 +71,13 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
     setLoading(true)
 
     try {
-      const history = messages.filter(m => m.role === 'user').map(m => m.content)
-      const res = await fetch('/api/chat/message', {
+      const res = await apiFetch('/chat/message', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ message: userMsg, history, policy_profile: policyProfile, cost_breakdown: costBreakdown }),
+        body: JSON.stringify({ message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'ai', content: data.error ? `Error: ${data.error}` : data.response }])
+      if (data.messages?.length) setMessages(data.messages)
+      else setMessages(prev => [...prev, { role: 'ai', content: data.error ? `Error: ${data.error}` : data.response }])
     } catch (err) {
       setMessages(prev => [...prev, { role: 'ai', content: `Network error: ${err.message}` }])
     } finally { setLoading(false) }
@@ -55,9 +98,12 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
           <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-label">
             <span className="line" /> RAG-Powered Chat
           </motion.p>
-          <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
-            AI <span className="gradient-text">Assistant</span>
-          </motion.h1>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
+              AI <span className="gradient-text">Assistant</span>
+            </motion.h1>
+            <button type="button" className="btn btn-ghost" onClick={handleClearChat}>Clear Chat</button>
+          </div>
         </motion.div>
 
         <div className="grid-2" style={{ gap: '1.5rem', alignItems: 'start' }}>
@@ -111,9 +157,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
               <div className="chat-messages">
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`chat-bubble ${msg.role}`}>
-                    {msg.role === 'ai' ? (
-                      <div dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                    ) : msg.content}
+                    {msg.role === 'ai' ? renderMessageContent(msg.content) : msg.content}
                   </div>
                 ))}
                 {loading && (

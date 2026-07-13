@@ -1,31 +1,13 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
-import logging
-from app.config import settings
+"""Legacy SQLAlchemy database module removed.
 
-logger = logging.getLogger(__name__)
+User data is stored through app.services.user_data using Supabase/Postgres.
+Do not add new SQLAlchemy dependencies here.
+"""
 
-# Fallback to in-memory SQLite if DATABASE_URL is not set yet, so app doesn't crash on boot
-_db_url = settings.database_url or "sqlite+aiosqlite:///:memory:"
-
-engine = create_async_engine(_db_url, echo=False)
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
-
-Base = declarative_base()
 
 async def get_db():
-    """Dependency to get the DB session."""
-    if settings.database_url is None:
-        logger.warning("DATABASE_URL is not set. Using in-memory SQLite. Data will be lost on restart.")
-    
-    async with AsyncSessionLocal() as session:
-        yield session
+    raise RuntimeError("SQLAlchemy has been removed. Use app.services.user_data instead.")
+
 
 async def init_db():
-    """Initialize the database tables."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    raise RuntimeError("SQLAlchemy startup initialization has been removed. Use Supabase migrations.")

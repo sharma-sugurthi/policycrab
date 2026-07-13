@@ -10,11 +10,11 @@ from pydantic import BaseModel, Field
 from app.agents.graph import get_policy_ingestion_graph
 from app.services.pdf_extractor import extract_text_from_pdf
 from app.api.auth import get_current_user
-from app.database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.db_models import UserPolicy
+from app.security.rate_limit import rate_limit
+from app.services.user_data import create_user_policy
 
 logger = logging.getLogger(__name__)
+POLICY_UPLOAD_RATE_LIMIT = rate_limit("policy:upload", max_requests=5, window_seconds=60)
 
 router = APIRouter(prefix="/api/policy", tags=["Policy"])
 
@@ -50,6 +50,7 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
         "raw_claim_text": "",
         "policy_profile": None,
         "claim_case": None,
+        "allowed_amount": None,
         "cost_breakdown": None,
         "appeal_output": None,
         "current_phase": "ingestion",
@@ -78,7 +79,7 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
 async def upload_policy_text(
     request: PolicyUploadRequest, 
     user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    _: None = Depends(POLICY_UPLOAD_RATE_LIMIT)
 ):
     """
     Upload raw SBC/EOB text for AI-powered policy extraction.
@@ -86,9 +87,7 @@ async def upload_policy_text(
     try:
         response = await _run_ingestion(request.policy_text)
         if response.success and response.policy_profile:
-            db_policy = UserPolicy(user_id=user["id"], policy_profile_json=response.policy_profile)
-            db.add(db_policy)
-            await db.commit()
+            create_user_policy(user["id"], response.policy_profile)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")
@@ -98,7 +97,7 @@ async def upload_policy_text(
 async def upload_policy_pdf(
     file: UploadFile = File(...), 
     user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    _: None = Depends(POLICY_UPLOAD_RATE_LIMIT)
 ):
     """
     Upload a PDF file (SBC, EOB, or policy summary) for AI-powered extraction.
@@ -145,9 +144,7 @@ async def upload_policy_pdf(
         response = await _run_ingestion(extracted_text)
         response.extracted_text = extracted_text[:2000]
         if response.success and response.policy_profile:
-            db_policy = UserPolicy(user_id=user["id"], policy_profile_json=response.policy_profile)
-            db.add(db_policy)
-            await db.commit()
+            create_user_policy(user["id"], response.policy_profile)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")

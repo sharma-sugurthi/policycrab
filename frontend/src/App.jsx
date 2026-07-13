@@ -1,5 +1,5 @@
 import { Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Home from './pages/Home'
 import ClaimEvaluator from './pages/ClaimEvaluator'
 import ChatAssistant from './pages/ChatAssistant'
@@ -18,8 +18,26 @@ function ProtectedRoute({ children }) {
 function AppContent() {
   const [policyProfile, setPolicyProfile] = useState(null)
   const [costBreakdown, setCostBreakdown] = useState(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const { user, signOut } = useAuth()
+
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
+
+  const navItems = [
+    ['/', 'Home'],
+    ['/dashboard', 'Dashboard'],
+    ['/policy', 'Policy Upload'],
+    ['/claim', 'Claim Evaluator'],
+    ['/chat', 'AI Assistant'],
+  ]
+
+  const handleSignOut = async () => {
+    setMobileMenuOpen(false)
+    await signOut()
+  }
 
   return (
     <>
@@ -31,32 +49,56 @@ function AppContent() {
             <span>PolicyCrab</span>
           </NavLink>
 
-          <nav className="navbar-links">
-            <NavLink to="/" className={location.pathname === '/' ? 'active' : ''}>
-              Home
-            </NavLink>
-            <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/policy" className={({ isActive }) => isActive ? 'active' : ''}>
-              Policy Upload
-            </NavLink>
-            <NavLink to="/claim" className={({ isActive }) => isActive ? 'active' : ''}>
-              Claim Evaluator
-            </NavLink>
-            <NavLink to="/chat" className={({ isActive }) => isActive ? 'active' : ''}>
-              AI Assistant
-            </NavLink>
+          <nav className="navbar-links" aria-label="Primary navigation">
+            {navItems.map(([to, label]) => (
+              <NavLink key={to} to={to} className={to === '/' ? (location.pathname === '/' ? 'active' : '') : ({ isActive }) => isActive ? 'active' : ''}>
+                {label}
+              </NavLink>
+            ))}
           </nav>
 
           <div className="navbar-status" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {user ? (
               <>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#3f3f46' }}>{user.email}</span>
-                <button onClick={signOut} className="btn btn-ghost" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>Sign Out</button>
+                <span className="navbar-email">{user.email}</span>
+                <button onClick={handleSignOut} className="btn btn-ghost" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>Sign Out</button>
               </>
             ) : (
               <NavLink to="/auth" className="btn btn-red" style={{ padding: '0.5rem 1.25rem', fontSize: '0.8125rem' }}>
+                Sign In
+              </NavLink>
+            )}
+            <button
+              type="button"
+              className={`mobile-menu-button${mobileMenuOpen ? ' active' : ''}`}
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
+              onClick={() => setMobileMenuOpen(open => !open)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
+        </div>
+
+        <div id="mobile-navigation" className={`mobile-nav${mobileMenuOpen ? ' open' : ''}`}>
+          <nav className="mobile-nav-links" aria-label="Mobile navigation">
+            {navItems.map(([to, label]) => (
+              <NavLink key={to} to={to} className={to === '/' ? (location.pathname === '/' ? 'active' : '') : ({ isActive }) => isActive ? 'active' : ''}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="mobile-nav-account">
+            {user ? (
+              <>
+                <span>{user.email}</span>
+                <button onClick={handleSignOut} className="btn btn-ghost">Sign Out</button>
+              </>
+            ) : (
+              <NavLink to="/auth" className="btn btn-red">
                 Sign In
               </NavLink>
             )}
@@ -72,7 +114,7 @@ function AppContent() {
         {/* Protected Routes */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <Dashboard />
+            <Dashboard policyProfile={policyProfile} onPolicySelected={setPolicyProfile} />
           </ProtectedRoute>
         } />
         <Route path="/policy" element={

@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
+import { apiFetch } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function PolicyUpload({ onPolicyParsed }) {
-  const { session } = useAuth()
   const [policyText, setPolicyText] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -25,18 +24,13 @@ export default function PolicyUpload({ onPolicyParsed }) {
       if (selectedFile) {
         const formData = new FormData()
         formData.append('file', selectedFile)
-        res = await fetch('/api/policy/upload-pdf', { 
+        res = await apiFetch('/policy/upload-pdf', { 
           method: 'POST', 
-          headers: { 'Authorization': `Bearer ${session?.access_token}` },
           body: formData 
         })
       } else {
-        res = await fetch('/api/policy/upload', { 
+        res = await apiFetch('/policy/upload', { 
           method: 'POST', 
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`
-          }, 
           body: JSON.stringify({ policy_text: policyText }) 
         })
       }
@@ -73,12 +67,17 @@ export default function PolicyUpload({ onPolicyParsed }) {
           {/* ── Input ─────────────────── */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <div className="card" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <div className="feature-icon red">📋</div>
                 <div>
                   <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#09090b' }}>Policy Document</h3>
                   <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Upload a PDF or paste your SBC/EOB text</p>
                 </div>
+              </div>
+
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.75rem', padding: '1rem', marginBottom: '1.25rem', fontSize: '0.8125rem', color: '#1e40af' }}>
+                <strong style={{ display: 'block', marginBottom: '0.25rem' }}>💡 What should I upload?</strong>
+                Upload your <strong>Summary of Benefits and Coverage (SBC)</strong>. This is usually an 8-page document detailing deductibles, copays, and out-of-pocket maximums. Or, upload an <strong>Explanation of Benefits (EOB)</strong> for a specific claim.
               </div>
               
               <div style={{ marginBottom: '1.25rem', background: '#fafafa', border: '1px dashed #d4d4d8', borderRadius: '0.75rem', padding: '1.25rem', textAlign: 'center' }}>
@@ -178,7 +177,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
                 <h3 style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem' }}>No Policy Loaded</h3>
                 <p style={{ color: '#71717a', fontSize: '0.875rem', maxWidth: '20rem', margin: '0 auto' }}>
-                  Paste your policy text and click "Analyze Policy" to extract structured details.
+                  Paste your policy text and click &quot;Analyze Policy&quot; to extract structured details.
                 </p>
               </div>
             )}

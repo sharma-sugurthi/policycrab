@@ -3,21 +3,26 @@ API Router — aggregates all route modules and provides the health check.
 """
 
 from datetime import datetime, timezone
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.config import settings
 from app.api.policy_routes import router as policy_router
 from app.api.claim_routes import router as claim_router
 from app.api.chat_routes import router as chat_router
 from app.api.history_routes import router as history_router
+from app.api.provider_routes import router as provider_router
+from app.security.rate_limit import rate_limit
+from app.api.auth import get_current_user
 
 api_router = APIRouter()
+KNOWLEDGE_SEARCH_RATE_LIMIT = rate_limit("knowledge:search", max_requests=20, window_seconds=60)
 
 # Include sub-routers
 api_router.include_router(policy_router)
 api_router.include_router(claim_router)
 api_router.include_router(chat_router)
 api_router.include_router(history_router)
+api_router.include_router(provider_router)
 
 
 @api_router.get("/health", tags=["System"])
@@ -32,7 +37,7 @@ async def health_check():
 
 
 @api_router.get("/api/knowledge/search", tags=["Knowledge Base"])
-async def search_knowledge(q: str, domain: str | None = None, jurisdiction: str | None = None, limit: int = 5):
+async def search_knowledge(q: str, domain: str | None = None, jurisdiction: str | None = None, limit: int = 5, user: dict = Depends(get_current_user), _: None = Depends(KNOWLEDGE_SEARCH_RATE_LIMIT)):
     """
     Search the knowledge base using semantic similarity.
     Useful for debugging and verifying RAG retrieval quality.

@@ -18,6 +18,8 @@ from app.services.llm_router import get_llm, TaskType
 from app.models.claim import ClaimCase
 from app.models.policy import PolicyProfile
 from app.models.enums import NetworkStatus
+from app.tools.cpt_icd_lookup import lookup_cpt_code, lookup_icd10_code
+from langchain_core.messages import ToolMessage
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ You MUST extract:
 - facility_name: Hospital/clinic name (if mentioned)
 - network_status: "IN_NETWORK", "OUT_OF_NETWORK", or "NOT_APPLICABLE"
 - is_emergency: Boolean — was this an emergency?
+- prior_auth_required: Boolean — True ONLY if the procedure semantically matches one of the 'Prior Auth Categories' in the policy context.
 - prior_auth_obtained: true/false/null (null if not mentioned)
 - pcp_referral_obtained: true/false/null (null if not mentioned)
 
@@ -71,7 +74,8 @@ async def claim_intake_node(state: AgentState) -> dict:
         }
 
     try:
-        llm = get_llm(TaskType.EXTRACTION, temperature=0.0)
+        tools = [lookup_cpt_code, lookup_icd10_code]
+        llm = get_llm(TaskType.EXTRACTION, temperature=0.0).bind_tools(tools)
 
         # Include policy context if available
         policy_context = ""
@@ -92,8 +96,39 @@ async def claim_intake_node(state: AgentState) -> dict:
             HumanMessage(content=f"Extract claim details from this patient description:{policy_context}\n\n{raw_text}"),
         ]
 
-        response = await llm.ainvoke(messages)
-        content = response.content
+        # Tool execution loop
+        max_steps = 3
+        current_step = 0
+        content = ""
+        
+        while current_step < max_steps:
+            response = await llm.ainvoke(messages)
+            messages.append(response)
+
+            if not response.tool_calls:
+                content = response.content
+                break
+
+            for tool_call in response.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                
+                try:
+                    if tool_name == "lookup_cpt_code":
+                        tool_result = lookup_cpt_code.invoke(tool_args)
+                    elif tool_name == "lookup_icd10_code":
+                        tool_result = lookup_icd10_code.invoke(tool_args)
+                    else:
+                        tool_result = f"Error: Unknown tool {tool_name}"
+                except Exception as e:
+                    tool_result = f"Error executing {tool_name}: {e}"
+
+                messages.append(ToolMessage(
+                    content=str(tool_result),
+                    tool_call_id=tool_call["id"]
+                ))
+            
+            current_step += 1
 
         # Parse JSON from response
         if "```json" in content:
@@ -103,16 +138,10 @@ async def claim_intake_node(state: AgentState) -> dict:
 
         claim_data = json.loads(content.strip())
 
-        # Cross-reference prior auth requirements from policy
-        if state.get("policy_profile"):
-            policy = PolicyProfile(**state["policy_profile"])
-            cpt_desc = claim_data.get("cpt_description", "").lower()
-
-            # Check if any prior auth category matches
-            for category in policy.prior_auth_required_categories:
-                if category.lower() in cpt_desc or cpt_desc in category.lower():
-                    claim_data["prior_auth_required"] = True
-                    break
+        # The LLM now semantically determines prior_auth_required based on the policy context.
+        # Ensure it falls back to False if omitted by the LLM.
+        if "prior_auth_required" not in claim_data:
+            claim_data["prior_auth_required"] = False
 
         # Validate through Pydantic
         claim = ClaimCase(**claim_data)

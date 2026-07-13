@@ -32,14 +32,23 @@ class NetworkStatusTool(BaseTool):
         # We use modulo 100 to get a stable number between 0 and 99
         is_in_network = (hash_int % 100) < 70
         
+        disclaimer = (
+            "\n\n*Disclaimer: This network status is a simulated estimation "
+            "based on the provider's NPI and your plan parameters. It is "
+            "not a guarantee of coverage. Always verify with your insurance "
+            "carrier before receiving non-emergency care.*"
+        )
+        
         if is_in_network:
             return (
                 f"✅ IN-NETWORK: The provider with NPI {npi} IS contracted and participating "
                 f"in the '{plan_name}' network. In-network benefits and cost-sharing will apply."
+                f"{disclaimer}"
             )
         else:
             return (
                 f"❌ OUT-OF-NETWORK: The provider with NPI {npi} is NOT contracted with "
                 f"the '{plan_name}' network. Out-of-network penalties, higher deductibles, "
                 f"or balance billing may apply depending on the plan type."
+                f"{disclaimer}"
             )

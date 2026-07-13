@@ -45,7 +45,10 @@ _CPT_LOOKUP: dict[str, dict] = {
     # Imaging
     "mri": {"cpt": "70553", "desc": "MRI Brain Without/With Contrast", "range": "$1,000-$5,000"},
     "mri brain": {"cpt": "70553", "desc": "MRI Brain Without/With Contrast", "range": "$1,000-$5,000"},
-    "mri knee": {"cpt": "73721", "desc": "MRI Lower Extremity Without Contrast", "range": "$800-$3,500"},
+    "mri knee": {"cpt": "73721", "desc": "MRI Lower Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri spine": {"cpt": "72148", "desc": "MRI Lumbar Spine Without Contrast", "range": "$1,000-$4,000"},
+    "mri shoulder": {"cpt": "73221", "desc": "MRI Upper Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri abdomen": {"cpt": "74181", "desc": "MRI Abdomen Without Contrast", "range": "$1,000-$4,500"},
     "ct scan": {"cpt": "74177", "desc": "CT Abdomen/Pelvis With Contrast", "range": "$500-$3,000"},
     "ct scan chest": {"cpt": "71260", "desc": "CT Chest With Contrast", "range": "$500-$3,000"},
     "x-ray": {"cpt": "71046", "desc": "Chest X-Ray, 2 Views", "range": "$100-$400"},

@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
-export default function Dashboard() {
+export default function Dashboard({ policyProfile, onPolicySelected }) {
   const { session } = useAuth()
   const navigate = useNavigate()
   const [policies, setPolicies] = useState([])
@@ -15,23 +16,64 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const headers = { 'Authorization': `Bearer ${session?.access_token}` }
         const [polRes, claimRes] = await Promise.all([
-          fetch('/api/history/policies', { headers }),
-          fetch('/api/history/claims', { headers })
+          apiFetch('/history/policies'),
+          apiFetch('/history/claims')
         ])
-        
+
         if (polRes.ok) setPolicies(await polRes.json())
         if (claimRes.ok) setClaims(await claimRes.json())
       } catch (err) {
-        console.error("Failed to load history", err)
+        console.error('Failed to load history', err)
       } finally {
         setLoading(false)
       }
     }
-    
+
     if (session) fetchData()
   }, [session])
+
+  const hasPolicy = Boolean(policyProfile) || policies.length > 0
+  const hasClaim = claims.length > 0
+  const activePolicy = policyProfile || policies[0]?.policy_profile
+
+  const handleUsePolicyForClaim = (profile) => {
+    if (profile) onPolicySelected?.(profile)
+    navigate('/claim')
+  }
+
+  const onboardingSteps = [
+    {
+      title: 'Load your policy',
+      status: hasPolicy ? 'Done' : 'Start here',
+      body: hasPolicy
+        ? `${activePolicy?.plan_name || 'A policy'} is ready for claim evaluation.`
+        : 'Upload an SBC or policy PDF so the app can read deductibles, copays, coinsurance, and network rules.',
+      action: hasPolicy ? 'Upload another policy' : 'Upload policy',
+      onClick: () => navigate('/policy'),
+      tone: hasPolicy ? 'success' : 'danger',
+    },
+    {
+      title: 'Evaluate a claim',
+      status: hasClaim ? 'Done' : hasPolicy ? 'Next' : 'Locked',
+      body: hasPolicy
+        ? 'Use the loaded policy and describe the bill or denial. Add the EOB allowed amount when you have it.'
+        : 'Claim evaluation needs a policy first so the math uses the right plan terms.',
+      action: hasPolicy ? 'Evaluate claim' : 'Upload policy first',
+      onClick: () => hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy'),
+      tone: hasClaim ? 'success' : hasPolicy ? 'danger' : 'zinc',
+    },
+    {
+      title: 'Use the appeal output',
+      status: hasClaim ? 'Available' : 'Later',
+      body: hasClaim
+        ? 'Denied claims can produce a formal appeal letter with deadline tracking and export actions.'
+        : 'If a claim routes as denied, PolicyCrab drafts an appeal letter you can copy or download.',
+      action: hasClaim ? 'Review claim history' : 'Start with a claim',
+      onClick: () => hasClaim ? window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }) : (hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy')),
+      tone: hasClaim ? 'success' : 'zinc',
+    },
+  ]
 
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><span className="spinner" /></div>
@@ -40,76 +82,126 @@ export default function Dashboard() {
   return (
     <section className="section-white section-pad">
       <div className="main">
-        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '3rem' }}>
+        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '2rem' }}>
           <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
             My <span className="gradient-text">Dashboard</span>
           </motion.h1>
           <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-subtitle">
-            Manage your uploaded policies and past claim evaluations.
+            Start with your policy, evaluate a bill or denial, then use the appeal output when it applies.
           </motion.p>
         </motion.div>
 
-        <div className="grid-2">
-          {/* Policies Column */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#09090b' }}>Saved Policies</h2>
-              <button className="btn btn-red" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }} onClick={() => navigate('/policy')}>+ New</button>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="dashboard-guide">
+          <div className="dashboard-guide-header">
+            <div>
+              <p className="section-label" style={{ marginBottom: '0.5rem' }}><span className="line" /> Start Here</p>
+              <h2>Claim workflow</h2>
             </div>
-            
+            <span className={`badge ${hasClaim ? 'badge-success' : hasPolicy ? 'badge-warning' : 'badge-danger'}`}>
+              {hasClaim ? 'Claim evaluated' : hasPolicy ? 'Policy ready' : 'Policy needed'}
+            </span>
+          </div>
+
+          <div className="dashboard-steps">
+            {onboardingSteps.map((step, index) => (
+              <div className="dashboard-step" key={step.title}>
+                <div className="dashboard-step-top">
+                  <span className="dashboard-step-number">{String(index + 1).padStart(2, '0')}</span>
+                  <span className={`badge badge-${step.tone}`}>{step.status}</span>
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+                <button className={step.tone === 'danger' ? 'btn btn-red' : 'btn btn-ghost'} onClick={step.onClick}>
+                  {step.action}
+                </button>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <div className="grid-2" style={{ alignItems: 'start' }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <div className="dashboard-section-heading">
+              <h2>Saved Policies</h2>
+              <button className="btn btn-red" onClick={() => navigate('/policy')}>New Policy</button>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {policies.length === 0 ? (
-                <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
-                  <p style={{ color: '#71717a', fontSize: '0.875rem' }}>No policies uploaded yet.</p>
-                </div>
+                policyProfile ? (
+                  <div className="card dashboard-history-card">
+                    <div className="dashboard-card-header">
+                      <h3>{policyProfile.plan_name || 'Loaded Policy'}</h3>
+                      <span>Current session</span>
+                    </div>
+                    <p>{policyProfile.carrier_name || 'Unknown carrier'} - {policyProfile.plan_type || 'Plan type unknown'}</p>
+                    <div className="dashboard-badge-row">
+                      <span className="badge badge-zinc">Ded: ${policyProfile.in_network_deductible_individual?.toLocaleString?.() || policyProfile.in_network_deductible_individual || 'n/a'}</span>
+                      <span className="badge badge-zinc">OOP: ${policyProfile.in_network_oop_max_individual?.toLocaleString?.() || policyProfile.in_network_oop_max_individual || 'n/a'}</span>
+                    </div>
+                    <button className="btn btn-ghost" onClick={() => handleUsePolicyForClaim(policyProfile)}>Use for Claim</button>
+                  </div>
+                ) : (
+                  <div className="dashboard-empty">
+                    <h3>No saved policies yet</h3>
+                    <p>Upload your Summary of Benefits and Coverage or policy PDF to unlock claim evaluation.</p>
+                    <button className="btn btn-red" onClick={() => navigate('/policy')}>Upload Policy</button>
+                  </div>
+                )
               ) : (
                 policies.map(p => (
-                  <div key={p.id} className="card" style={{ padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                      <h3 style={{ fontWeight: 700, color: '#09090b', fontSize: '0.9375rem' }}>{p.policy_profile?.plan_name || 'Unknown Plan'}</h3>
-                      <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>{new Date(p.created_at).toLocaleDateString()}</span>
+                  <div key={p.id} className="card dashboard-history-card">
+                    <div className="dashboard-card-header">
+                      <h3>{p.policy_profile?.plan_name || 'Unknown Plan'}</h3>
+                      <span>{new Date(p.created_at).toLocaleDateString()}</span>
                     </div>
-                    <p style={{ fontSize: '0.8125rem', color: '#52525b', marginBottom: '0.75rem' }}>
-                      {p.policy_profile?.carrier_name} • {p.policy_profile?.plan_type}
-                    </p>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span className="badge badge-zinc">Ded: ${p.policy_profile?.in_network_deductible_individual}</span>
-                      <span className="badge badge-zinc">OOP: ${p.policy_profile?.in_network_oop_max_individual}</span>
+                    <p>{p.policy_profile?.carrier_name || 'Unknown carrier'} - {p.policy_profile?.plan_type || 'Plan type unknown'}</p>
+                    <div className="dashboard-badge-row">
+                      <span className="badge badge-zinc">Ded: ${p.policy_profile?.in_network_deductible_individual?.toLocaleString?.() || p.policy_profile?.in_network_deductible_individual || 'n/a'}</span>
+                      <span className="badge badge-zinc">OOP: ${p.policy_profile?.in_network_oop_max_individual?.toLocaleString?.() || p.policy_profile?.in_network_oop_max_individual || 'n/a'}</span>
                     </div>
+                    <button className="btn btn-ghost" onClick={() => handleUsePolicyForClaim(p.policy_profile)}>Use for Claim</button>
                   </div>
                 ))
               )}
             </div>
           </motion.div>
 
-          {/* Claims Column */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#09090b' }}>Claim History</h2>
-              <button className="btn btn-red" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }} onClick={() => navigate('/claim')}>+ New</button>
+            <div className="dashboard-section-heading">
+              <h2>Claim History</h2>
+              <button className="btn btn-red" onClick={() => hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy')}>New Claim</button>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {claims.length === 0 ? (
-                <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
-                  <p style={{ color: '#71717a', fontSize: '0.875rem' }}>No claims evaluated yet.</p>
+                <div className="dashboard-empty">
+                  <h3>No claims evaluated yet</h3>
+                  <p>{hasPolicy ? 'Use your loaded policy to evaluate a medical bill, EOB, or denial.' : 'Upload a policy first, then come back to evaluate a claim.'}</p>
+                  <button className="btn btn-red" onClick={() => hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy')}>
+                    {hasPolicy ? 'Evaluate Claim' : 'Upload Policy'}
+                  </button>
                 </div>
               ) : (
                 claims.map(c => (
-                  <div key={c.id} className="card" style={{ padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <div key={c.id} className="card dashboard-history-card">
+                    <div className="dashboard-card-header">
                       <span className={`badge ${c.route_decision === 'denied' ? 'badge-danger' : 'badge-success'}`}>
                         {c.route_decision === 'denied' ? 'Denied' : 'Approved'}
                       </span>
-                      <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>{new Date(c.created_at).toLocaleDateString()}</span>
+                      <span>{new Date(c.created_at).toLocaleDateString()}</span>
                     </div>
-                    <p style={{ fontSize: '0.8125rem', color: '#3f3f46', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      "{c.claim_description}"
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa', padding: '0.5rem 0.75rem', borderRadius: '0.5rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 500 }}>Patient Responsibility</span>
-                      <span style={{ fontWeight: 700, color: '#dc2626', fontSize: '0.875rem' }}>${c.cost_breakdown?.total_patient_responsibility?.toLocaleString()}</span>
+                    <p className="dashboard-claim-description">&quot;{c.claim_description}&quot;</p>
+                    <div className="dashboard-cost-row">
+                      <span>Patient responsibility</span>
+                      <strong>${c.cost_breakdown?.total_patient_responsibility?.toLocaleString?.() || c.cost_breakdown?.total_patient_responsibility || 0}</strong>
                     </div>
+                    {c.appeal_output?.appeal_deadline && (
+                      <div className="dashboard-cost-row">
+                        <span>Appeal deadline</span>
+                        <strong>{new Date(c.appeal_output.appeal_deadline).toLocaleDateString()}</strong>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

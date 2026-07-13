@@ -4,12 +4,12 @@ Claim API Routes — evaluate claims and calculate costs.
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
-from app.database import get_db
-from app.models.db_models import UserClaim
+from app.security.rate_limit import rate_limit
+from app.services.user_data import create_user_claim
+
+CLAIM_EVALUATE_RATE_LIMIT = rate_limit("claim:evaluate", max_requests=10, window_seconds=60)
 
 router = APIRouter(prefix="/api/claim", tags=["Claims"])
 
@@ -24,6 +24,11 @@ class ClaimEvaluationRequest(BaseModel):
     policy_profile: dict | None = Field(
         None,
         description="Previously parsed PolicyProfile (from /api/policy/upload). Required for cost calculation."
+    )
+    allowed_amount: float | None = Field(
+        None,
+        gt=0,
+        description="Optional EOB/ERA allowed amount. If omitted, the engine uses billed amount as a conservative estimate and labels the result as an estimate.",
     )
 
 
@@ -42,7 +47,7 @@ class ClaimEvaluationResponse(BaseModel):
 async def evaluate_claim(
     request: ClaimEvaluationRequest, 
     user: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT)
 ):
     """
     Evaluate a patient's healthcare claim through the full pipeline.
@@ -63,6 +68,7 @@ async def evaluate_claim(
         "raw_claim_text": request.claim_description,
         "policy_profile": request.policy_profile,
         "claim_case": None,
+        "allowed_amount": request.allowed_amount,
         "cost_breakdown": None,
         "appeal_output": None,
         "current_phase": "intake",
@@ -89,15 +95,13 @@ async def evaluate_claim(
         )
 
         if response.success:
-            db_claim = UserClaim(
+            create_user_claim(
                 user_id=user["id"],
                 claim_description=request.claim_description,
-                cost_breakdown_json=response.cost_breakdown,
-                appeal_output_json=response.appeal_output,
-                route_decision=response.route_decision
+                cost_breakdown=response.cost_breakdown,
+                appeal_output=response.appeal_output,
+                route_decision=response.route_decision,
             )
-            db.add(db_claim)
-            await db.commit()
 
         return response
 

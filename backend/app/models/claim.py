@@ -66,6 +66,10 @@ class CostBreakdown(BaseModel):
     # ── Input Echo ────────────────────────────────────────────────
     billed_amount: float = Field(..., description="Original billed charge")
     allowed_amount: float = Field(..., description="Plan's allowed amount (negotiated or QPA)")
+    allowed_amount_source: str = Field(
+        "estimate",
+        description="'eob' when supplied by the user; 'billed_amount_estimate' when no EOB allowed amount is available",
+    )
 
     # ── Waterfall Calculation ─────────────────────────────────────
     applied_to_deductible: float = Field(

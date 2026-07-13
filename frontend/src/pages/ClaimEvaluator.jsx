@@ -1,30 +1,83 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
+import { apiFetch } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function ClaimEvaluator({ policyProfile, onResult }) {
-  const { session } = useAuth()
   const navigate = useNavigate()
   const [claimText, setClaimText] = useState('')
+  const [allowedAmount, setAllowedAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+  const [providerSearch, setProviderSearch] = useState({ city: '', state: '', last_name: '', taxonomy_description: '', is_facility: false })
+  const [providerResults, setProviderResults] = useState([])
+  const [providerLoading, setProviderLoading] = useState(false)
+  const [networkChecks, setNetworkChecks] = useState({})
+  const [providerError, setProviderError] = useState(null)
+  const [letterActionStatus, setLetterActionStatus] = useState('')
+
+  const buildAppealLetterExport = () => {
+    if (!result?.appeal_output?.appeal_letter) return ''
+
+    const appeal = result.appeal_output
+    const deadline = appeal.appeal_deadline
+      ? new Date(appeal.appeal_deadline).toLocaleDateString()
+      : 'Not available'
+
+    return [
+      'PolicyCrab Appeal Letter',
+      '',
+      `Framework: ${appeal.appeal_framework || 'Not available'}`,
+      `Appeal deadline: ${deadline}${appeal.days_remaining != null ? ` (${appeal.days_remaining} days remaining)` : ''}`,
+      '',
+      appeal.appeal_letter,
+    ].join('\n')
+  }
+
+  const handleCopyAppealLetter = async () => {
+    const text = buildAppealLetterExport()
+    if (!text) return
+
+    try {
+      await navigator.clipboard.writeText(text)
+      setLetterActionStatus('Copied appeal letter')
+    } catch {
+      setLetterActionStatus('Copy failed. Select the letter text manually.')
+    }
+  }
+
+  const handleDownloadAppealLetter = () => {
+    const text = buildAppealLetterExport()
+    if (!text) return
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const date = new Date().toISOString().slice(0, 10)
+    link.href = url
+    link.download = `policycrab-appeal-letter-${date}.txt`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    setLetterActionStatus('Downloaded appeal letter')
+  }
 
   const handleEvaluate = async () => {
     if (!policyProfile) { setError('Upload a policy first.'); return }
     if (claimText.trim().length < 20) { setError('Please describe the claim in more detail.'); return }
-    setLoading(true); setError(null); setResult(null)
+    setLoading(true); setError(null); setResult(null); setLetterActionStatus('')
     try {
-      const res = await fetch('/api/claim/evaluate', { 
+      const res = await apiFetch('/claim/evaluate', { 
         method: 'POST', 
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        }, 
-        body: JSON.stringify({ claim_description: claimText, policy_profile: policyProfile }) 
+        body: JSON.stringify({
+          claim_description: claimText,
+          policy_profile: policyProfile,
+          allowed_amount: allowedAmount ? Number(allowedAmount) : null,
+        }) 
       })
       const data = await res.json()
       if (data.success && data.cost_breakdown) { setResult(data); onResult(data.cost_breakdown) }
@@ -33,10 +86,73 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
     finally { setLoading(false) }
   }
 
+  const handleProviderSearch = async () => {
+    if (!providerSearch.city && !providerSearch.state && !providerSearch.last_name && !providerSearch.taxonomy_description) {
+      setProviderError('Enter a provider name, specialty, city, or state.')
+      return
+    }
+
+    setProviderLoading(true)
+    setProviderError(null)
+    setProviderResults([])
+
+    try {
+      const res = await apiFetch('/providers/search', {
+        method: 'POST',
+        body: JSON.stringify({ ...providerSearch, limit: 5 }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Provider search failed')
+      setProviderResults(data.results || [])
+    } catch (err) {
+      setProviderError(err.message)
+    } finally {
+      setProviderLoading(false)
+    }
+  }
+
+  const handleNetworkCheck = async (provider) => {
+    if (!policyProfile?.plan_name) {
+      setProviderError('Upload or select a policy first so network status can be checked against the plan name.')
+      return
+    }
+
+    setProviderError(null)
+    setNetworkChecks(prev => ({ ...prev, [provider.npi]: { loading: true } }))
+
+    try {
+      const res = await apiFetch('/providers/network-status', {
+        method: 'POST',
+        body: JSON.stringify({ npi: provider.npi, plan_name: policyProfile.plan_name }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Network status check failed')
+      setNetworkChecks(prev => ({ ...prev, [provider.npi]: data }))
+    } catch (err) {
+      setNetworkChecks(prev => ({ ...prev, [provider.npi]: { error: err.message } }))
+    }
+  }
+
+  const addProviderToClaim = (provider) => {
+    const network = networkChecks[provider.npi]?.result
+    const address = provider.address
+      ? `${provider.address.address_1}, ${provider.address.city}, ${provider.address.state} ${provider.address.postal_code}`
+      : 'address unavailable'
+    const providerText = `\n\nProvider/facility context from CMS NPPES: ${provider.name}, NPI ${provider.npi}, ${provider.primary_specialty}, ${address}.${network ? ` Network-status estimate for ${policyProfile?.plan_name}: ${network}` : ''}`
+    setClaimText(prev => `${prev}${providerText}`.trim())
+  }
+
   const loadSample = (type) => {
-    if (type === 'approved') setClaimText("I went to my in-network doctor for a routine office visit because I had a bad cold. The bill was $250.")
-    else if (type === 'nsa') setClaimText("I went to the ER at City Hospital because of severe chest pain. The hospital is out-of-network. They billed $15,000.")
-    else setClaimText("I had an MRI on my right knee. My insurance denied it saying it wasn't medically necessary (Code CO-50). The facility billed $3,500. No prior authorization was done.")
+    if (type === 'approved') {
+      setClaimText("I went to my in-network doctor for a routine office visit because I had a bad cold. The bill was $250.")
+      setAllowedAmount('160')
+    } else if (type === 'nsa') {
+      setClaimText("I went to the ER at City Hospital because of severe chest pain. The hospital is out-of-network. They billed $15,000.")
+      setAllowedAmount('1200')
+    } else {
+      setClaimText("I had an MRI on my right knee. My insurance denied it saying it wasn't medically necessary (Code CO-50). The facility billed $3,500. No prior authorization was done.")
+      setAllowedAmount('')
+    }
   }
 
   return (
@@ -65,6 +181,90 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
           </motion.div>
         )}
 
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+          className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <div>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#09090b', marginBottom: '0.25rem' }}>Provider & Facility Network Check</h2>
+              <p style={{ fontSize: '0.8125rem', color: '#71717a', maxWidth: '44rem' }}>
+                Search the CMS NPPES registry for real US doctors and hospitals, then estimate network status against your loaded plan before planned non-emergency care.
+              </p>
+            </div>
+            <span className="badge badge-info">CMS NPPES</span>
+          </div>
+
+          <div className="grid-4" style={{ gap: '0.75rem', marginBottom: '0.75rem' }}>
+            <input className="input" placeholder="Last name or facility" value={providerSearch.last_name}
+              onChange={e => setProviderSearch(prev => ({ ...prev, last_name: e.target.value }))} />
+            <input className="input" placeholder="Specialty" value={providerSearch.taxonomy_description}
+              onChange={e => setProviderSearch(prev => ({ ...prev, taxonomy_description: e.target.value }))} />
+            <input className="input" placeholder="City" value={providerSearch.city}
+              onChange={e => setProviderSearch(prev => ({ ...prev, city: e.target.value }))} />
+            <input className="input" placeholder="State" maxLength={2} value={providerSearch.state}
+              onChange={e => setProviderSearch(prev => ({ ...prev, state: e.target.value.toUpperCase() }))} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#3f3f46', fontWeight: 600 }}>
+              <input type="checkbox" checked={providerSearch.is_facility}
+                onChange={e => setProviderSearch(prev => ({ ...prev, is_facility: e.target.checked }))} />
+              Search hospitals / facilities
+            </label>
+            <button className="btn btn-red" onClick={handleProviderSearch} disabled={providerLoading}>
+              {providerLoading ? <><span className="spinner" /> Searching...</> : 'Search Providers'}
+            </button>
+          </div>
+
+          <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#71717a', lineHeight: 1.5 }}>
+            Network data is an estimate unless your insurer confirms it. For emergencies and certain surprise out-of-network bills, the No Surprises Act may cap patient cost-sharing at in-network amounts.
+          </p>
+
+          {providerError && (
+            <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.8125rem', fontWeight: 500 }}>
+              {providerError}
+            </div>
+          )}
+
+          {providerResults.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+              {providerResults.map(provider => {
+                const network = networkChecks[provider.npi]
+                return (
+                  <div key={provider.npi} style={{ border: '1px solid #e4e4e7', borderRadius: '0.75rem', padding: '1rem', background: '#fafafa' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div>
+                        <h3 style={{ fontSize: '0.9375rem', fontWeight: 800, color: '#09090b' }}>{provider.name}</h3>
+                        <p style={{ fontSize: '0.8125rem', color: '#52525b', marginTop: '0.25rem' }}>
+                          NPI {provider.npi} · {provider.primary_specialty}
+                        </p>
+                        {provider.address && (
+                          <p style={{ fontSize: '0.75rem', color: '#71717a', marginTop: '0.25rem' }}>
+                            {provider.address.address_1}, {provider.address.city}, {provider.address.state} {provider.address.postal_code}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                        <button className="btn btn-ghost" onClick={() => handleNetworkCheck(provider)} disabled={!policyProfile || network?.loading}>
+                          {network?.loading ? 'Checking...' : 'Check Network'}
+                        </button>
+                        <button className="btn btn-ghost" onClick={() => addProviderToClaim(provider)}>Use in Claim</button>
+                      </div>
+                    </div>
+                    {network?.result && (
+                      <div style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: '#3f3f46', whiteSpace: 'pre-wrap' }}>
+                        {network.result}
+                      </div>
+                    )}
+                    {network?.error && (
+                      <div style={{ marginTop: '0.75rem', fontSize: '0.8125rem', color: '#dc2626' }}>{network.error}</div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </motion.div>
+
         <div className="grid-2" style={{ alignItems: 'start' }}>
           {/* ── Input ─────────────────── */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }}>
@@ -81,6 +281,25 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                 placeholder="e.g., I went to the ER for chest pain on July 1st. The hospital billed $15,000..."
                 style={{ minHeight: '140px', marginBottom: '1rem' }} disabled={!policyProfile}
               />
+
+              <label style={{ display: 'block', marginBottom: '1rem' }}>
+                <span style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#3f3f46', marginBottom: '0.375rem' }}>
+                  EOB allowed amount
+                </span>
+                <input
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={allowedAmount}
+                  onChange={e => setAllowedAmount(e.target.value)}
+                  placeholder="Optional, e.g. 1200.00"
+                  disabled={!policyProfile}
+                />
+                <span style={{ display: 'block', fontSize: '0.75rem', color: '#71717a', lineHeight: 1.5, marginTop: '0.375rem' }}>
+                  Use the allowed amount, plan discount, or approved amount from your EOB. If left blank, PolicyCrab labels the result as an estimate and does not assume a negotiated rate.
+                </span>
+              </label>
 
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                 {[['In-Network Visit', 'approved'], ['OON Emergency (NSA)', 'nsa'], ['Denied MRI', 'denied']].map(([l, t]) => (
@@ -137,6 +356,12 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
 
                     <div style={{ height: '1px', background: '#e4e4e7', margin: '0.75rem 0' }} />
 
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      {result.cost_breakdown.allowed_amount_source === 'eob'
+                        ? <span className="badge badge-success">EOB-based allowed amount</span>
+                        : <span className="badge badge-warning">Estimate: no EOB allowed amount</span>}
+                    </div>
+
                     <div className="result-row">
                       <span className="result-label" style={{ fontWeight: 700, color: '#09090b' }}>Your Total Responsibility</span>
                       <span className="result-value money" style={{ fontSize: '1.25rem' }}>${result.cost_breakdown.total_patient_responsibility?.toLocaleString()}</span>
@@ -188,7 +413,14 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                       </div>
                     </div>
 
-                    <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '0.75rem', color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Formal Appeal Letter</h4>
+                    <div className="appeal-letter-toolbar">
+                      <h4 style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Formal Appeal Letter</h4>
+                      <div className="appeal-letter-actions">
+                        {letterActionStatus && <span>{letterActionStatus}</span>}
+                        <button type="button" className="btn btn-ghost" onClick={handleCopyAppealLetter}>Copy Letter</button>
+                        <button type="button" className="btn btn-red" onClick={handleDownloadAppealLetter}>Download .txt</button>
+                      </div>
+                    </div>
                     <div className="appeal-letter">{result.appeal_output.appeal_letter}</div>
                   </motion.div>
                 )}
