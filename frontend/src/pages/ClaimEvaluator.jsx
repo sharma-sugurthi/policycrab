@@ -52,6 +52,37 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
   const [eobLoading, setEobLoading] = useState(false)
   const [eobResult, setEobResult] = useState(null)
   const [eobError, setEobError] = useState(null)
+  const [escalatedLevel, setEscalatedLevel] = useState(null)   // 2 or 3
+  const [escalatedResult, setEscalatedResult] = useState(null)
+  const [escalatedLoading, setEscalatedLoading] = useState(false)
+  const [escalatedError, setEscalatedError] = useState(null)
+
+  const handleDraftEscalated = async (level) => {
+    if (!result?.claim_case || !policyProfile) return
+    setEscalatedLevel(level); setEscalatedLoading(true); setEscalatedResult(null); setEscalatedError(null)
+    try {
+      const res = await apiFetch('/claim/draft-appeal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level,
+          policy_profile: policyProfile,
+          claim_case: result.claim_case,
+          level1_denial_summary: result.appeal_output?.appeal_letter?.slice(0, 600) || null,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setEscalatedResult(data)
+      } else {
+        setEscalatedError(data.detail || 'Draft failed.')
+      }
+    } catch (err) {
+      setEscalatedError(`Network error: ${err.message}`)
+    } finally {
+      setEscalatedLoading(false)
+    }
+  }
 
   const handleEobUpload = async () => {
     if (!eobFile) return
@@ -750,18 +781,69 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                     </div>
                     <div className="appeal-roadmap-body">
                       {APPEAL_LEVELS.map((level, i) => (
-                        <div key={i} className={`roadmap-level${i === 0 ? ' active' : ''}`}>
+                        <div key={i} className={`roadmap-level${i === 0 ? ' active' : (escalatedLevel === i + 1 && escalatedResult ? ' active' : '')}`}>
                           <span className="roadmap-level-num">{i + 1}</span>
                           <div className="roadmap-level-info">
                             <h5>{level.title}</h5>
                             <p>{level.desc}</p>
+                            {i === 0 && (
+                              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#16a34a', background: '#dcfce7', borderRadius: '0.375rem', padding: '0.1rem 0.5rem', marginTop: '0.25rem', display: 'inline-block' }}>Current — Letter Generated Above</span>
+                            )}
+                            {(i === 1 || i === 2) && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                {escalatedLevel === i + 1 && escalatedLoading ? (
+                                  <span style={{ fontSize: '0.75rem', color: '#dc2626' }}><span className="spinner" /> Drafting...</span>
+                                ) : escalatedLevel === i + 1 && escalatedResult ? (
+                                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#16a34a', background: '#dcfce7', borderRadius: '0.375rem', padding: '0.1rem 0.5rem' }}>Letter Ready ↓</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="btn btn-ghost"
+                                    style={{ fontSize: '0.75rem', padding: '0.25rem 0.75rem' }}
+                                    onClick={() => handleDraftEscalated(i + 1)}
+                                    disabled={escalatedLoading}
+                                  >
+                                    Draft Level {i + 1} Letter
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
-                      <p style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '0.5rem', lineHeight: 1.5 }}>
-                        The appeal letter above is for Level 1 (Internal Appeal). If denied again, escalate to the next level.
-                      </p>
                     </div>
+
+                    {/* Escalated letter output */}
+                    {escalatedResult && (
+                      <div style={{ marginTop: '1rem', borderTop: '1px solid #f4f4f5', paddingTop: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                          <h5 style={{ fontWeight: 700, color: '#dc2626', fontSize: '0.9375rem' }}>Level {escalatedResult.level}: {escalatedResult.level_name}</h5>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.75rem' }}
+                              onClick={() => navigator.clipboard.writeText(escalatedResult.appeal_letter || '')}>Copy</button>
+                            <button type="button" className="btn btn-ghost" style={{ fontSize: '0.75rem' }}
+                              onClick={() => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([escalatedResult.appeal_letter || ''], { type: 'text/plain' })); a.download = `appeal-level${escalatedResult.level}.txt`; a.click() }}>Download .txt</button>
+                          </div>
+                        </div>
+                        {escalatedResult.deadline_date && (
+                          <div style={{ fontSize: '0.8125rem', color: '#d97706', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', marginBottom: '0.75rem' }}>
+                            ⏳ File by: <strong>{new Date(escalatedResult.deadline_date).toLocaleDateString()}</strong>
+                          </div>
+                        )}
+                        <div className="appeal-letter">{escalatedResult.appeal_letter}</div>
+                        {escalatedResult.recommended_next_steps?.length > 0 && (
+                          <div style={{ marginTop: '0.75rem' }}>
+                            <h6 style={{ fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Next Steps</h6>
+                            <ol style={{ paddingLeft: '1.25rem', fontSize: '0.8125rem', color: '#3f3f46', listStyle: 'decimal' }}>
+                              {escalatedResult.recommended_next_steps.map((s, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{s}</li>)}
+                            </ol>
+                          </div>
+                        )}
+                        {escalatedError && (
+                          <div style={{ color: '#dc2626', fontSize: '0.8125rem', marginTop: '0.5rem' }}>❌ {escalatedError}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </>
