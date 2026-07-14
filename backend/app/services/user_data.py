@@ -1,8 +1,10 @@
-"""Supabase-backed user data operations."""
-
+import logging
 from datetime import datetime, timezone
 
 from app.services.supabase_client import get_supabase_client
+from app.security.phi_scrubber import scrub_phi
+
+logger = logging.getLogger(__name__)
 
 
 def create_user_policy(user_id: str, policy_profile: dict) -> dict | None:
@@ -35,11 +37,19 @@ def create_user_claim(
     route_decision: str | None,
     policy_id: str | None = None,
 ) -> dict | None:
+    # Scrub PHI from freetext before writing to DB
+    clean_description, redaction_count = scrub_phi(claim_description)
+    if redaction_count:
+        logger.info(
+            f"create_user_claim: {redaction_count} PHI pattern(s) redacted "
+            f"from claim description before DB write (user={user_id})"
+        )
+
     client = get_supabase_client()
     payload = {
         "user_id": user_id,
         "policy_id": policy_id,
-        "claim_description": claim_description,
+        "claim_description": clean_description,
         "cost_breakdown_json": cost_breakdown,
         "appeal_output_json": appeal_output,
         "route_decision": route_decision,
