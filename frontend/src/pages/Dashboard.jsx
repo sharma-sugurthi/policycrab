@@ -3,8 +3,145 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
+import { jsPDF } from 'jspdf'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
+
+// ── CSV Export ──────────────────────────────────────────────────
+function exportCsv(claims) {
+  const headers = [
+    'Date', 'Status', 'Claim Description', 'CPT Code', 'Network Status',
+    'Billed Amount', 'Patient Responsibility', 'Appeal Deadline', 'Days Remaining'
+  ]
+  const rows = claims.map(c => [
+    new Date(c.created_at).toLocaleDateString(),
+    c.route_decision || '',
+    `"${(c.claim_description || '').replace(/"/g, '""')}"`,
+    c.cost_breakdown?.cpt_code || '',
+    c.cost_breakdown?.network_status || '',
+    c.cost_breakdown?.billed_amount != null ? `$${c.cost_breakdown.billed_amount.toFixed(2)}` : '',
+    c.cost_breakdown?.total_patient_responsibility != null
+      ? `$${Number(c.cost_breakdown.total_patient_responsibility).toFixed(2)}` : '',
+    c.appeal_output?.appeal_deadline
+      ? new Date(c.appeal_output.appeal_deadline).toLocaleDateString() : '',
+    c.appeal_output?.days_remaining != null ? c.appeal_output.days_remaining : '',
+  ])
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `policycrab_claims_${new Date().toISOString().slice(0,10)}.csv`
+  a.click()
+}
+
+// ── PDF Export ──────────────────────────────────────────────────
+function exportPdf(claims, policyProfile) {
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' })
+  const W = doc.internal.pageSize.getWidth()
+  const margin = 48
+  const colW = W - margin * 2
+
+  const addPage = () => doc.addPage()
+  const heading = (text, y) => {
+    doc.setFontSize(11).setFont(undefined, 'bold').setTextColor(220, 38, 38)
+    doc.text(text, margin, y)
+    doc.setTextColor(0, 0, 0)
+    return y + 16
+  }
+  const body = (text, y, indent = 0) => {
+    doc.setFontSize(9).setFont(undefined, 'normal').setTextColor(60, 60, 60)
+    const lines = doc.splitTextToSize(text, colW - indent)
+    doc.text(lines, margin + indent, y)
+    return y + lines.length * 12
+  }
+  const rule = (y) => {
+    doc.setDrawColor(228, 228, 231).setLineWidth(0.5)
+    doc.line(margin, y, W - margin, y)
+    return y + 10
+  }
+
+  // ── Cover page ────────────────────────────────────────────────
+  doc.setFontSize(22).setFont(undefined, 'bold').setTextColor(220, 38, 38)
+  doc.text('PolicyCrab', margin, 80)
+  doc.setFontSize(14).setFont(undefined, 'normal').setTextColor(60, 60, 60)
+  doc.text('Claim History Report', margin, 102)
+  doc.setFontSize(9).setTextColor(150, 150, 150)
+  doc.text(`Generated: ${new Date().toLocaleString()}`, margin, 118)
+
+  let y = 150
+  y = rule(y)
+  if (policyProfile) {
+    y = heading('Loaded Policy', y)
+    y = body(`Plan: ${policyProfile.plan_name || 'N/A'}`, y)
+    y = body(`Carrier: ${policyProfile.carrier_name || 'N/A'}`, y)
+    y = body(`Type: ${policyProfile.plan_type || 'N/A'} | State: ${policyProfile.state || 'N/A'}`, y)
+    y = body(`Deductible (Individual): $${policyProfile.in_network_deductible_individual?.toLocaleString() || 'N/A'}`, y)
+    y = body(`OOP Max (Individual): $${policyProfile.in_network_oop_max_individual?.toLocaleString() || 'N/A'}`, y)
+    y += 8
+    y = rule(y)
+  }
+  y = heading(`Claims Summary (${claims.length} total)`, y)
+  y = body(`${claims.filter(c => c.route_decision === 'denied').length} denied · ${claims.filter(c => c.route_decision !== 'denied').length} approved`, y)
+  y += 16
+
+  // ── Claim pages ───────────────────────────────────────────────
+  claims.forEach((c, i) => {
+    addPage()
+    y = 56
+    doc.setFontSize(12).setFont(undefined, 'bold').setTextColor(220, 38, 38)
+    doc.text(`Claim ${i + 1} of ${claims.length}`, margin, y)
+    y += 20
+
+    const cb = c.cost_breakdown || {}
+    const ao = c.appeal_output || {}
+    const status = c.route_decision === 'denied' ? 'DENIED' : 'APPROVED'
+
+    y = rule(y)
+    y = heading('Overview', y)
+    y = body(`Date: ${new Date(c.created_at).toLocaleDateString()}`, y)
+    y = body(`Status: ${status}`, y)
+    if (cb.cpt_code) y = body(`CPT: ${cb.cpt_code}${cb.cpt_description ? ' — ' + cb.cpt_description : ''}`, y)
+    if (cb.network_status) y = body(`Network: ${cb.network_status}`, y)
+    y += 8
+
+    y = rule(y)
+    y = heading('Claim Description', y)
+    y = body(c.claim_description || 'N/A', y, 8)
+    y += 8
+
+    y = rule(y)
+    y = heading('Cost Breakdown', y)
+    if (cb.billed_amount != null) y = body(`Billed Amount: $${Number(cb.billed_amount).toLocaleString()}`, y)
+    if (cb.deductible_applied != null) y = body(`Deductible Applied: $${Number(cb.deductible_applied).toLocaleString()}`, y)
+    if (cb.coinsurance_amount != null) y = body(`Coinsurance: $${Number(cb.coinsurance_amount).toLocaleString()}`, y)
+    if (cb.copay_amount != null) y = body(`Copay: $${Number(cb.copay_amount).toLocaleString()}`, y)
+    if (cb.total_patient_responsibility != null)
+      y = body(`Patient Responsibility: $${Number(cb.total_patient_responsibility).toLocaleString()}`, y)
+    y += 8
+
+    if (ao.appeal_deadline) {
+      y = rule(y)
+      y = heading('Appeal Information', y)
+      y = body(`Framework: ${ao.appeal_framework || 'N/A'}`, y)
+      y = body(`Deadline: ${new Date(ao.appeal_deadline).toLocaleDateString()} (${ao.days_remaining ?? 'N/A'} days remaining)`, y)
+      if (ao.denial_reason) y = body(`Denial Reason: ${ao.denial_reason}`, y)
+    }
+  })
+
+  // ── Footer on all pages ───────────────────────────────────────
+  const pageCount = doc.getNumberOfPages()
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p)
+    doc.setFontSize(7).setFont(undefined, 'normal').setTextColor(180, 180, 180)
+    doc.text(
+      'PolicyCrab — Informational use only. Not legal or medical advice. Verify with your insurer.',
+      margin, doc.internal.pageSize.getHeight() - 24
+    )
+    doc.text(`Page ${p} of ${pageCount}`, W - margin, doc.internal.pageSize.getHeight() - 24, { align: 'right' })
+  }
+
+  doc.save(`policycrab_report_${new Date().toISOString().slice(0,10)}.pdf`)
+}
 
 export default function Dashboard({ policyProfile, onPolicySelected }) {
   const { session } = useAuth()
@@ -170,7 +307,27 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <div className="dashboard-section-heading">
               <h2>Claim History</h2>
-              <button className="btn btn-red" onClick={() => hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy')}>New Claim</button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-ghost"
+                  style={{ fontSize: '0.75rem' }}
+                  disabled={claims.length === 0}
+                  onClick={() => exportCsv(claims)}
+                  title="Download all claims as CSV"
+                >
+                  ⬇ CSV
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  style={{ fontSize: '0.75rem' }}
+                  disabled={claims.length === 0}
+                  onClick={() => exportPdf(claims, policyProfile)}
+                  title="Download full claim report as PDF"
+                >
+                  ⬇ PDF Report
+                </button>
+                <button className="btn btn-red" onClick={() => hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy')}>New Claim</button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
