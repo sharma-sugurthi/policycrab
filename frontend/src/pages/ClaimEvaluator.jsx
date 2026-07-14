@@ -519,7 +519,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                 )}
                 {eobResult && (
                   <div style={{ padding: '1rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <div className="eob-fields-grid">
                       {[
                         ['Date of Service', eobResult.date_of_service, eobResult.confidence?.date_of_service],
                         ['Provider', eobResult.provider_name, 'high'],
