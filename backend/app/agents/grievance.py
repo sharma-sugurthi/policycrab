@@ -24,6 +24,14 @@ from app.models.enums import DenialReason
 
 logger = logging.getLogger(__name__)
 
+CARC_PRECEDENTS = {
+    "CO-50": "Medical Necessity denial. Cite: ERISA Sec. 503 (29 CFR § 2560.503-1). Requires the plan to provide the specific rule, guideline, or protocol used in the denial, and mandates a 'full and fair review' by an independent medical professional.",
+    "PR-96": "Non-covered charge / Experimental denial. Cite: Affordable Care Act (ACA) § 2719. Requires plans to ensure coverage for essential health benefits and allows external review for medical judgement denials.",
+    "CO-16": "Lack of Information. Cite: ERISA Sec. 503. The plan must provide a specific description of any additional material or information necessary to perfect the claim and an explanation of why it is necessary.",
+    "CO-22": "Coordination of Benefits (COB). Cite: NAIC Coordination of Benefits Model Regulation (if state-regulated) to argue proper primary/secondary payer determination.",
+    "CO-45": "Charge exceeds fee schedule/UCR. If out-of-network, cite: No Surprises Act (NSA) for emergency services or covered non-emergency services at in-network facilities, protecting the patient from balance billing.",
+}
+
 APPEAL_DRAFTING_PROMPT = """You are a patient advocacy attorney specializing in US health insurance 
 appeals. Draft a formal appeal letter for the denied claim described below.
 
@@ -124,6 +132,14 @@ async def grievance_node(state: AgentState) -> dict:
             f"- Denial Reason: {denial_reason.value}\n"
             f"- Denial Date: {denial_date}\n"
             f"- CARC Code: {claim.denial_carc_code or 'Not specified'}\n"
+        )
+        
+        # Inject CARC-specific legal precedent if available
+        if claim.denial_carc_code and claim.denial_carc_code.upper() in CARC_PRECEDENTS:
+            precedent = CARC_PRECEDENTS[claim.denial_carc_code.upper()]
+            case_summary += f"- CARC Precedent to Cite: {precedent}\n"
+
+        case_summary += (
             f"\nAPPEAL FRAMEWORK: {framework.value}\n"
             f"- Governing Law: {framework_details.get('governing_law', 'N/A')}\n"
             f"- Deadline: {deadline_info['deadline_date']} ({deadline_info['days_remaining']} days remaining)\n"

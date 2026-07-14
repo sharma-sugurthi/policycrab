@@ -14,9 +14,9 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-EOB_EXTRACTION_PROMPT = """You are a US health insurance specialist extracting structured data from an Explanation of Benefits (EOB) document.
+EOB_EXTRACTION_PROMPT = """You are a US health insurance specialist extracting structured data from a healthcare document.
 
-An EOB is a statement from an insurer explaining how a medical claim was processed. Extract the following fields from the EOB text below.
+The document could be an Explanation of Benefits (EOB), a medical bill/itemized statement, an insurance policy/SBC, or something else.
 
 RULES:
 - Extract ONLY what is explicitly stated in the document. Do NOT guess or hallucinate.
@@ -27,9 +27,11 @@ RULES:
 - RARC codes follow pattern: N115, M51, etc.
 - CPT codes are 5-digit numeric or alphanumeric (e.g., 99285, 27447, J0129)
 - ICD-10 codes follow pattern: A00.0, I21.0, M17.11, etc.
+- document_type: classify as "eob" (Explanation of Benefits), "bill" (itemized medical bill/invoice), "policy" (insurance policy, SBC, or benefit summary), or "unknown".
 
 Return a single JSON object with this exact schema:
 {
+  "document_type": "eob|bill|policy|unknown",
   "date_of_service": "YYYY-MM-DD or null",
   "denial_date": "YYYY-MM-DD or null",
   "billed_amount": float or null,
@@ -55,7 +57,7 @@ Return a single JSON object with this exact schema:
   }
 }
 
-EOB DOCUMENT TEXT:
+DOCUMENT TEXT:
 \"\"\"
 {eob_text}
 \"\"\"
