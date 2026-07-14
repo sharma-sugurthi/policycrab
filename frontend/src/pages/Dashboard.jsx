@@ -143,12 +143,117 @@ function exportPdf(claims, policyProfile) {
   doc.save(`policycrab_report_${new Date().toISOString().slice(0,10)}.pdf`)
 }
 
+// ── Policy Compare Table ────────────────────────────────────────────
+const COMPARE_ROWS = [
+  { label: 'Plan Type', key: (p) => p.plan_type || 'N/A', type: 'text' },
+  { label: 'Metal Tier', key: (p) => p.metal_tier || 'N/A', type: 'text' },
+  { label: 'State', key: (p) => p.state || 'N/A', type: 'text' },
+  { label: 'Deductible (Individual)', key: (p) => p.in_network_deductible_individual, type: 'dollar', best: 'low' },
+  { label: 'Deductible (Family)', key: (p) => p.in_network_deductible_family, type: 'dollar', best: 'low' },
+  { label: 'OOP Max (Individual)', key: (p) => p.in_network_oop_max_individual, type: 'dollar', best: 'low' },
+  { label: 'OOP Max (Family)', key: (p) => p.in_network_oop_max_family, type: 'dollar', best: 'low' },
+  { label: 'Coinsurance (You Pay)', key: (p) => p.in_network_coinsurance, type: 'pct', best: 'low' },
+  { label: 'PCP Copay', key: (p) => p.copay_schedule?.primary_care, type: 'dollar', best: 'low' },
+  { label: 'Specialist Copay', key: (p) => p.copay_schedule?.specialist, type: 'dollar', best: 'low' },
+  { label: 'Urgent Care Copay', key: (p) => p.copay_schedule?.urgent_care, type: 'dollar', best: 'low' },
+  { label: 'ER Copay', key: (p) => p.copay_schedule?.emergency_room, type: 'dollar', best: 'low' },
+  { label: 'Generic Rx Copay', key: (p) => p.copay_schedule?.generic_rx, type: 'dollar', best: 'low' },
+  { label: 'OON Deductible', key: (p) => p.out_of_network_deductible_individual, type: 'dollar', best: 'low' },
+  { label: 'OON Coinsurance', key: (p) => p.out_of_network_coinsurance, type: 'pct', best: 'low' },
+  { label: 'HSA Eligible', key: (p) => p.is_hsa_eligible ? 'Yes ✅' : 'No', type: 'text' },
+  { label: 'Requires PCP Referral', key: (p) => p.requires_pcp_referral ? 'Yes' : 'No', type: 'text' },
+  { label: 'ACA Essential Benefits', key: (p) => p.covered_essential_health_benefits ? 'Yes' : 'No', type: 'text' },
+]
+
+function fmt(value, type) {
+  if (value == null) return <span style={{ color: '#d1d5db' }}>N/A</span>
+  if (type === 'dollar') return `$${Number(value).toLocaleString()}`
+  if (type === 'pct') return `${Math.round(value * 100)}%`
+  return String(value)
+}
+
+function PolicyCompareTable({ profiles, onClose }) {
+  if (profiles.length < 2) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      style={{ marginTop: '2.5rem' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#09090b' }}>Plan Comparison</h2>
+          <p style={{ fontSize: '0.8125rem', color: '#71717a', marginTop: '0.25rem' }}>
+            <span style={{ display: 'inline-block', width: '10px', height: '10px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '2px', marginRight: '6px' }} />
+            Best value in each row highlighted green.
+          </p>
+        </div>
+        <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }} onClick={onClose}>✕ Close</button>
+      </div>
+
+      <div style={{ overflowX: 'auto', borderRadius: '1rem', border: '1px solid #e4e4e7', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: `${280 + profiles.length * 160}px` }}>
+          <thead>
+            <tr style={{ background: '#fafafa' }}>
+              <th style={{ padding: '0.875rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #e4e4e7', width: '200px' }}>Field</th>
+              {profiles.map((p, i) => (
+                <th key={i} style={{ padding: '0.875rem 1rem', textAlign: 'center', borderBottom: '1px solid #e4e4e7', minWidth: '160px' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#09090b' }}>{p.plan_name || `Plan ${i + 1}`}</div>
+                  <div style={{ fontSize: '0.7rem', color: '#71717a', marginTop: '2px' }}>{p.carrier_name}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {COMPARE_ROWS.map((row, ri) => {
+              const values = profiles.map(p => row.key(p))
+              // Find best (lowest numeric) index for rows where we care
+              let bestIdx = null
+              if (row.best === 'low') {
+                const nums = values.map(v => (v != null && !isNaN(Number(v)) ? Number(v) : Infinity))
+                const min = Math.min(...nums)
+                if (min !== Infinity) bestIdx = nums.indexOf(min)
+              }
+
+              return (
+                <tr key={ri} style={{ borderBottom: '1px solid #f4f4f5', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
+                  onMouseLeave={e => e.currentTarget.style.background = ''}
+                >
+                  <td style={{ padding: '0.625rem 1rem', fontSize: '0.8125rem', fontWeight: 600, color: '#3f3f46' }}>{row.label}</td>
+                  {values.map((val, vi) => {
+                    const isBest = bestIdx === vi
+                    return (
+                      <td key={vi} style={{
+                        padding: '0.625rem 1rem', textAlign: 'center',
+                        fontSize: '0.875rem', fontWeight: isBest ? 700 : 400,
+                        color: isBest ? '#15803d' : '#09090b',
+                        background: isBest ? '#dcfce7' : undefined,
+                      }}>
+                        {fmt(val, row.type)}
+                        {isBest && <span style={{ fontSize: '0.65rem', display: 'block', color: '#16a34a', marginTop: '1px' }}>Best</span>}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </motion.div>
+  )
+}
+
 export default function Dashboard({ policyProfile, onPolicySelected }) {
   const { session } = useAuth()
   const navigate = useNavigate()
   const [policies, setPolicies] = useState([])
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
+  const [compareIds, setCompareIds] = useState(new Set())
 
   useEffect(() => {
     async function fetchData() {
@@ -178,6 +283,20 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
     if (profile) onPolicySelected?.(profile)
     navigate('/claim')
   }
+
+  const toggleCompare = (id) => {
+    setCompareIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) { next.delete(id) }
+      else if (next.size < 3) { next.add(id) }
+      return next
+    })
+  }
+
+  const compareProfiles = policies
+    .filter(p => compareIds.has(p.id))
+    .map(p => p.policy_profile)
+    .filter(Boolean)
 
   const onboardingSteps = [
     {
@@ -260,7 +379,29 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
             <div className="dashboard-section-heading">
               <h2>Saved Policies</h2>
-              <button className="btn btn-red" onClick={() => navigate('/policy')}>New Policy</button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {compareIds.size >= 2 && (
+                  <span style={{ fontSize: '0.7rem', color: '#71717a' }}>{compareIds.size} selected</span>
+                )}
+                <button
+                  className="btn btn-ghost"
+                  style={{ fontSize: '0.75rem' }}
+                  disabled={policies.length < 2}
+                  title={policies.length < 2 ? 'Save 2+ policies to compare' : 'Select 2-3 plans below to compare'}
+                  onClick={() => {
+                    if (compareIds.size >= 2) {
+                      // already have selections — scroll to table
+                      document.getElementById('compare-table')?.scrollIntoView({ behavior: 'smooth' })
+                    } else {
+                      // seed first two
+                      setCompareIds(new Set(policies.slice(0, 2).map(p => p.id)))
+                    }
+                  }}
+                >
+                  ⚖ Compare
+                </button>
+                <button className="btn btn-red" onClick={() => navigate('/policy')}>New Policy</button>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -287,7 +428,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                 )
               ) : (
                 policies.map(p => (
-                  <div key={p.id} className="card dashboard-history-card">
+                  <div key={p.id} className="card dashboard-history-card" style={compareIds.has(p.id) ? { border: '1.5px solid #dc2626', boxShadow: '0 0 0 3px #fecaca' } : {}}>
                     <div className="dashboard-card-header">
                       <h3>{p.policy_profile?.plan_name || 'Unknown Plan'}</h3>
                       <span>{new Date(p.created_at).toLocaleDateString()}</span>
@@ -297,7 +438,18 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                       <span className="badge badge-zinc">Ded: ${p.policy_profile?.in_network_deductible_individual?.toLocaleString?.() || p.policy_profile?.in_network_deductible_individual || 'n/a'}</span>
                       <span className="badge badge-zinc">OOP: ${p.policy_profile?.in_network_oop_max_individual?.toLocaleString?.() || p.policy_profile?.in_network_oop_max_individual || 'n/a'}</span>
                     </div>
-                    <button className="btn btn-ghost" onClick={() => handleUsePolicyForClaim(p.policy_profile)}>Use for Claim</button>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                      <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => handleUsePolicyForClaim(p.policy_profile)}>Use for Claim</button>
+                      {policies.length >= 2 && (
+                        <button
+                          className={`btn ${compareIds.has(p.id) ? 'btn-red' : 'btn-ghost'}`}
+                          style={{ fontSize: '0.75rem' }}
+                          onClick={() => toggleCompare(p.id)}
+                        >
+                          {compareIds.has(p.id) ? '✓ Selected' : '+ Compare'}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -383,6 +535,16 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
               )}
             </div>
           </motion.div>
+        </div>
+
+        {/* ── Policy Comparison Table ─────────────────────────────── */}
+        <div id="compare-table">
+          {compareProfiles.length >= 2 && (
+            <PolicyCompareTable
+              profiles={compareProfiles}
+              onClose={() => setCompareIds(new Set())}
+            />
+          )}
         </div>
       </div>
     </section>
