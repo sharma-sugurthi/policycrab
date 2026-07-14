@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 
 from app.api.auth import get_current_user
-from app.security.rate_limit import rate_limit
+from app.security.rate_limit import rate_limit_user
 from app.services.llm_router import get_llm, TaskType, generate_embedding
 from app.services.supabase_client import search_knowledge_base
 from app.engine.regulatory_router import route_to_appeal_framework, get_appeal_framework_details
@@ -23,7 +23,8 @@ from app.models.enums import DenialReason
 
 logger = logging.getLogger(__name__)
 
-DRAFT_APPEAL_RATE_LIMIT = rate_limit("claim:draft_appeal", max_requests=5, window_seconds=60)
+# Per-user: 3 appeal drafts per 60 seconds
+DRAFT_APPEAL_RATE_LIMIT = rate_limit_user("claim:draft_appeal", max_requests=3, window_seconds=60)
 
 router = APIRouter(prefix="/api/claim", tags=["Appeals"])
 

@@ -6,7 +6,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 
 from app.api.auth import get_current_user
-from app.security.rate_limit import rate_limit
+from app.security.rate_limit import rate_limit_user
 from app.services.llm_router import get_llm, TaskType
 from app.agents.eob_extractor import extract_eob_fields
 
@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 
-EOB_PARSE_RATE_LIMIT = rate_limit("eob:parse", max_requests=10, window_seconds=60)
+# Per-user: 10 EOB parses per hour
+EOB_PARSE_RATE_LIMIT = rate_limit_user("eob:parse", max_requests=10, window_seconds=3600)
 
 router = APIRouter(prefix="/api/eob", tags=["EOB"])
 

@@ -6,10 +6,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
-from app.security.rate_limit import rate_limit
+from app.security.rate_limit import rate_limit_user
 from app.services.user_data import create_user_claim
 
-CLAIM_EVALUATE_RATE_LIMIT = rate_limit("claim:evaluate", max_requests=10, window_seconds=60)
+# Per-user: 5 evaluations per 60 seconds
+CLAIM_EVALUATE_RATE_LIMIT = rate_limit_user("claim:evaluate", max_requests=5, window_seconds=60)
 
 router = APIRouter(prefix="/api/claim", tags=["Claims"])
 
@@ -45,9 +46,9 @@ class ClaimEvaluationResponse(BaseModel):
 
 @router.post("/evaluate", response_model=ClaimEvaluationResponse)
 async def evaluate_claim(
-    request: ClaimEvaluationRequest, 
+    request: ClaimEvaluationRequest,
     user: dict = Depends(get_current_user),
-    _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT)
+    _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT),
 ):
     """
     Evaluate a patient's healthcare claim through the full pipeline.
