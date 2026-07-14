@@ -3,6 +3,83 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { apiFetch } from '../lib/api'
 import { jsPDF } from 'jspdf'
+import { CPT_CODES } from '../data/cpt_codes'
+
+// ── CPT Lookup widget ─────────────────────────────────────────────
+function CptLookup({ onSelect, disabled }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const [results, setResults] = useState([])
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const q = query.trim().toLowerCase()
+    if (q.length < 2) { setResults([]); setOpen(false); return }
+    const filtered = CPT_CODES.filter(
+      ([code, desc]) => code.startsWith(q) || desc.toLowerCase().includes(q)
+    ).slice(0, 12)
+    setResults(filtered)
+    setOpen(filtered.length > 0)
+  }, [query])
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const handleSelect = ([code, desc, cat]) => {
+    setQuery(`${code} — ${desc}`)
+    setOpen(false)
+    onSelect({ code, desc, cat })
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative', marginBottom: '0.75rem' }}>
+      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 700, color: '#3f3f46', marginBottom: '0.375rem' }}>
+        🔍 CPT Code Lookup
+        <span style={{ fontWeight: 400, color: '#a1a1aa', marginLeft: '0.5rem' }}>— search by code or procedure name</span>
+      </label>
+      <input
+        className="input"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        placeholder="e.g. 99213 or 'knee replacement'"
+        disabled={disabled}
+        autoComplete="off"
+      />
+      {open && (
+        <ul style={{
+          position: 'absolute', zIndex: 200, top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: '#fff', border: '1px solid #e4e4e7', borderRadius: '0.75rem',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)', maxHeight: '260px', overflowY: 'auto',
+          listStyle: 'none', padding: '0.375rem', margin: 0,
+        }}>
+          {results.map(([code, desc, cat]) => (
+            <li
+              key={code}
+              onMouseDown={() => handleSelect([code, desc, cat])}
+              style={{
+                padding: '0.5rem 0.75rem', borderRadius: '0.5rem', cursor: 'pointer',
+                display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f4f4f5'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.875rem', color: '#dc2626', flexShrink: 0, minWidth: '52px' }}>{code}</span>
+              <span style={{ flex: 1 }}>
+                <span style={{ fontSize: '0.8125rem', color: '#09090b', fontWeight: 500 }}>{desc}</span>
+                <span style={{ display: 'block', fontSize: '0.65rem', color: '#a1a1aa', marginTop: '0.1rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{cat}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 const PROGRESS_STEPS = [
   { label: 'Normalizing claim' },
@@ -555,6 +632,20 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                   </div>
                 )}
               </div>
+
+              {/* ── CPT Lookup ─────────────────────── */}
+              <CptLookup
+                disabled={!policyProfile}
+                onSelect={({ code, desc }) => {
+                  // Append structured CPT line to textarea if not already present
+                  const line = `Procedure: CPT ${code} — ${desc}.`
+                  setClaimText(prev =>
+                    prev.includes(`CPT ${code}`)
+                      ? prev
+                      : prev ? `${prev}\n${line}` : line
+                  )
+                }}
+              />
 
               <textarea value={claimText} onChange={e => setClaimText(e.target.value)}
                 placeholder="e.g., I went to the ER for chest pain on July 1st. The hospital billed $15,000..."
