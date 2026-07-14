@@ -13,12 +13,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.api.router import api_router
+from app.middleware.logging import RequestLoggingMiddleware
 
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG if settings.debug else logging.INFO,
     format="%(asctime)s | %(name)-30s | %(levelname)-7s | %(message)s",
 )
+# Access log always at INFO regardless of debug flag
+logging.getLogger("policycrab.access").setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -72,6 +75,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Request Logging Middleware ────────────────────────────────────
+# Registered after CORS so status codes reflect the actual response.
+app.add_middleware(RequestLoggingMiddleware)
 
 # ── Include API Routes ────────────────────────────────────────────
 app.include_router(api_router)
