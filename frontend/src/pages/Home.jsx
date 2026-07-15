@@ -28,7 +28,7 @@ export default function Home({ policyProfile }) {
             <motion.h1
               variants={fadeUp}
               transition={{ duration: 0.65 }}
-              style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900, letterSpacing: '-0.05em', lineHeight: 0.92, marginBottom: '1.5rem' }}
+              style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900, letterSpacing: '-0.05em', lineHeight: 0.92, marginBottom: '1.5rem', color: 'var(--text-primary)' }}
             >
               Understand your
               <br />
@@ -40,7 +40,7 @@ export default function Home({ policyProfile }) {
             <motion.p
               variants={fadeUp}
               transition={{ duration: 0.55, delay: 0.1 }}
-              style={{ fontSize: '1.125rem', color: '#71717a', fontWeight: 500, lineHeight: 1.625, maxWidth: '36rem', marginBottom: '2.5rem' }}
+              style={{ fontSize: '1.125rem', color: 'var(--text-tertiary)', fontWeight: 500, lineHeight: 1.625, maxWidth: '36rem', marginBottom: '2.5rem' }}
             >
               Upload your policy. Describe your claim. Get deterministic cost breakdowns, regulatory routing, 
               and AI-drafted appeal letters — all grounded in ERISA, ACA, and the No Surprises Act.
@@ -55,7 +55,7 @@ export default function Home({ policyProfile }) {
               </button>
             </motion.div>
 
-            <motion.p variants={fadeUp} transition={{ duration: 0.5, delay: 0.3 }} style={{ marginTop: '1.5rem', fontSize: '0.8125rem', color: '#a1a1aa', fontWeight: 500 }}>
+            <motion.p variants={fadeUp} transition={{ duration: 0.5, delay: 0.3 }} style={{ marginTop: '1.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>
               46 regulatory knowledge chunks · 5 AI agents · Deterministic cost engine
             </motion.p>
           </motion.div>
@@ -80,10 +80,10 @@ export default function Home({ policyProfile }) {
 
           <div className="grid-4">
             {[
-              { value: '$1M+', label: 'Claims Evaluated', color: '#dc2626', bg: '#fef2f2' },
-              { value: '10k+', label: 'Appeals Generated', color: '#09090b', bg: '#fafafa' },
-              { value: '4.9/5', label: 'Average Rating', color: '#059669', bg: '#ecfdf5' },
-              { value: '15+', label: 'Insurers Supported', color: '#dc2626', bg: '#fef2f2' },
+              { value: '$1M+', label: 'Claims Evaluated', color: 'var(--accent)', bg: 'var(--accent-subtle)' },
+              { value: '10k+', label: 'Appeals Generated', color: 'var(--text-primary)', bg: 'var(--bg-secondary)' },
+              { value: '4.9/5', label: 'Average Rating', color: 'var(--success)', bg: 'var(--success-bg)' },
+              { value: '15+', label: 'Insurers Supported', color: 'var(--accent)', bg: 'var(--accent-subtle)' },
             ].map((s, i) => (
               <motion.div
                 key={s.label}
@@ -131,12 +131,12 @@ export default function Home({ policyProfile }) {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
                 className="card"
-                style={{ padding: '1.5rem', background: '#fafafa' }}
+                style={{ padding: '1.5rem', background: 'var(--bg-secondary)' }}
               >
-                <p style={{ fontStyle: 'italic', color: '#3f3f46', marginBottom: '1rem', lineHeight: 1.6 }}>"{t.quote}"</p>
+                <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: 1.6 }}>"{t.quote}"</p>
                 <div>
-                  <div style={{ fontWeight: 700, color: '#09090b' }}>{t.name}</div>
-                  <div style={{ fontSize: '0.8125rem', color: '#dc2626', fontWeight: 600 }}>{t.claim}</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{t.name}</div>
+                  <div style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}>{t.claim}</div>
                 </div>
               </motion.div>
             ))}
@@ -175,17 +175,17 @@ export default function Home({ policyProfile }) {
                 style={{ padding: '2rem' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                  <div style={{ width: '3rem', height: '3rem', borderRadius: '1rem', background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+                  <div style={{ width: '3rem', height: '3rem', borderRadius: '1rem', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
                     {item.icon}
                   </div>
-                  <span style={{ fontSize: '0.6875rem', fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: '#dc2626', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: '0.6875rem', fontWeight: 800, fontFamily: "'JetBrains Mono', monospace", color: 'var(--accent)', letterSpacing: '0.05em' }}>
                     STEP {item.step}
                   </span>
                 </div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.025em', marginBottom: '0.5rem' }}>
                   {item.title}
                 </h3>
-                <p style={{ fontSize: '0.875rem', color: '#71717a', fontWeight: 500, lineHeight: 1.625 }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 500, lineHeight: 1.625 }}>
                   {item.desc}
                 </p>
               </motion.div>
@@ -255,14 +255,14 @@ export default function Home({ policyProfile }) {
                   </div>
                 ) : (
                   <div>
-                    <p style={{ color: '#71717a', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.625 }}>
+                    <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.625 }}>
                       Upload your Summary of Benefits and Coverage to see your plan details extracted here automatically.
                     </p>
                     <button className="btn btn-red" onClick={() => navigate('/policy')}>Upload Policy →</button>
                   </div>
                 )}
               </div>
-              <div style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', width: '8rem', height: '8rem', background: '#fef2f2', borderRadius: '1.5rem', zIndex: -1, border: '1px solid #fecaca' }} />
+              <div style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', width: '8rem', height: '8rem', background: 'var(--accent-subtle)', borderRadius: '1.5rem', zIndex: -1, border: '1px solid var(--accent-border)' }} />
             </motion.div>
           </div>
         </div>
@@ -330,7 +330,7 @@ export default function Home({ policyProfile }) {
             <img src="/logo.png" alt="PolicyCrab" style={{ width: '20px', height: '20px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
             <span style={{ fontWeight: 800, fontSize: '1rem', color: '#fff', letterSpacing: '-0.02em' }}>PolicyCrab</span>
           </div>
-          <p style={{ fontSize: '0.6875rem', color: '#52525b', fontWeight: 500, maxWidth: '36rem', lineHeight: 1.5, textAlign: 'right' }}>
+          <p style={{ fontSize: '0.6875rem', color: '#71717a', fontWeight: 500, maxWidth: '36rem', lineHeight: 1.5, textAlign: 'right' }}>
             Not legal or medical advice. For informational purposes only. Always verify with your insurer and consult a licensed professional. Use at your own risk.
           </p>
         </div>

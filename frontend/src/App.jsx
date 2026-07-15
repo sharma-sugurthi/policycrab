@@ -12,6 +12,27 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 const LS_POLICY_KEY = 'policycrab_policy_profile'
 const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
 const LS_ONBOARDED_KEY = 'policycrab_onboarded'
+const LS_THEME_KEY = 'policycrab_theme'
+
+// ── Theme Hook ───────────────────────────────────────────────
+function useTheme() {
+  const [theme, setThemeState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(LS_THEME_KEY)
+      if (stored === 'dark' || stored === 'light') return stored
+      if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark'
+    } catch {}
+    return 'light'
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem(LS_THEME_KEY, theme)
+  }, [theme])
+
+  const toggleTheme = () => setThemeState(t => t === 'dark' ? 'light' : 'dark')
+  return { theme, toggleTheme }
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -199,6 +220,7 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const { user, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -270,7 +292,7 @@ function AppContent() {
             ))}
           </nav>
 
-          <div className="navbar-status" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="navbar-status" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {user ? (
               <>
                 <span className="navbar-email">{user.email}</span>
@@ -281,6 +303,15 @@ function AppContent() {
                 Sign In
               </NavLink>
             )}
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
             <button
               type="button"
               className={`mobile-menu-button${mobileMenuOpen ? ' active' : ''}`}

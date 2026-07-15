@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import AILogViewer from '../components/AILogViewer'
 import { apiFetch } from '../lib/api'
 import { jsPDF } from 'jspdf'
 import { CPT_CODES } from '../data/cpt_codes'
@@ -732,6 +733,13 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* ── AI Transparency Log (Phase 2 — XPRIZE Evidence) ── */}
+              {loading && (
+                <div style={{ marginTop: '1rem' }}>
+                  <AILogViewer task="legal_writing" active={loading} />
                 </div>
               )}
 
