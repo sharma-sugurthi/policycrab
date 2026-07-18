@@ -39,13 +39,19 @@ LETTER REQUIREMENTS:
 1. Use formal business letter format
 2. Address it to the plan's grievance/appeals department
 3. Reference the specific denial reason and any CARC/RARC codes
-4. Cite the SPECIFIC federal/state regulations that support the patient's case
-5. Use the regulatory citations from the knowledge base retrieval (provided below)
-6. Include a clear statement of what relief is being requested
-7. Reference relevant legal precedents and statutes
-8. Include a deadline for the plan to respond
-9. Be persuasive but factual — never fabricate citations
-10. End with consequences of non-compliance (DOI complaint, federal court, etc.)
+4. If POLICY CONTRADICTIONS are provided below, cite them with EXACT PAGE NUMBERS (e.g., 'As stated on Page 47 of the attached policy...'). This is mandatory.
+5. Cite the SPECIFIC federal/state regulations that support the patient's case
+6. Use the regulatory citations from the knowledge base retrieval (provided below)
+7. Include a clear statement of what relief is being requested
+8. Reference relevant legal precedents and statutes
+9. Include a deadline for the plan to respond
+10. Be persuasive but factual — never fabricate citations, page numbers, or clause text
+11. End with consequences of non-compliance (DOI complaint, federal court, etc.)
+12. If the HONEST ASSESSMENT indicates the patient is unlikely to win, still write the letter but include a note in recommended_next_steps about the realistic prospects
+
+CRITICAL: When policy contradictions are available, the letter must include a section titled
+'SPECIFIC POLICY CONTRADICTIONS' that states verbatim: 'On page [X] of the policy, it states:
+[exact quote]. The insurer's denial of [reason] directly contradicts this provision.'
 
 REGULATORY CONTEXT: Use the retrieved knowledge base excerpts to cite specific laws, 
 deadlines, and patient rights. Every legal assertion must be supported by a citation.
@@ -57,14 +63,208 @@ Respond with a JSON object containing:
 """
 
 
+PROVIDER_CORRECTION_PROMPT = """You are a medical billing advocate helping a patient request a
+corrected claim resubmission from a hospital's billing department.
+
+The insurance claim was DENIED due to a PROVIDER BILLING ERROR — not because of a coverage issue.
+The hospital's billing department needs to correct and refile the claim.
+
+Draft a professional, clear letter to the HOSPITAL BILLING DEPARTMENT (NOT the insurance company)
+requesting a corrected claim resubmission.
+
+LETTER REQUIREMENTS:
+1. Address it to 'Patient Billing Department' or 'Medical Billing Office'
+2. Clearly identify the claim: patient name, date of service, claim/account number if known
+3. State the specific billing errors detected (from the triage analysis)
+4. Reference the CARC denial code and its meaning
+5. Request a specific corrective action (e.g., 'add Modifier 25 to CPT code XXXXX')
+6. Request a written confirmation of resubmission
+7. Set a 30-day response deadline
+8. Be firm but professional — this is not adversarial, it's a correction request
+9. Do NOT cite ERISA or ACA — this is a billing correction, not a legal appeal
+
+Respond with a JSON object containing:
+- appeal_letter: The full text of the corrected claim request letter
+- cited_regulations: [] (empty — no regulations needed for billing corrections)
+- recommended_next_steps: Array of specific actionable steps for the patient
+"""
+
+
 async def grievance_node(state: AgentState) -> dict:
     """
-    Draft a formal appeal letter for a denied claim.
-    Uses RAG to retrieve relevant regulations, then Gemini Pro for drafting.
-    """
-    logger.info("Agent 3 (Grievance): Starting appeal letter drafting")
+    Draft a formal letter for a denied claim.
 
+    Branches based on Triage Agent output:
+    - PROVIDER_CODING_ERROR → Draft a corrected claim request to the hospital billing dept
+    - PAYER_ILLEGAL_DENIAL  → Draft a formal legal appeal to the insurance company
+    """
     errors = state.get("errors", [])
+    triage_decision = state.get("triage_decision")
+
+    # ── Route based on Triage Agent decision ──────────────────────
+    triage_path = "PAYER_ILLEGAL_DENIAL"  # default — never block the appeal path
+    triage_confidence = "LOW"
+    triage_action_summary = ""
+    estimated_success_probability = 0.5
+
+    if triage_decision:
+        triage_path = triage_decision.get("path", "PAYER_ILLEGAL_DENIAL")
+        triage_confidence = triage_decision.get("confidence", "LOW")
+        triage_action_summary = triage_decision.get("action_summary", "")
+        estimated_success_probability = triage_decision.get("estimated_success_probability", 0.5)
+
+    if triage_path == "PROVIDER_CODING_ERROR":
+        logger.info(
+            "Agent 3 (Grievance): Triage → PROVIDER_CODING_ERROR. "
+            "Drafting corrected claim request letter to provider billing department."
+        )
+        return await _draft_provider_correction_letter(
+            state, errors, triage_decision,
+            triage_path, triage_confidence, triage_action_summary, estimated_success_probability
+        )
+    else:
+        logger.info(
+            f"Agent 3 (Grievance): Triage → {triage_path} (confidence={triage_confidence}). "
+            "Drafting formal legal appeal letter to insurance company."
+        )
+        return await _draft_payer_appeal_letter(
+            state, errors, triage_decision,
+            triage_path, triage_confidence, triage_action_summary, estimated_success_probability
+        )
+
+
+async def _draft_provider_correction_letter(
+    state: AgentState,
+    errors: list,
+    triage_decision: dict,
+    triage_path: str,
+    triage_confidence: str,
+    triage_action_summary: str,
+    estimated_success_probability: float,
+) -> dict:
+    """
+    Draft a corrected claim request letter to the hospital's billing department.
+    This is the PROVIDER_CODING_ERROR path — no ERISA citations, no RAG retrieval.
+    """
+    if not state.get("claim_case"):
+        return {"errors": errors + ["Grievance Agent: No claim case available"], "current_phase": "appeal"}
+
+    try:
+        claim = ClaimCase(**state["claim_case"])
+        policy = PolicyProfile(**state["policy_profile"]) if state.get("policy_profile") else None
+
+        framework = route_to_appeal_framework(policy, claim) if policy else None
+        denial_date = claim.denial_date or date.today()
+
+        coding_errors = triage_decision.get("coding_errors_detected", []) if triage_decision else []
+        corrected_claim_instructions = triage_decision.get("corrected_claim_instructions", "") if triage_decision else ""
+
+        case_summary = (
+            f"CLAIM DETAILS (for corrected claim request):\n"
+            f"- Patient Plan: {policy.plan_name if policy else 'Unknown'} ({policy.carrier_name if policy else ''})\n"
+            f"- Procedure: CPT {claim.cpt_code} — {claim.cpt_description}\n"
+            f"- Diagnosis: ICD-10 {claim.icd_10_code} — {claim.icd_10_description}\n"
+            f"- Date of Service: {claim.date_of_service}\n"
+            f"- Billed Amount: ${claim.billed_amount:,.2f}\n"
+            f"- Provider: {claim.provider_name or 'Not specified'}\n"
+            f"- Facility: {claim.facility_name or 'Not specified'}\n"
+            f"- Denial CARC Code: {claim.denial_carc_code or 'Not specified'}\n"
+            f"\nCODING ERRORS DETECTED BY TRIAGE ANALYSIS:\n"
+        )
+        for err in coding_errors:
+            case_summary += f"• {err}\n"
+
+        if corrected_claim_instructions:
+            case_summary += f"\nSUGGESTED CORRECTIVE ACTIONS:\n{corrected_claim_instructions}\n"
+
+        llm = get_llm(TaskType.LEGAL_WRITING, temperature=0.3)
+        messages = [
+            SystemMessage(content=PROVIDER_CORRECTION_PROMPT),
+            HumanMessage(content=f"{case_summary}\n\nDraft the provider correction request letter now."),
+        ]
+
+        response = await llm.ainvoke(messages)
+        content = response.content
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0]
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0]
+
+        try:
+            appeal_data = json.loads(content.strip())
+        except json.JSONDecodeError:
+            appeal_data = {
+                "appeal_letter": response.content,
+                "cited_regulations": [],
+                "recommended_next_steps": [
+                    "Send this letter to the hospital's billing department via certified mail.",
+                    "Follow up in 30 days if no response.",
+                    "Request written confirmation of corrected claim resubmission.",
+                ],
+            }
+
+        appeal_output = AppealOutput(
+            appeal_framework=framework if framework else route_to_appeal_framework(
+                PolicyProfile(
+                    plan_name="Unknown", carrier_name="Unknown",
+                    plan_type="PPO", legal_classification="FULLY_INSURED",
+                ) if not policy else policy,
+                claim,
+            ),
+            denial_reason=claim.denial_reason or DenialReason.OTHER,
+            denial_date=denial_date,
+            appeal_deadline=denial_date,  # No legal deadline for correction requests
+            days_remaining=30,
+            appeal_letter=appeal_data.get("appeal_letter", ""),
+            letter_type="provider_correction",
+            letter_format="correction_request",
+            cited_regulations=[],
+            cited_knowledge_chunks=[],
+            policy_citations=[],
+            contradiction_detected=False,
+            contradiction_strength="NONE",
+            appeal_recommendation="PROVIDER_CORRECTION",
+            honest_assessment=triage_action_summary,
+            plain_english_summary="",
+            recommended_next_steps=appeal_data.get("recommended_next_steps", []),
+            triage_path=triage_path,
+            triage_confidence=triage_confidence,
+            triage_action_summary=triage_action_summary,
+            estimated_success_probability=estimated_success_probability,
+        )
+
+        logger.info(
+            f"Agent 3 (Grievance): Provider correction letter drafted. "
+            f"Coding errors: {len(coding_errors)}. "
+            f"Estimated success: {estimated_success_probability:.0%}"
+        )
+
+        return {
+            "appeal_output": appeal_output.model_dump(mode="json"),
+            "current_phase": "appeal",
+            "errors": errors,
+        }
+
+    except Exception as e:
+        error_msg = f"Agent 3 (Provider Correction): Letter drafting failed: {e}"
+        logger.error(error_msg, exc_info=True)
+        return {"errors": errors + [error_msg], "current_phase": "appeal"}
+
+
+async def _draft_payer_appeal_letter(
+    state: AgentState,
+    errors: list,
+    triage_decision: dict | None,
+    triage_path: str,
+    triage_confidence: str,
+    triage_action_summary: str,
+    estimated_success_probability: float,
+) -> dict:
+    """
+    Draft a formal legal appeal letter to the insurance company.
+    This is the original PAYER_ILLEGAL_DENIAL path — full ERISA/ACA/NSA legal writing.
+    """
+    logger.info("Agent 3 (Grievance): Starting payer appeal letter drafting")
 
     # Validate required inputs
     if not state.get("policy_profile"):
@@ -164,10 +364,59 @@ async def grievance_node(state: AgentState) -> dict:
                 for m in state_ctx['notable_mandates'][:3]:
                     case_summary += f"  • {m}\n"
 
+        # ── Step 4b: Inject Policy Contradiction Evidence ─────────────
+        # This is the key upgrade: if the Policy Analyzer found contradictions,
+        # inject the exact page numbers and clause text into the letter prompt.
+        contradiction_context = ""
+        contradiction_analysis = state.get("contradiction_analysis")
+        appeal_recommendation = "APPEAL"  # default
+        contradiction_detected = False
+        contradiction_strength = "NONE"
+        honest_assessment = ""
+        policy_citations_for_output = []
+
+        if contradiction_analysis:
+            appeal_recommendation = contradiction_analysis.get("appeal_recommendation", "APPEAL")
+            contradiction_detected = contradiction_analysis.get("is_contradiction", False)
+            contradiction_strength = contradiction_analysis.get("contradiction_strength", "NONE")
+            honest_assessment = contradiction_analysis.get("honest_assessment", "")
+
+            contradictions = contradiction_analysis.get("contradictions", [])
+            key_findings = contradiction_analysis.get("key_findings", [])
+
+            if contradictions:
+                contradiction_context = "\nPOLICY DOCUMENT CONTRADICTIONS (CITE THESE WITH EXACT PAGE NUMBERS):\n"
+                for c in contradictions:
+                    pg = c.get("page_number", "?")
+                    clause = c.get("exact_clause_text", "")
+                    explanation = c.get("contradiction_explanation", "")
+                    mistake = c.get("insurer_mistake", "")
+                    contradiction_context += (
+                        f"\n• PAGE {pg}: \"{clause}\"\n"
+                        f"  CONTRADICTION: {explanation}\n"
+                        f"  INSURER MISTAKE: {mistake}\n"
+                    )
+                    # Build PolicyCitation for AppealOutput
+                    policy_citations_for_output.append({
+                        "page_number": pg,
+                        "exact_clause_text": clause,
+                        "contradiction_explanation": explanation,
+                        "insurer_mistake": mistake,
+                    })
+
+            if key_findings:
+                contradiction_context += "\nKEY FINDINGS FROM POLICY ANALYSIS:\n"
+                for finding in key_findings:
+                    contradiction_context += f"• {finding}\n"
+
+            if honest_assessment:
+                contradiction_context += f"\nHONEST ASSESSMENT: {honest_assessment}\n"
+
         messages = [
             SystemMessage(content=APPEAL_DRAFTING_PROMPT),
             HumanMessage(content=(
                 f"{case_summary}\n\n"
+                f"{contradiction_context}\n"
                 f"RETRIEVED REGULATORY KNOWLEDGE:\n{rag_context}\n\n"
                 f"Draft the formal appeal letter now."
             )),
@@ -205,6 +454,17 @@ async def grievance_node(state: AgentState) -> dict:
                     relevance=reg.get("relevance", ""),
                 ))
 
+        # Build PolicyCitation objects from contradiction analysis
+        from app.models.appeal import PolicyCitation
+        policy_citations = []
+        for pc in policy_citations_for_output:
+            policy_citations.append(PolicyCitation(
+                page_number=pc["page_number"],
+                exact_clause_text=pc["exact_clause_text"],
+                contradiction_explanation=pc.get("contradiction_explanation", ""),
+                insurer_mistake=pc.get("insurer_mistake", ""),
+            ))
+
         appeal_output = AppealOutput(
             appeal_framework=framework,
             denial_reason=denial_reason,
@@ -212,16 +472,28 @@ async def grievance_node(state: AgentState) -> dict:
             appeal_deadline=date.fromisoformat(deadline_info["deadline_date"]),
             days_remaining=deadline_info["days_remaining"],
             appeal_letter=appeal_data.get("appeal_letter", ""),
+            letter_type="payer_appeal",
+            letter_format="formal",
             cited_regulations=citations,
             cited_knowledge_chunks=chunk_ids,
+            policy_citations=policy_citations,
+            contradiction_detected=contradiction_detected,
+            contradiction_strength=contradiction_strength,
+            appeal_recommendation=appeal_recommendation,
+            honest_assessment=honest_assessment,
             plain_english_summary="",  # Will be populated by Explanation Agent
             recommended_next_steps=appeal_data.get("recommended_next_steps", []),
+            triage_path=triage_path,
+            triage_confidence=triage_confidence,
+            triage_action_summary=triage_action_summary,
+            estimated_success_probability=estimated_success_probability,
         )
 
         logger.info(
-            f"Agent 3: Appeal drafted — Framework: {framework.value}, "
+            f"Agent 3 (Grievance): Payer appeal drafted. Framework: {framework.value}, "
             f"Deadline: {deadline_info['deadline_date']}, "
-            f"Citations: {len(citations)}, RAG chunks: {len(chunk_ids)}"
+            f"Citations: {len(citations)}, RAG chunks: {len(chunk_ids)}. "
+            f"Estimated success: {estimated_success_probability:.0%}"
         )
 
         return {
@@ -231,7 +503,7 @@ async def grievance_node(state: AgentState) -> dict:
         }
 
     except Exception as e:
-        error_msg = f"Agent 3: Appeal drafting failed: {e}"
+        error_msg = f"Agent 3 (Payer Appeal): Drafting failed: {e}"
         logger.error(error_msg, exc_info=True)
         return {
             "errors": errors + [error_msg],

@@ -1,15 +1,15 @@
 """
 LangGraph State Machine — the central orchestrator.
 
-Wires together all 5 agents and 3 deterministic functions into
+Wires together all 6 agents and 3 deterministic functions into
 a single executable graph with conditional routing.
 
 Three entry paths:
 1. Policy Upload → Agent 1 (Ingestion) → Agent 4 (Explain) → END
 2. Claim Evaluation → Agent 2 (Intake) → Cost Engine → Router →
-   [if denied] → Agent 3 (Grievance) → Agent 4 (Explain) → END
-   [if approved] → Agent 4 (Explain) → END
-3. Chat → Agent 5 (Chat) → END
+   [if denied] → Agent 4 (Policy Analyzer) → Agent 3 (Grievance) → Agent 5 (Explain) → END
+   [if approved] → Agent 5 (Explain) → END
+3. Chat → Agent 6 (Chat) → END
 """
 
 import logging
@@ -18,6 +18,8 @@ from langgraph.graph import StateGraph, END
 from app.agents.state import AgentState
 from app.agents.policy_ingestion import policy_ingestion_node
 from app.agents.claim_intake import claim_intake_node
+from app.agents.policy_analyzer import policy_analyzer_node
+from app.agents.triage import triage_node
 from app.agents.grievance import grievance_node
 from app.agents.explanation import explanation_node
 from app.agents.chat import chat_node
@@ -108,11 +110,11 @@ def route_after_intake(state: AgentState) -> str:
 
 
 def route_after_cost(state: AgentState) -> str:
-    """Route after cost calculation: approved → explain, denied → grievance."""
+    """Route after cost calculation: approved → explain, denied → policy_analyzer → grievance."""
     route = state.get("route_decision", "approved")
     if route == "denied":
-        logger.info("Routing → Grievance Agent (claim denied)")
-        return "grievance"
+        logger.info("Routing → Policy Analyzer (claim denied)")
+        return "policy_analyzer"
     else:
         logger.info("Routing → Explanation Agent (claim approved)")
         return "explain_cost"
@@ -130,7 +132,7 @@ def build_claim_evaluation_graph() -> StateGraph:
     Build the claim evaluation pipeline graph.
 
     Flow:
-    claim_intake → cost_calculation → [denied?] → grievance → explain_appeal → END
+    claim_intake → cost_calculation → [denied?] → policy_analyzer → grievance → explain_appeal → END
                                     → [approved?] → explain_cost → END
     """
     graph = StateGraph(AgentState)
@@ -138,6 +140,8 @@ def build_claim_evaluation_graph() -> StateGraph:
     # Add nodes
     graph.add_node("claim_intake", claim_intake_node)
     graph.add_node("cost_calculation", cost_calculation_node)
+    graph.add_node("policy_analyzer", policy_analyzer_node)
+    graph.add_node("triage", triage_node)                     # NEW: Triage agent
     graph.add_node("grievance", grievance_node)
     graph.add_node("explain_cost", explanation_node)
     graph.add_node("explain_appeal", explanation_node)
@@ -151,10 +155,12 @@ def build_claim_evaluation_graph() -> StateGraph:
         "cost_calculation",
         route_after_cost,
         {
-            "grievance": "grievance",
-            "explain_cost": "explain_cost",
+            "policy_analyzer": "policy_analyzer",  # denied path
+            "explain_cost": "explain_cost",         # approved path
         }
     )
+    graph.add_edge("policy_analyzer", "triage")     # Analyzer → Triage
+    graph.add_edge("triage", "grievance")           # Triage → Grievance
     graph.add_edge("grievance", "explain_appeal")
     graph.add_edge("explain_cost", END)
     graph.add_edge("explain_appeal", END)

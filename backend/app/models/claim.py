@@ -28,6 +28,27 @@ class ClaimCase(BaseModel):
     facility_name: str | None = Field(None, description="Hospital or facility name")
     provider_npi: str | None = Field(None, description="National Provider Identifier (10-digit)")
     network_status: NetworkStatus = Field(..., description="Provider's network status under the patient's plan")
+    # The facility (hospital) network status, which may DIFFER from the individual provider's status.
+    # This is the critical field for NSA ancillary provider detection:
+    # e.g., an OON anesthesiologist (network_status=OUT_OF_NETWORK) working at an INN hospital
+    # (facility_network_status=IN_NETWORK) — the patient CANNOT be balance billed for this.
+    facility_network_status: NetworkStatus | None = Field(
+        None,
+        description=(
+            "The hospital/facility's network status. If this is IN_NETWORK while "
+            "network_status is OUT_OF_NETWORK, an NSA ancillary provider violation may apply."
+        ),
+    )
+    # Identifies whether this claim is for an ancillary service. Under the NSA, ancillary
+    # providers (anesthesiology, pathology, radiology, neonatology, assistant surgeons, etc.)
+    # at in-network facilities are specifically prohibited from balance billing.
+    ancillary_service_type: str | None = Field(
+        None,
+        description=(
+            "Type of ancillary service if applicable (e.g., 'anesthesiology', 'radiology', "
+            "'pathology', 'neonatology'). Populated by Claim Intake Agent."
+        ),
+    )
 
     # ── Authorization & Referral Status ───────────────────────────
     is_emergency: bool = Field(False, description="True if this was an emergency service (triggers NSA/EMTALA)")
@@ -97,6 +118,23 @@ class CostBreakdown(BaseModel):
     )
     hit_oop_max: bool = Field(
         False, description="True if patient hit the OOP max during this claim"
+    )
+
+    # ── NSA Violation Flags ───────────────────────────────────────
+    # These are populated when the calculator detects an NSA Scenario B violation
+    # (OON ancillary provider at INN facility). The grievance agent uses these to
+    # draft a targeted NSA appeal letter citing the exact illegal balance billed amount.
+    nsa_violation_detected: bool = Field(
+        False,
+        description="True if an NSA ancillary provider balance billing violation was detected",
+    )
+    illegal_balance_billed_amount: float = Field(
+        0.0,
+        description=(
+            "The amount the provider/EOB attempted to illegally assign to the patient "
+            "in violation of 45 CFR § 149.410(b). This is the amount the appeal letter "
+            "must demand be corrected or refunded."
+        ),
     )
 
     # ── Status & Notes ────────────────────────────────────────────

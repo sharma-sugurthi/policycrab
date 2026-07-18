@@ -1,0 +1,28 @@
+{
+  "id": "FORM-154",
+  "category": "formulary_exception",
+  "title": "Diabetes medication not on formulary - 13",
+  "claim_description": "My doctor prescribed Ozempic for my Type 2 Diabetes. The pharmacy said it was denied because it's not on the plan's formulary list.",
+  "policy_profile": {
+    "plan_name": "Standard HMO",
+    "carrier_name": "BenchmarkHealth",
+    "plan_type": "HMO",
+    "legal_classification": "INDIVIDUAL_ACA",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2,
+    "out_of_network_deductible_individual": 2000,
+    "out_of_network_oop_max_individual": 10000,
+    "out_of_network_coinsurance": 0.4
+  },
+  "benchmark_policy_excerpt": "Section 9 \u2014 Prescription Drugs: Medications not listed on the plan formulary are excluded from standard coverage. Members may request a Formulary Exception if their prescribing physician demonstrates that all formulary alternatives are clinically ineffective or contraindicated.",
+  "allowed_amount": 900,
+  "expected": {
+    "appeal_recommendation": "EXCEPTION_REQUEST",
+    "contradiction_detected": false,
+    "contradiction_strength": "NONE",
+    "route_decision": "denied"
+  },
+  "ground_truth_rationale": "Medication is not on the formulary. A standard appeal will fail; an exception request is required."
+}

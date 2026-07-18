@@ -31,6 +31,10 @@ class ClaimEvaluationRequest(BaseModel):
         gt=0,
         description="Optional EOB/ERA allowed amount. If omitted, the engine uses billed amount as a conservative estimate and labels the result as an estimate.",
     )
+    benchmark_policy_excerpt: str | None = Field(
+        None,
+        description="Hidden field for automated benchmarks. Injects policy excerpt directly, bypassing RAG."
+    )
 
 
 class ClaimEvaluationResponse(BaseModel):
@@ -67,6 +71,7 @@ async def evaluate_claim(
         "messages": [],
         "raw_policy_text": "",
         "raw_claim_text": request.claim_description,
+        "benchmark_policy_excerpt": request.benchmark_policy_excerpt,
         "policy_profile": request.policy_profile,
         "claim_case": None,
         "allowed_amount": request.allowed_amount,

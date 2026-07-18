@@ -1,0 +1,3009 @@
+{
+  "summary": {
+    "total": 200,
+    "passed": 0,
+    "accuracy_percent": 0.0
+  },
+  "results": [
+    {
+      "case_id": "FORM-056",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-049",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-198",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-043",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-090",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-114",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-004",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-163",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-015",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-076",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-113",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-136",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-147",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-019",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-064",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-005",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "FORM-041",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-009",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-119",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "error": ""
+      },
+      "status": "fail",
+      "reason": "API Error: "
+    },
+    {
+      "case_id": "INFR-093",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-077",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-086",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-094",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-084",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-158",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-073",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-118",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-166",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-069",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-068",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-057",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-120",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-117",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-062",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-149",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-173",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-110",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-178",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-065",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-160",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-033",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-109",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "FORM-058",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-159",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-042",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-181",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-012",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-176",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-137",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-155",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-143",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-146",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-039",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-165",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-021",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-200",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-103",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-037",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-002",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-071",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-139",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-135",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-045",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-003",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "INFR-184",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-157",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-121",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-182",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-066",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-038",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-130",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-100",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-116",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-102",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "INFR-092",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-059",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-063",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-036",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-030",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-013",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-171",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-101",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-018",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "INFR-096",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-123",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-196",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-140",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-081",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-085",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-172",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-199",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-032",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-054",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-148",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-025",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-175",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-060",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-017",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-168",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-020",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-167",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-067",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-153",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-197",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-048",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-188",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-055",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-083",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-131",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-001",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-104",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-125",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-183",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-027",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-107",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "FORM-050",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-053",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-190",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-191",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-072",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-174",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-029",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-150",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-194",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-132",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-128",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-070",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-186",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-089",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-134",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-040",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-129",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-115",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-074",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-035",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-193",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-014",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "LMIT-164",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-010",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "INFR-098",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-099",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-108",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "EMRG-011",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "FORM-052",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-127",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-026",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-177",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-169",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "error": ""
+      },
+      "status": "fail",
+      "reason": "API Error: "
+    },
+    {
+      "case_id": "EMRG-105",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "FORM-044",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-189",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-170",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-180",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-007",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-022",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-031",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-097",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-080",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-061",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-161",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-111",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "INFR-082",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-133",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-145",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-152",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-008",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "INFR-095",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-144",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-075",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-187",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-034",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-087",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-112",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "FORM-154",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-126",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-179",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-088",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-016",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-024",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-006",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-138",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-047",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-151",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-046",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-141",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-156",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-023",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-079",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-028",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-051",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-185",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-078",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "FORM-142",
+      "category": "formulary_exception",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected EXCEPTION_REQUEST, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "EMRG-106",
+      "category": "emergency_care",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected STRONG_APPEAL, got None; Contradiction Detected: expected True, got None; Strength: expected STRONG, got None"
+    },
+    {
+      "case_id": "COSM-124",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-195",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "COSM-122",
+      "category": "explicit_exclusion",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "LMIT-162",
+      "category": "annual_limit",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected CLAIM_CORRECTLY_DENIED, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-091",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    },
+    {
+      "case_id": "INFR-192",
+      "category": "hard_exclusion",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "route_decision": ""
+      },
+      "status": "fail",
+      "reason": "Recommendation: expected UNLIKELY_TO_WIN, got None; Contradiction Detected: expected False, got None; Strength: expected NONE, got None"
+    }
+  ]
+}

@@ -21,6 +21,7 @@ class TaskType(str, Enum):
     EXTRACTION = "extraction"          # Policy parsing, structured output
     TOOL_CALLING = "tool_calling"      # Agent tool use, CPT/ICD lookup
     LEGAL_WRITING = "legal_writing"    # Appeal letter drafting (highest quality)
+    REASONING = "reasoning"            # Deep contradiction analysis (Policy Analyzer)
     EXPLANATION = "explanation"        # Jargon → plain English
     CHAT = "chat"                      # Interactive Q&A
 
@@ -49,6 +50,14 @@ TASK_STEP_LOGS: dict[TaskType, list[str]] = {
         "[Gemini Pro] Calculating appeal deadline and urgency...",
         "[Gemini Pro] Drafting formal appeal letter with legal citations...",
         "[Gemini Pro] Validating citations against knowledge base ✓",
+    ],
+    TaskType.REASONING: [
+        "[Gemini Pro] Loading patient policy document from vector store...",
+        "[Gemini Pro] Generating targeted queries from denial reason...",
+        "[Gemini Pro] Retrieving relevant policy clauses by semantic search...",
+        "[Gemini Pro] Comparing denial reason to retrieved policy language...",
+        "[Gemini Pro] Detecting contradictions and insurer mistakes...",
+        "[Gemini Pro] Extracting exact page numbers and clause text ✓",
     ],
     TaskType.EXPLANATION: [
         "[Gemini] Translating insurance jargon to plain English...",
@@ -80,6 +89,10 @@ _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     ],
     TaskType.LEGAL_WRITING: [
         {"provider": "gemini", "model": "gemini-2.5-pro"},     # PRIMARY — best for long-form legal reasoning
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+    ],
+    TaskType.REASONING: [
+        {"provider": "gemini", "model": "gemini-2.5-pro"},     # PRIMARY — deep multi-document legal reasoning
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
     ],
     TaskType.EXPLANATION: [
@@ -174,7 +187,7 @@ def get_embedding_client():
 
 
 async def generate_embedding(text: str) -> list[float]:
-    """Generate a 768-dim embedding using Gemini Embedding 001."""
+    """Generate a 768-dim embedding using Gemini Embedding — optimized for queries."""
     client = get_embedding_client()
     result = client.models.embed_content(
         model=settings.embedding_model,
@@ -185,3 +198,88 @@ async def generate_embedding(text: str) -> list[float]:
         },
     )
     return result.embeddings[0].values
+
+
+async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> list[dict]:
+    """
+    Embed a list of page-aware text chunks using Gemini Embedding.
+
+    Each input chunk must have 'chunk_text', 'page_number', and 'chunk_index'.
+    Returns the same list with 'embedding' added to each chunk.
+
+    Uses RETRIEVAL_DOCUMENT task_type (not QUERY) to optimize for storage.
+    Processes in batches of 50 with inter-batch delays to respect rate limits.
+    Includes exponential backoff on 429 RESOURCE_EXHAUSTED errors.
+
+    Args:
+        chunks: List of chunk dicts with chunk_text, page_number, chunk_index.
+        max_pages: Soft cap — chunks beyond this page number are skipped to prevent
+                   runaway billing on extremely long documents. Default is 200 pages.
+    """
+    import asyncio
+    client = get_embedding_client()
+    embedded_chunks = []
+    batch_size = 50
+    BATCH_DELAY_S = 0.5   # 500ms between batches — stay under 100 req/min free tier
+    MAX_RETRIES = 3
+
+    # Soft page cap — skip chunks from pages beyond max_pages
+    filtered = [c for c in chunks if c.get("page_number", 0) <= max_pages]
+    if len(filtered) < len(chunks):
+        skipped = len(chunks) - len(filtered)
+        logger.warning(
+            f"embed_document_chunks: Skipped {skipped} chunks beyond page {max_pages} "
+            f"(soft cap). Total chunks to embed: {len(filtered)}"
+        )
+
+    for i in range(0, len(filtered), batch_size):
+        batch = filtered[i: i + batch_size]
+        texts = [c["chunk_text"] for c in batch]
+        batch_num = i // batch_size + 1
+        total_batches = (len(filtered) + batch_size - 1) // batch_size
+
+        success = False
+        for attempt in range(MAX_RETRIES):
+            try:
+                result = client.models.embed_content(
+                    model=settings.embedding_model,
+                    contents=texts,
+                    config={
+                        "task_type": "RETRIEVAL_DOCUMENT",  # Optimized for document storage
+                        "output_dimensionality": settings.embedding_dimensions,
+                    },
+                )
+                for chunk, emb in zip(batch, result.embeddings):
+                    embedded_chunks.append({**chunk, "embedding": emb.values})
+                success = True
+                logger.debug(f"Batch {batch_num}/{total_batches} embedded ({len(batch)} chunks)")
+                break
+
+            except Exception as e:
+                err_str = str(e)
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                    wait = (2 ** attempt) * 5  # 5s, 10s, 20s
+                    logger.warning(
+                        f"Embedding batch {batch_num} rate-limited (attempt {attempt + 1}/{MAX_RETRIES}). "
+                        f"Waiting {wait}s before retry..."
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    logger.error(f"Embedding batch {batch_num} failed (non-retryable): {e}")
+                    break
+
+        if not success:
+            logger.error(f"Embedding batch {batch_num} failed after {MAX_RETRIES} retries — inserting without embeddings")
+            for chunk in batch:
+                embedded_chunks.append({**chunk, "embedding": None})
+
+        # Inter-batch delay to stay within Gemini free-tier rate limits
+        if i + batch_size < len(filtered):
+            await asyncio.sleep(BATCH_DELAY_S)
+
+    valid = sum(1 for c in embedded_chunks if c.get("embedding") is not None)
+    logger.info(
+        f"embed_document_chunks: {valid}/{len(filtered)} chunks embedded successfully "
+        f"({len(chunks) - len(filtered)} skipped by page cap)"
+    )
+    return embedded_chunks

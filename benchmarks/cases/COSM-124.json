@@ -1,0 +1,28 @@
+{
+  "id": "COSM-124",
+  "category": "explicit_exclusion",
+  "title": "Out of network elective rhinoplasty denied - 3",
+  "claim_description": "I went to an out-of-network plastic surgery clinic for a cosmetic rhinoplasty to improve the appearance of my nose. The clinic billed $12,000. Insurance denied it as not covered.",
+  "policy_profile": {
+    "plan_name": "Standard PPO",
+    "carrier_name": "BenchmarkHealth",
+    "plan_type": "PPO",
+    "legal_classification": "INDIVIDUAL_ACA",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2,
+    "out_of_network_deductible_individual": 2000,
+    "out_of_network_oop_max_individual": 10000,
+    "out_of_network_coinsurance": 0.4
+  },
+  "benchmark_policy_excerpt": "Section 8 \u2014 General Exclusions: Cosmetic surgery, defined as surgery performed primarily to alter or reshape normal structures of the body in order to improve appearance, is explicitly excluded from coverage under any circumstances.",
+  "allowed_amount": 12000,
+  "expected": {
+    "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+    "contradiction_detected": false,
+    "contradiction_strength": "NONE",
+    "route_decision": "denied"
+  },
+  "ground_truth_rationale": "Cosmetic surgery is explicitly excluded. The denial is legally and contractually correct."
+}

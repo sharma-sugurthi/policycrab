@@ -14,24 +14,48 @@ const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
 const LS_ONBOARDED_KEY = 'policycrab_onboarded'
 const LS_THEME_KEY = 'policycrab_theme'
 
-// ── Theme Hook ───────────────────────────────────────────────
+// ── Theme Hook (3-state: system / light / dark) ──────────────
 function useTheme() {
   const [theme, setThemeState] = useState(() => {
     try {
       const stored = localStorage.getItem(LS_THEME_KEY)
-      if (stored === 'dark' || stored === 'light') return stored
-      if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark'
+      if (stored === 'dark' || stored === 'light' || stored === 'system') return stored
     } catch {}
-    return 'light'
+    return 'system' // default to system
   })
 
+  // Apply the resolved theme to <html data-theme>
+  const applyResolved = (t) => {
+    const resolved = t === 'system'
+      ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : t
+    document.documentElement.setAttribute('data-theme', resolved)
+  }
+
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
+    applyResolved(theme)
     localStorage.setItem(LS_THEME_KEY, theme)
+
+    // When in system mode, listen for OS theme changes
+    if (theme === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)')
+      const handler = () => applyResolved('system')
+      mq.addEventListener('change', handler)
+      return () => mq.removeEventListener('change', handler)
+    }
   }, [theme])
 
-  const toggleTheme = () => setThemeState(t => t === 'dark' ? 'light' : 'dark')
-  return { theme, toggleTheme }
+  // Cycle: system → light → dark → system
+  const toggleTheme = () => setThemeState(t => {
+    if (t === 'system') return 'light'
+    if (t === 'light') return 'dark'
+    return 'system'
+  })
+
+  const themeIcon = theme === 'dark' ? '☀️' : theme === 'light' ? '🌙' : '🖥️'
+  const themeLabel = theme === 'dark' ? 'Switch to system' : theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
+
+  return { theme, toggleTheme, themeIcon, themeLabel }
 }
 
 function ProtectedRoute({ children }) {
@@ -220,7 +244,7 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const { user, signOut } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, themeIcon, themeLabel } = useTheme()
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -307,10 +331,10 @@ function AppContent() {
               type="button"
               className="theme-toggle"
               onClick={toggleTheme}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              aria-label={themeLabel}
+              title={themeLabel}
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {themeIcon}
             </button>
             <button
               type="button"

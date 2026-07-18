@@ -1,0 +1,28 @@
+{
+  "id": "LMIT-190",
+  "category": "annual_limit",
+  "title": "Physical therapy visits exceeded - 9",
+  "claim_description": "I had my 25th physical therapy session for the year. The bill was $200. Insurance denied it saying I exceeded the maximum allowed visits.",
+  "policy_profile": {
+    "plan_name": "Standard PPO",
+    "carrier_name": "BenchmarkHealth",
+    "plan_type": "PPO",
+    "legal_classification": "INDIVIDUAL_ACA",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2,
+    "out_of_network_deductible_individual": 2000,
+    "out_of_network_oop_max_individual": 10000,
+    "out_of_network_coinsurance": 0.4
+  },
+  "benchmark_policy_excerpt": "Section 5 \u2014 Therapy Services: Physical therapy, occupational therapy, and speech therapy are limited to a combined total of 20 visits per calendar year. Any visits beyond this limit are the sole financial responsibility of the member.",
+  "allowed_amount": 200,
+  "expected": {
+    "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+    "contradiction_detected": false,
+    "contradiction_strength": "NONE",
+    "route_decision": "denied"
+  },
+  "ground_truth_rationale": "Patient exceeded the hard 20-visit limit stated in the policy."
+}

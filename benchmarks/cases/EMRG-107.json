@@ -1,0 +1,28 @@
+{
+  "id": "EMRG-107",
+  "category": "emergency_care",
+  "title": "Emergency Appendectomy Denied for Prior Auth - 6",
+  "claim_description": "I went to the ER with severe abdominal pain and was diagnosed with appendicitis. They performed emergency surgery. The hospital billed $15,000. My insurance denied it stating I didn't get prior authorization.",
+  "policy_profile": {
+    "plan_name": "Standard PPO",
+    "carrier_name": "BenchmarkHealth",
+    "plan_type": "PPO",
+    "legal_classification": "INDIVIDUAL_ACA",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2,
+    "out_of_network_deductible_individual": 2000,
+    "out_of_network_oop_max_individual": 10000,
+    "out_of_network_coinsurance": 0.4
+  },
+  "benchmark_policy_excerpt": "Section 4.2 \u2014 Emergency Services: Prior authorization is strictly waived for all emergency medical conditions. Emergency surgeries and admissions are covered at the in-network cost-sharing level regardless of the facility.",
+  "allowed_amount": 10000,
+  "expected": {
+    "appeal_recommendation": "STRONG_APPEAL",
+    "contradiction_detected": true,
+    "contradiction_strength": "STRONG",
+    "route_decision": "denied"
+  },
+  "ground_truth_rationale": "Emergency surgery is explicitly covered and prior auth is waived for emergencies. Insurer's denial is wrong."
+}

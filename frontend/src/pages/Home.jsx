@@ -103,7 +103,7 @@ export default function Home({ policyProfile }) {
       </section>
 
       {/* ═══════════════ TESTIMONIALS ═══════════════ */}
-      <section className="section-white section-pad" style={{ background: '#fff' }}>
+      <section className="section-white section-pad">
         <div className="main">
           <motion.div
             initial="hidden" whileInView="show" viewport={{ once: true }}

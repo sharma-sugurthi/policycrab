@@ -117,6 +117,11 @@ export default function PolicyUpload({ onPolicyParsed }) {
         setResult(data)
         setEditableProfile({ ...data.policy_profile })
         if (data.extracted_text) setPolicyText(data.extracted_text)
+      } else if (data.session_id && data.policy_indexed) {
+        // RAG indexing succeeded but profile extraction failed (e.g. rate limit on LLM)
+        // Still store the result so the user sees the RAG status
+        setResult(data)
+        setError(data.errors?.join(', ') || 'Policy profile extraction failed, but document was indexed for RAG search.')
       } else {
         setError(data.errors?.join(', ') || 'Failed to parse policy')
       }
@@ -251,6 +256,39 @@ export default function PolicyUpload({ onPolicyParsed }) {
                         <ul>
                           {result.extraction_warnings.map((w, i) => <li key={i}>{w}</li>)}
                         </ul>
+                      </div>
+                    )}
+
+                    {/* RAG Indexing Status Banner */}
+                    {result?.session_id && (
+                      <div style={{
+                        display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+                        padding: '0.875rem 1rem',
+                        background: result.policy_indexed ? '#ecfdf5' : '#fef3c7',
+                        border: `1px solid ${result.policy_indexed ? '#a7f3d0' : '#fde68a'}`,
+                        borderRadius: '0.75rem',
+                        marginBottom: '1rem',
+                      }}>
+                        <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>
+                          {result.policy_indexed ? '🔒' : '⚠️'}
+                        </span>
+                        <div>
+                          <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: result.policy_indexed ? '#065f46' : '#92400e', marginBottom: '0.25rem' }}>
+                            {result.policy_indexed
+                              ? `RAG Document Vault — ${result.policy_page_count || '?'} pages indexed`
+                              : 'RAG indexing failed — appeal letters will use regulations only'}
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: result.policy_indexed ? '#047857' : '#b45309', lineHeight: 1.5 }}>
+                            {result.policy_indexed
+                              ? 'Your full policy is now searchable. The Policy Analyzer will cite exact page numbers when detecting contradictions in insurer denials.'
+                              : 'The document vault could not be populated. Check Supabase connection and try re-uploading.'}
+                          </p>
+                          {result.policy_indexed && (
+                            <p style={{ fontSize: '0.7rem', color: '#a1a1aa', marginTop: '0.25rem', fontFamily: 'monospace' }}>
+                              Session: {result.session_id}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
 

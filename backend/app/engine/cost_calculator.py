@@ -155,24 +155,87 @@ def calculate_cost(
             )
 
     # ── Step 3: NSA Override ──────────────────────────────────────
+    # The No Surprises Act has two main triggering scenarios that we must detect:
+    #
+    # Scenario A (Emergency): Patient receives emergency services at any facility.
+    #   → Force in-network cost-sharing.
+    #
+    # Scenario B (Ancillary Provider at INN Facility): An OON ancillary provider
+    #   (e.g., anesthesiologist, radiologist, pathologist) renders services at an
+    #   IN-NETWORK facility. The patient had no meaningful opportunity to choose
+    #   this provider, so balance billing is ILLEGAL.
+    #   → Force in-network cost-sharing for the ancillary provider.
+    #   → Flag the ILLEGAL BALANCE BILLED AMOUNT for the appeal agent.
+    #
+    # Scenario C (Standard OON): Patient voluntarily chose an OON provider
+    #   at a non-emergency, non-ancillary context.
+    #   → Apply OON cost-sharing rates.
     use_in_network_rates = True
+    nsa_violation_detected = False
+    illegal_balance_billed_amount = 0.0
+
+    # NSA Ancillary types per 45 CFR § 149.410(b) and the NSA regulations
+    NSA_ANCILLARY_TYPES = {
+        "anesthesiology", "anesthesia", "radiology", "pathology",
+        "neonatology", "assistant surgeon", "hospitalist", "intensivist",
+        "diagnostic imaging",
+    }
+
     if claim.network_status == NetworkStatus.OUT_OF_NETWORK:
-        if claim.nsa_applies or claim.is_emergency:
+        # ── Scenario A: Emergency (pre-existing check, enhanced) ──────
+        if claim.is_emergency:
             notes.append(
-                "No Surprises Act applies: patient cost-sharing calculated at "
-                "IN-NETWORK rates despite out-of-network provider."
+                "No Surprises Act / EMTALA (Scenario A — Emergency): Patient cost-sharing "
+                "calculated at IN-NETWORK rates. Emergency services are protected regardless "
+                "of facility or provider network status."
             )
             use_in_network_rates = True
+
+        # ── Scenario B: OON Ancillary Provider at INN Facility ────────
+        elif (
+            claim.facility_network_status == NetworkStatus.IN_NETWORK
+            and claim.ancillary_service_type is not None
+            and claim.ancillary_service_type.lower() in NSA_ANCILLARY_TYPES
+        ):
+            nsa_violation_detected = True
+            use_in_network_rates = True
+            # The "illegal balance" is the full billed amount, because the insurer
+            # paid $0 and told the patient they owe 100% — which violates the NSA.
+            # The legal patient responsibility will be capped at INN cost-sharing below.
+            illegal_balance_billed_amount = effective_allowed
+            notes.append(
+                f"⚠️ NSA VIOLATION DETECTED (Scenario B — Ancillary Provider Balance Billing): "
+                f"Provider '{claim.provider_name or 'Unknown'}' is OUT-OF-NETWORK for "
+                f"{claim.ancillary_service_type} services, but the FACILITY "
+                f"('{claim.facility_name or 'Unknown'}') is IN-NETWORK. "
+                f"Under 45 CFR § 149.410(b) of the No Surprises Act, this provider CANNOT "
+                f"balance bill the patient. Patient cost-sharing is capped at the IN-NETWORK "
+                f"rate. Provider must bill the plan directly and negotiate via the IDR process."
+            )
+            notes.append(
+                f"ILLEGAL AMOUNT ATTEMPTED: The EOB incorrectly assigns "
+                f"${illegal_balance_billed_amount:,.2f} as patient responsibility. "
+                f"Legal maximum patient responsibility is calculated below using INN rates."
+            )
+            # Also trigger the nsa_applies flag for downstream agents
+            claim = claim.model_copy(update={"nsa_applies": True, "nsa_reason": (
+                f"OON {claim.ancillary_service_type} provider at INN facility — "
+                "NSA balance billing prohibition applies per 45 CFR § 149.410(b)."
+            )})
+
+        # ── Scenario C: Standard OON — apply OON rates ────────────────
         elif policy.out_of_network_coinsurance is not None:
             use_in_network_rates = False
             notes.append(
-                "Out-of-network rates applied. Patient is responsible for "
-                "OON deductible and higher coinsurance percentage."
+                "Out-of-network rates applied: Patient voluntarily used an OON provider "
+                "in a non-emergency, non-ancillary context. OON deductible and higher "
+                "coinsurance rates apply per the plan's schedule of benefits."
             )
         else:
             # PPO/POS with no OON benefits defined — unusual, deny
             notes.append(
-                "DENIED: Plan does not define out-of-network benefits."
+                "DENIED: Plan does not define out-of-network benefits and no NSA "
+                "exception applies."
             )
             return _create_denial(
                 claim=claim,
@@ -181,6 +244,14 @@ def calculate_cost(
                 notes=notes,
                 policy=policy,
             )
+
+        # If explicitly flagged by upstream agent (e.g., claim intake), honor it
+        if claim.nsa_applies and not nsa_violation_detected and not claim.is_emergency:
+            notes.append(
+                "No Surprises Act applies (flagged by intake agent): "
+                "Patient cost-sharing calculated at IN-NETWORK rates."
+            )
+            use_in_network_rates = True
 
     # ── Select cost-sharing parameters based on network ───────────
     if use_in_network_rates:
@@ -291,6 +362,8 @@ def calculate_cost(
         oop_remaining_after=max(oop_remaining - patient_total, 0),
         hit_oop_max=hit_oop_max,
         claim_status=ClaimStatus.APPROVED,
+        nsa_violation_detected=nsa_violation_detected,
+        illegal_balance_billed_amount=illegal_balance_billed_amount,
         calculation_notes=notes,
     )
 

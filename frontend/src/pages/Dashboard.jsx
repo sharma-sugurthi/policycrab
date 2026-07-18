@@ -67,12 +67,42 @@ const FIELD_DEFS = [
 function DocumentVault({ policyProfile, onGoToClaim }) {
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [progressText, setProgressText] = useState('Uploading document...')
   const [result, setResult] = useState(null)        // last extraction result
   const [error, setError] = useState(null)
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem(LS_VAULT_KEY) || '[]') } catch { return [] }
   })
   const inputRef = useRef(null)
+
+  useEffect(() => {
+    let interval;
+    if (uploading && uploadProgress < 100) {
+      interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev < 20) {
+            setProgressText('Uploading document...')
+            return prev + 5
+          } else if (prev < 50) {
+            setProgressText('Analyzing layout...')
+            return prev + 2
+          } else if (prev < 85) {
+            setProgressText('Extracting fields via AI...')
+            return prev + 1
+          } else if (prev < 95) {
+            setProgressText('Validating data...')
+            return prev + 0.5
+          }
+          return prev
+        })
+      }, 200)
+    } else if (!uploading) {
+      setUploadProgress(0)
+      setProgressText('Uploading document...')
+    }
+    return () => clearInterval(interval)
+  }, [uploading, uploadProgress])
 
   const saveToHistory = useCallback((entry) => {
     setHistory(prev => {
@@ -114,7 +144,8 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
     } catch (e) {
       setError(e.message || 'Something went wrong.')
     } finally {
-      setUploading(false)
+      setUploadProgress(100)
+      setTimeout(() => setUploading(false), 500)
     }
   }, [saveToHistory])
 
@@ -178,10 +209,24 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
       >
         <input ref={inputRef} type="file" accept=".pdf,image/*" style={{ display: 'none' }} onChange={onFileChange} />
         {uploading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
-            <span className="spinner" style={{ width: 36, height: 36 }} />
-            <p style={{ color: '#71717a', fontSize: '0.9rem', fontWeight: 600 }}>Reading document…</p>
-            <p style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>Extracting fields with AI</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
+            <div style={{ width: '100%', height: '8px', background: '#e4e4e7', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ 
+                height: '100%', 
+                background: '#dc2626', 
+                width: `${uploadProgress}%`,
+                transition: 'width 0.2s ease-out'
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+              <p style={{ color: '#71717a', fontSize: '0.85rem', fontWeight: 600 }}>{progressText}</p>
+              <p style={{ color: '#a1a1aa', fontSize: '0.75rem', fontWeight: 700 }}>{Math.floor(uploadProgress)}%</p>
+            </div>
+            {uploadProgress > 50 && (
+              <p style={{ color: '#a1a1aa', fontSize: '0.7rem', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                Long documents may take up to a minute to process...
+              </p>
+            )}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>

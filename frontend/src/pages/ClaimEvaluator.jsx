@@ -819,25 +819,191 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                   </div>
                 )}
 
+                {/* ── Agent 3: Policy Analyzer Results ────────────────── */}
+                {result.appeal_output && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    style={{
+                      marginBottom: '1.5rem',
+                      border: result.appeal_output.contradiction_detected
+                        ? '1px solid var(--accent-border)'
+                        : '1px solid var(--border-primary)',
+                      borderRadius: 'var(--radius-2xl)',
+                      overflow: 'hidden',
+                      background: 'var(--bg-card)',
+                    }}
+                  >
+                    {/* Header */}
+                    <div style={{
+                      padding: '1.25rem 1.5rem',
+                      background: result.appeal_output.contradiction_detected
+                        ? 'var(--accent-subtle)'
+                        : 'var(--bg-secondary)',
+                      borderBottom: '1px solid var(--border-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem',
+                      flexWrap: 'wrap',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div className="feature-icon red">🔍</div>
+                        <div>
+                          <h3 style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.0625rem' }}>Agent 3: Policy Analyzer</h3>
+                          <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>Cross-referencing denial against your loaded policy document</p>
+                        </div>
+                      </div>
+                      {result.appeal_output.contradiction_strength && (
+                        <span className={`badge ${
+                          result.appeal_output.contradiction_strength === 'STRONG' ? 'badge-danger' :
+                          result.appeal_output.contradiction_strength === 'MODERATE' ? 'badge-warning' :
+                          result.appeal_output.contradiction_strength === 'WEAK' ? 'badge-info' :
+                          'badge-zinc'
+                        }`}>
+                          {result.appeal_output.contradiction_strength === 'STRONG' ? '🚨 Strong Contradiction Found' :
+                           result.appeal_output.contradiction_strength === 'MODERATE' ? '⚠️ Moderate Contradiction Found' :
+                           result.appeal_output.contradiction_strength === 'WEAK' ? '🔎 Weak Contradiction Signal' :
+                           '✓ No Direct Contradiction'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ padding: '1.5rem' }}>
+                      {/* AI Honest Assessment */}
+                      {result.appeal_output.honest_assessment && (
+                        <div style={{
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-secondary)',
+                          borderRadius: 'var(--radius-lg)',
+                          padding: '1rem 1.25rem',
+                          marginBottom: '1.25rem',
+                          display: 'flex',
+                          gap: '0.75rem',
+                          alignItems: 'flex-start',
+                        }}>
+                          <span style={{ fontSize: '1.25rem', lineHeight: 1, flexShrink: 0 }}>🤖</span>
+                          <div>
+                            <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.375rem' }}>AI Honest Assessment</p>
+                            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.65, fontWeight: 500 }}>
+                              {result.appeal_output.honest_assessment}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Appeal Recommendation */}
+                      {result.appeal_output.appeal_recommendation && (
+                        <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>Recommendation:</span>
+                          <span className={`badge ${
+                            result.appeal_output.appeal_recommendation === 'STRONG_APPEAL' ? 'badge-success' :
+                            result.appeal_output.appeal_recommendation === 'APPEAL' ? 'badge-info' :
+                            result.appeal_output.appeal_recommendation === 'EXCEPTION_REQUEST' ? 'badge-purple' :
+                            result.appeal_output.appeal_recommendation === 'UNLIKELY_TO_WIN' ? 'badge-warning' :
+                            'badge-danger'
+                          }`} style={{ fontSize: '0.75rem', padding: '0.375rem 1rem' }}>
+                            {result.appeal_output.appeal_recommendation === 'STRONG_APPEAL' ? '✅ File an Appeal — Strong Case' :
+                             result.appeal_output.appeal_recommendation === 'APPEAL' ? '📋 Appeal Recommended' :
+                             result.appeal_output.appeal_recommendation === 'EXCEPTION_REQUEST' ? '🔄 Formulary Exception Request' :
+                             result.appeal_output.appeal_recommendation === 'UNLIKELY_TO_WIN' ? '⚠️ Unlikely to Win' :
+                             '❌ Claim Correctly Denied'}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Policy Citations */}
+                      {result.appeal_output.policy_citations?.length > 0 ? (
+                        <div>
+                          <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.875rem' }}>
+                            📄 {result.appeal_output.policy_citations.length} Policy Clause{result.appeal_output.policy_citations.length !== 1 ? 's' : ''} Found
+                          </p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                            {result.appeal_output.policy_citations.map((citation, i) => (
+                              <div key={i} style={{ border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                                <div style={{
+                                  background: 'var(--accent-subtle)',
+                                  padding: '0.5rem 1rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.625rem',
+                                  borderBottom: '1px solid var(--accent-border)',
+                                }}>
+                                  <span style={{
+                                    fontFamily: "'JetBrains Mono', monospace",
+                                    fontSize: '0.6875rem',
+                                    fontWeight: 800,
+                                    background: 'var(--accent)',
+                                    color: '#fff',
+                                    borderRadius: '0.375rem',
+                                    padding: '0.125rem 0.5rem',
+                                    letterSpacing: '0.04em',
+                                    flexShrink: 0,
+                                  }}>PAGE {citation.page_number}</span>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent)' }}>Policy Contradiction</span>
+                                </div>
+                                <div style={{ padding: '0.875rem 1rem', background: 'var(--bg-card)' }}>
+                                  <blockquote style={{
+                                    borderLeft: '3px solid var(--accent)',
+                                    paddingLeft: '0.875rem',
+                                    margin: '0 0 0.75rem',
+                                    fontStyle: 'italic',
+                                    fontSize: '0.875rem',
+                                    color: 'var(--text-secondary)',
+                                    lineHeight: 1.65,
+                                  }}>
+                                    "{citation.exact_clause_text}"
+                                  </blockquote>
+                                  {citation.insurer_mistake && (
+                                    <div style={{
+                                      background: 'var(--danger-bg)',
+                                      border: '1px solid var(--danger-border)',
+                                      borderRadius: 'var(--radius-sm)',
+                                      padding: '0.5rem 0.75rem',
+                                      fontSize: '0.8125rem',
+                                      color: 'var(--danger)',
+                                      fontWeight: 600,
+                                      lineHeight: 1.5,
+                                    }}>
+                                      ⚠️ Insurer Error: {citation.insurer_mistake}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                          {result.appeal_output.contradiction_detected
+                            ? '⚙️ Analysis complete — see assessment above.'
+                            : '📋 No direct policy contradictions detected. Appeal relies on regulatory grounds.'}
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
                 {result.appeal_output && (
                   <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                     className="card" style={{ border: '1px solid #dc2626', boxShadow: '0 4px 24px rgba(220,38,38,0.15)', padding: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                       <div className="feature-icon red">⚖️</div>
                       <div>
-                        <h3 style={{ fontWeight: 800, color: '#dc2626', fontSize: '1.125rem' }}>Agent 3: Appeal Letter</h3>
+                        <h3 style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '1.125rem' }}>Agent 4: Appeal Letter</h3>
                         <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>RAG-powered regulatory response</p>
                       </div>
                     </div>
 
                     <div className="grid-2" style={{ gap: '0.75rem', marginBottom: '1.5rem' }}>
-                      <div style={{ background: '#fafafa', padding: '0.75rem 1rem', borderRadius: '0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 500 }}>Framework</span>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: '0.75rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>Framework</span>
                         <div className="badge badge-purple" style={{ display: 'block', width: 'fit-content', marginTop: '0.25rem' }}>{result.appeal_output.appeal_framework}</div>
                       </div>
-                      <div style={{ background: '#fafafa', padding: '0.75rem 1rem', borderRadius: '0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 500 }}>Deadline</span>
-                        <div style={{ fontWeight: 700, color: result.appeal_output.days_remaining < 30 ? '#dc2626' : '#09090b', marginTop: '0.25rem', fontSize: '0.875rem' }}>
+                      <div style={{ background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: '0.75rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>Deadline</span>
+                        <div style={{ fontWeight: 700, color: result.appeal_output.days_remaining < 30 ? 'var(--danger)' : 'var(--text-primary)', marginTop: '0.25rem', fontSize: '0.875rem' }}>
                           {new Date(result.appeal_output.appeal_deadline).toLocaleDateString()} ({result.appeal_output.days_remaining} days)
                         </div>
                       </div>

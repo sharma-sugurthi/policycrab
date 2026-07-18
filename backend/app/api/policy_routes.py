@@ -40,6 +40,9 @@ class PolicyUploadResponse(BaseModel):
     extraction_warnings: list[str] = []
     extraction_confidence: str | None = None
     errors: list[str] = []
+    session_id: str | None = None       # The Supabase session used for RAG indexing
+    policy_indexed: bool = False         # True if the full doc was chunked/embedded for RAG
+    policy_page_count: int | None = None # Number of pages processed
 
 
 async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
@@ -73,11 +76,19 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
             extraction_warnings=result.get("extraction_warnings", []),
             extraction_confidence=result.get("extraction_confidence"),
             errors=result.get("errors", []),
+            session_id=result.get("session_id"),
+            policy_indexed=result.get("policy_indexed", False),
+            policy_page_count=result.get("policy_page_count"),
         )
     else:
+        # Phase 1 (RAG indexing) may have succeeded even if Phase 2 (extraction) failed.
+        # Surface the session_id so the frontend can still use RAG if available.
         return PolicyUploadResponse(
             success=False,
             errors=result.get("errors", ["Policy extraction returned no data"]),
+            session_id=result.get("session_id"),
+            policy_indexed=result.get("policy_indexed", False),
+            policy_page_count=result.get("policy_page_count"),
         )
 
 
@@ -108,13 +119,18 @@ async def upload_policy_pdf(
     """
     Upload a PDF file (SBC, EOB, or policy summary) for AI-powered extraction.
 
-    The PDF text is extracted using PyMuPDF, then passed through
-    the same Policy Ingestion Agent as the text upload endpoint.
+    Phase 4 upgrade: The full document is chunked page-by-page and embedded
+    into Supabase for semantic RAG search by the Policy Analyzer Agent.
+    This enables exact page-number citations in appeal letters.
 
-    Accepts: application/pdf, max 10 MB.
+    Accepts: application/pdf, max 10 MB. Supports 150+ page policy documents.
+    Processing time scales with document length (allow up to 2 minutes for
+    very large documents).
     """
-    # ── Validate file type ────────────────────────────────────
-    if not file.content_type or "pdf" not in file.content_type.lower():
+    # ── Validate file type (loosened — some browsers send octet-stream) ──
+    ct = (file.content_type or "").lower()
+    fn = (file.filename or "").lower()
+    if "pdf" not in ct and not fn.endswith(".pdf"):
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {file.content_type}. Please upload a PDF file."
@@ -132,7 +148,7 @@ async def upload_policy_pdf(
     if len(pdf_bytes) == 0:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
-    # ── Extract text from PDF ─────────────────────────────────
+    # ── Extract text from PDF (page-aware) ───────────────────
     try:
         extracted_text = extract_text_from_pdf(pdf_bytes)
     except ValueError as e:
@@ -144,13 +160,66 @@ async def upload_policy_pdf(
             detail="PDF produced too little text. It may be a scanned document — try pasting the text manually."
         )
 
-    logger.info(f"PDF upload: {file.filename}, {len(pdf_bytes)} bytes → {len(extracted_text)} chars extracted")
+    # Estimate page count from "--- Page N ---" markers
+    import re
+    page_markers = re.findall(r"--- Page (\d+) ---", extracted_text)
+    page_count = int(page_markers[-1]) if page_markers else 1
+
+    logger.info(
+        f"PDF upload: '{file.filename}', {len(pdf_bytes) / 1024:.0f} KB, "
+        f"~{page_count} pages → {len(extracted_text)} chars extracted. "
+        f"User: {user.get('id', 'unknown')}"
+    )
+
+    # ── Build session_id from user id (stable across uploads) ──
+    # This ensures the Policy Analyzer always queries the correct user's chunks.
+    import hashlib
+    user_session_id = hashlib.sha256(
+        f"{user['id']}:{file.filename}:{len(pdf_bytes)}".encode()
+    ).hexdigest()[:16]
 
     try:
-        response = await _run_ingestion(extracted_text)
-        response.extracted_text = extracted_text[:2000]
-        if response.success and response.policy_profile:
-            create_user_policy(user["id"], response.policy_profile)
-        return response
+        from app.agents.graph import get_policy_ingestion_graph
+        graph = get_policy_ingestion_graph()
+
+        initial_state = {
+            "messages": [],
+            "raw_policy_text": extracted_text,
+            "raw_claim_text": "",
+            "policy_profile": None,
+            "claim_case": None,
+            "allowed_amount": None,
+            "cost_breakdown": None,
+            "appeal_output": None,
+            "current_phase": "ingestion",
+            "route_decision": "",
+            "errors": [],
+            "extraction_warnings": [],
+            "extraction_confidence": None,
+            "explanations": {},
+            "session_id": user_session_id,  # Pre-seed session_id
+        }
+
+        result = await graph.ainvoke(initial_state)
+
+        # Build response
+        base_resp = PolicyUploadResponse(
+            success=bool(result.get("policy_profile")),
+            policy_profile=result.get("policy_profile"),
+            explanation=result.get("explanations", {}).get("ingestion"),
+            extraction_warnings=result.get("extraction_warnings", []),
+            extraction_confidence=result.get("extraction_confidence"),
+            errors=result.get("errors", []),
+            session_id=result.get("session_id", user_session_id),
+            policy_indexed=result.get("policy_indexed", False),
+            policy_page_count=result.get("policy_page_count", page_count),
+            extracted_text=extracted_text[:2000],
+        )
+
+        if base_resp.success and base_resp.policy_profile:
+            create_user_policy(user["id"], base_resp.policy_profile)
+
+        return base_resp
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")
