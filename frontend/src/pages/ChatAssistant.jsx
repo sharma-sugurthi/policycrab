@@ -75,11 +75,19 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
         method: 'POST',
         body: JSON.stringify({ message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }),
       })
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch {
+        const text = await res.text().catch(() => '')
+        console.error('Backend non-JSON response:', text)
+        setMessages(prev => [...prev, { role: 'ai', content: 'The AI server is temporarily unavailable. Please try again in a few seconds.' }])
+        return
+      }
       if (data.messages?.length) setMessages(data.messages)
       else setMessages(prev => [...prev, { role: 'ai', content: data.error ? `Error: ${data.error}` : data.response }])
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'ai', content: `Network error: ${err.message}` }])
+      setMessages(prev => [...prev, { role: 'ai', content: 'Connection error — please check your internet and try again.' }])
     } finally { setLoading(false) }
   }
 

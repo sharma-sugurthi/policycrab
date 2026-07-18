@@ -247,14 +247,22 @@ class EmailService:
     """Resend-backed email sender with pre-built PolicyCrab templates."""
 
     def __init__(self):
-        self._configured = bool(settings.resend_api_key)
-        if self._configured:
+        self._configured = False
+        self._resend = None
+        if not settings.resend_api_key:
+            logger.warning("EmailService: RESEND_API_KEY not set — emails will be skipped.")
+            return
+        try:
             import resend as _resend
             _resend.api_key = settings.resend_api_key
             self._resend = _resend
+            self._configured = True
             logger.info("EmailService: Resend configured ✅")
-        else:
-            logger.warning("EmailService: RESEND_API_KEY not set — emails will be skipped.")
+        except ImportError:
+            logger.error(
+                "EmailService: 'resend' package not installed. "
+                "Add resend to requirements.txt and redeploy."
+            )
 
     def send_welcome_email(self, user_email: str, user_name: str = "") -> bool:
         if not self._configured:
