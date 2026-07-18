@@ -40,7 +40,7 @@ export default function AuthPage() {
         const { error } = await signUp(email, password)
         if (error) throw error
         setShowOtp(true)
-        setMsg('A 6-digit verification code has been sent to your email.')
+        setMsg('A verification code has been sent to your email.')
       }
     } catch (err) {
       setError(err.message)
@@ -103,15 +103,15 @@ export default function AuthPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {showOtp ? (
             <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#3f3f46', marginBottom: '0.5rem', textTransform: 'uppercase' }}>6-Digit Verification Code</label>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#3f3f46', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Verification Code</label>
               <input 
                 type="text" 
                 className="input" 
                 value={otp} 
                 onChange={e => setOtp(e.target.value)} 
-                placeholder="000000"
+                placeholder="00000000"
                 required 
-                maxLength={6}
+                maxLength={8}
                 style={{ textAlign: 'center', letterSpacing: '0.5em', fontSize: '1.25rem', fontWeight: 'bold' }}
               />
             </div>
