@@ -7,6 +7,7 @@ export default function AuthPage() {
   const { user, signIn, signUp, verifyOtp } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [showOtp, setShowOtp] = useState(false)
+  const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
@@ -37,7 +38,7 @@ export default function AuthPage() {
         const { error } = await signIn(email, password)
         if (error) throw error
       } else {
-        const { error } = await signUp(email, password)
+        const { error } = await signUp(email, password, fullName)
         if (error) throw error
         setShowOtp(true)
         setMsg('A verification code has been sent to your email.')
@@ -117,6 +118,19 @@ export default function AuthPage() {
             </div>
           ) : (
             <>
+              {!isLogin && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#3f3f46', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Full Name</label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    placeholder="Jane Smith"
+                    required
+                  />
+                </div>
+              )}
               <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#3f3f46', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Email address</label>
                 <input 

@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const signUp = (email, password) => supabase.auth.signUp({ email, password })
+  const signUp = (email, password, fullName) => supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
   const verifyOtp = (email, token) => supabase.auth.verifyOtp({ email, token, type: 'signup' })
   const signIn = (email, password) => supabase.auth.signInWithPassword({ email, password })
   const signOut = () => supabase.auth.signOut()
