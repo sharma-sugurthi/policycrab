@@ -85,5 +85,5 @@ app.include_router(api_router)
 
 @app.get("/health", tags=["system"])
 async def health_check():
-    """Simple health check endpoint for Render/HuggingFace deployment monitors."""
+    """Simple health check endpoint for Heroku deployment monitors."""
     return {"status": "ok", "service": "policycrab-backend"}
