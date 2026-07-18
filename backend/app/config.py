@@ -30,7 +30,16 @@ class Settings(BaseSettings):
     app_name: str = "US Policy Claimer"
     app_version: str = "0.1.0"
     debug: bool = False
-    cors_origins: str | list[str] = ["http://localhost:3000", "http://localhost:5173"]
+    cors_origins: str | list[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://policycrab.tech",
+        "https://www.policycrab.tech",
+    ]
+
+    # ── Email (Resend) ────────────────────────────────────────────
+    resend_api_key: str = ""
+    email_from: str = "PolicyCrab <hello@policycrab.tech>"
 
     @property
     def parsed_cors_origins(self) -> list[str]:
