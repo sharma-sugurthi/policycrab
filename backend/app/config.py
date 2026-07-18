@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     # ── Email (Resend) ────────────────────────────────────────────
     resend_api_key: str = ""
-    email_from: str = "PolicyCrab <hello@policycrab.tech>"
+    email_from: str = "PolicyCrab <info@policycrab.tech>"
 
     @property
     def parsed_cors_origins(self) -> list[str]:

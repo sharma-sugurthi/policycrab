@@ -250,7 +250,7 @@ class EmailService:
             params = {
                 "from": settings.email_from,
                 "to": [user_email],
-                "reply_to": "hello@policycrab.tech",
+                "reply_to": "info@policycrab.tech",
                 "subject": "Welcome to PolicyCrab — Your AI Health Insurance Advocate",
                 "html": _welcome_html(user_name or user_email),
                 "text": _welcome_text(user_name or user_email),
@@ -281,7 +281,7 @@ class EmailService:
             params = {
                 "from": settings.email_from,
                 "to": [user_email],
-                "reply_to": "hello@policycrab.tech",
+                "reply_to": "info@policycrab.tech",
                 "subject": f"Your PolicyCrab Appeal Letter — Claim {claim_id}",
                 "html": _appeal_html(user_name or user_email, claim_id, appeal_text),
                 "text": _appeal_text(user_name or user_email, claim_id, appeal_text),
