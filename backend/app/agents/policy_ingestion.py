@@ -1,27 +1,40 @@
 """
-Agent 1: Policy Ingestion — Parses raw SBC/EOB text into a
-structured PolicyProfile using LLM extraction.
+Agent 1: Policy Ingestion — Two-phase pipeline for full-document RAG indexing
+and structured profile extraction.
 
-This agent takes unstructured policy document text and extracts
-all cost-sharing parameters, network rules, and legal classification
-into the PolicyProfile Pydantic model.
+Phase 1 — RAG Indexing (NEW):
+  Chunks the full policy PDF page-by-page using LangChain's splitter.
+  Embeds each chunk with Gemini Embedding and stores it in Supabase.
+  This enables the Policy Analyzer Agent to later perform exact page-cited
+  semantic searches against the patient's specific policy document.
+
+Phase 2 — Profile Extraction (ENHANCED):
+  Extracts the high-level PolicyProfile (deductibles, plan type, etc.)
+  by summarizing only the first 10 pages. This prevents LLM context
+  overflow on 100+ page documents while still capturing the SBC fields.
 """
 
 import json
 import logging
 from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.agents.state import AgentState
-from app.services.llm_router import get_llm, TaskType
+from app.services.llm_router import get_llm, TaskType, embed_document_chunks
+from app.services.supabase_client import insert_policy_chunks
 from app.models.policy import PolicyProfile
 
 logger = logging.getLogger(__name__)
 
+# Chunk settings — tuned for insurance policy language
+CHUNK_SIZE = 800        # ~600-800 tokens; insurance clauses are dense
+CHUNK_OVERLAP = 150     # Preserve context across clause boundaries
+
 POLICY_EXTRACTION_PROMPT = """You are a US health insurance policy analyst. Extract structured 
 policy information from the provided document text (SBC, EOB, or policy summary).
 
-You MUST extract ALL of the following fields. If a field is not explicitly stated in the 
-document, use reasonable defaults based on US insurance norms and note it in your response.
+CRITICAL RULE: If a field is not explicitly stated in the document, you MUST return null.
+DO NOT guess, assume, or fabricate reasonable defaults based on industry norms.
 
 Required fields:
 - plan_name: The name of the insurance plan
@@ -49,11 +62,41 @@ Required fields:
 Respond ONLY with a valid JSON object matching the schema above. No explanations."""
 
 
+def _build_page_chunks(pages: list[dict]) -> list[dict]:
+    """
+    Split page texts into overlapping chunks using LangChain's RecursiveCharacterTextSplitter.
+    Preserves page_number metadata on every chunk for exact citation later.
+    """
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+        separators=["\n\n", "\n", ". ", " ", ""],  # Prefer splitting at paragraph/sentence boundaries
+    )
+
+    all_chunks = []
+    for page in pages:
+        page_text = page["text"]
+        page_num = page["page_number"]
+
+        raw_chunks = splitter.split_text(page_text)
+        for i, chunk_text in enumerate(raw_chunks):
+            if chunk_text.strip():
+                all_chunks.append({
+                    "page_number": page_num,
+                    "chunk_index": i,
+                    "chunk_text":  chunk_text.strip(),
+                })
+
+    return all_chunks
+
+
 async def policy_ingestion_node(state: AgentState) -> dict:
     """
-    Parse raw policy text into a structured PolicyProfile.
+    Two-phase policy ingestion:
+      1. Chunk, embed, and store the full document in Supabase.
+      2. Extract structured PolicyProfile from a first-pages summary.
     """
-    logger.info("Agent 1 (Policy Ingestion): Starting SBC/EOB extraction")
+    logger.info("Agent 1 (Policy Ingestion): Starting two-phase pipeline")
 
     raw_text = state.get("raw_policy_text", "")
     if not raw_text:
@@ -62,12 +105,60 @@ async def policy_ingestion_node(state: AgentState) -> dict:
             "current_phase": "ingestion",
         }
 
+    # Determine session_id (required for scoping the vector store)
+    session_id = state.get("session_id")
+    if not session_id:
+        # Fall back to a hash of the raw text as a stable identifier
+        import hashlib
+        session_id = hashlib.sha256(raw_text[:500].encode()).hexdigest()[:16]
+        logger.warning(f"Agent 1: No session_id in state, derived '{session_id}' from text hash")
+
+    # ── Phase 1: Parse pages from raw text ───────────────────────────
+    # The raw_policy_text may already be in "--- Page N ---\n..." format
+    # (from extract_text_from_pdf). Parse it back into page dicts.
+    pages = _parse_pages_from_text(raw_text)
+
+    # ── Phase 1a: Chunk each page ─────────────────────────────────────
+    raw_chunks = _build_page_chunks(pages)
+    logger.info(f"Agent 1: Created {len(raw_chunks)} chunks from {len(pages)} pages")
+
+    # ── Phase 1b: Embed all chunks ────────────────────────────────────
+    policy_indexed = False
+    try:
+        embedded_chunks = await embed_document_chunks(raw_chunks)
+        # Filter out any chunks where embedding failed
+        valid_chunks = [c for c in embedded_chunks if c.get("embedding") is not None]
+
+        if valid_chunks:
+            # Attach carrier/plan metadata for denormalized filtering
+            # We'll update this after extraction, but insert now for speed
+            inserted = await insert_policy_chunks(session_id, valid_chunks)
+            policy_indexed = inserted > 0
+            logger.info(
+                f"Agent 1: Phase 1 complete — {inserted} chunks stored "
+                f"in Supabase for session '{session_id}'"
+            )
+        else:
+            logger.warning("Agent 1: No valid embeddings produced; skipping Supabase storage")
+
+    except Exception as e:
+        logger.error(f"Agent 1: Phase 1 (embedding/storage) failed: {e}", exc_info=True)
+        # Non-fatal: continue to Phase 2 even if RAG indexing fails.
+        # The grievance agent will fall back to regulation-only citations.
+
+    # ── Phase 2: Extract structured PolicyProfile ─────────────────────
+    # Use only the first 10 pages to avoid context window overflow.
+    first_pages_text = "\n\n".join(
+        f"--- Page {p['page_number']} ---\n{p['text']}"
+        for p in pages[:10]
+    )
+
     try:
         llm = get_llm(TaskType.EXTRACTION, temperature=0.0)
 
         messages = [
             SystemMessage(content=POLICY_EXTRACTION_PROMPT),
-            HumanMessage(content=f"Extract the policy details from this document:\n\n{raw_text}"),
+            HumanMessage(content=f"Extract the policy details from this document:\n\n{first_pages_text}"),
         ]
 
         response = await llm.ainvoke(messages)
@@ -84,11 +175,16 @@ async def policy_ingestion_node(state: AgentState) -> dict:
         # Validate through Pydantic
         policy = PolicyProfile(**policy_data)
 
-        # ── Post-extraction sanity checks ─────────────────────
+        # ── Post-extraction sanity checks ─────────────────────────────
         warnings = []
-        ded = policy.in_network_deductible_individual
-        oop = policy.in_network_oop_max_individual
+        ded  = policy.in_network_deductible_individual
+        oop  = policy.in_network_oop_max_individual
         coins = policy.in_network_coinsurance
+
+        if ded is None:
+            warnings.append("In-network deductible was not found in the document. It has been left null.")
+        if oop is None:
+            warnings.append("In-network OOP max was not found in the document. It has been left null.")
 
         if ded is not None and (ded < 0 or ded > 20000):
             warnings.append(f"In-network deductible (${ded:,.0f}) is outside the typical $0–$20,000 range — please verify.")
@@ -109,38 +205,61 @@ async def policy_ingestion_node(state: AgentState) -> dict:
                 if val is not None and val > 1000:
                     warnings.append(f"Copay for {field_name} (${val:,.0f}) seems high — please verify.")
 
-        # Confidence scoring
-        if len(warnings) == 0:
-            confidence = "HIGH"
-        elif len(warnings) <= 2:
-            confidence = "MEDIUM"
-        else:
-            confidence = "LOW"
-
+        confidence = "HIGH" if len(warnings) == 0 else ("MEDIUM" if len(warnings) <= 2 else "LOW")
         if warnings:
             logger.warning(f"Agent 1: Extraction warnings ({confidence}): {warnings}")
 
-        logger.info(f"Agent 1: Successfully extracted policy: {policy.plan_name} ({policy.carrier_name})")
+        logger.info(
+            f"Agent 1: Phase 2 complete — Policy: {policy.plan_name} ({policy.carrier_name}), "
+            f"Pages indexed: {len(pages)}, Chunks: {len(raw_chunks)}, "
+            f"Policy indexed in Supabase: {policy_indexed}"
+        )
 
         return {
-            "policy_profile": policy.model_dump(),
-            "extraction_warnings": warnings,
+            "policy_profile":        policy.model_dump(),
+            "session_id":            session_id,
+            "policy_indexed":        policy_indexed,
+            "policy_page_count":     len(pages),
+            "extraction_warnings":   warnings,
             "extraction_confidence": confidence,
-            "current_phase": "ingestion",
-            "errors": state.get("errors", []),
+            "current_phase":         "ingestion",
+            "errors":                state.get("errors", []),
         }
 
     except json.JSONDecodeError as e:
         error_msg = f"Agent 1: Failed to parse LLM response as JSON: {e}"
         logger.error(error_msg)
         return {
-            "errors": state.get("errors", []) + [error_msg],
-            "current_phase": "ingestion",
+            "errors":         state.get("errors", []) + [error_msg],
+            "session_id":     session_id,
+            "policy_indexed": policy_indexed,
+            "current_phase":  "ingestion",
         }
     except Exception as e:
         error_msg = f"Agent 1: Policy extraction failed: {e}"
         logger.error(error_msg)
         return {
-            "errors": state.get("errors", []) + [error_msg],
-            "current_phase": "ingestion",
+            "errors":         state.get("errors", []) + [error_msg],
+            "session_id":     session_id,
+            "policy_indexed": policy_indexed,
+            "current_phase":  "ingestion",
         }
+
+
+def _parse_pages_from_text(raw_text: str) -> list[dict]:
+    """
+    Parse "--- Page N ---\\n..." formatted text back into page dicts.
+    Falls back to treating the entire text as page 1 if no markers found.
+    """
+    import re
+    page_pattern = re.compile(r"--- Page (\d+) ---\n(.*?)(?=--- Page \d+ ---|$)", re.DOTALL)
+    matches = page_pattern.findall(raw_text)
+
+    if matches:
+        return [{"page_number": int(num), "text": text.strip()} for num, text in matches if text.strip()]
+
+    # Fallback: treat entire document as single page
+    logger.warning("Agent 1: No page markers found in raw text; treating as single page")
+    return [{"page_number": 1, "text": raw_text.strip()}]
+
+
