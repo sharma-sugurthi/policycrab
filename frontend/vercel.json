@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://policycrab-backend-7c7daa93c295.herokuapp.com/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
