@@ -27,7 +27,7 @@ from app.services.llm_router import get_llm, TaskType, generate_embedding
 from app.services.supabase_client import search_policy_document as search_knowledge_base
 from app.models.claim import ClaimCase
 from app.models.policy import PolicyProfile
-from app.models.enums import DenialReason
+from app.models.enums import DenialReason, NetworkStatus
 
 logger = logging.getLogger(__name__)
 
