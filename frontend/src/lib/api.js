@@ -45,3 +45,24 @@ export async function apiFetch(endpoint, options = {}) {
     throw error
   }
 }
+
+export async function readApiResponse(response) {
+  const contentType = response.headers.get('content-type') || ''
+
+  if (contentType.includes('application/json')) {
+    try {
+      return await response.json()
+    } catch (error) {
+      console.warn('Failed to parse JSON response:', error)
+    }
+  }
+
+  const text = await response.text().catch(() => '')
+  if (!text) return null
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}

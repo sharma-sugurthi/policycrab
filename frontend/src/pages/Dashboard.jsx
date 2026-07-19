@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch } from '../lib/api'
+import { apiFetch, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
 
 // ── localStorage key for vault history ──────────────────────
@@ -129,7 +129,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
       const form = new FormData()
       form.append('file', file)
       const res = await apiFetch('/eob/parse', { method: 'POST', body: form })
-      const data = await res.json()
+      const data = await readApiResponse(res)
       if (!res.ok) throw new Error(data.detail || 'Extraction failed')
       setResult({ ...data, filename: file.name, uploadedAt: new Date().toISOString() })
       saveToHistory({
@@ -1248,7 +1248,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                     ) : (
                       <div className="dashboard-empty">
                         <h3>No saved policies yet</h3>
-                        <p>Upload your Summary of Benefits and Coverage or policy PDF to unlock claim evaluation.</p>
+                        <p>Upload your plan summary or policy PDF to unlock claim evaluation.</p>
                         <button className="btn btn-red" onClick={() => navigate('/policy')}>Upload Policy</button>
                       </div>
                     )

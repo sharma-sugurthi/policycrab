@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import AILogViewer from '../components/AILogViewer'
-import { apiFetch } from '../lib/api'
+import { apiFetch, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
 import { CPT_CODES } from '../data/cpt_codes'
 
@@ -149,7 +149,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
           level1_denial_summary: result.appeal_output?.appeal_letter?.slice(0, 600) || null,
         }),
       })
-      const data = await res.json()
+      const data = await readApiResponse(res)
       if (data.success) {
         setEscalatedResult(data)
       } else {
@@ -169,7 +169,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
       const formData = new FormData()
       formData.append('file', eobFile)
       const res = await apiFetch('/eob/parse', { method: 'POST', body: formData })
-      const data = await res.json()
+      const data = await readApiResponse(res)
       if (data.success && data.extracted) {
         setEobResult(data.extracted)
       } else {
@@ -358,7 +358,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
           allowed_amount: allowedAmount ? Number(allowedAmount) : null,
         }) 
       })
-      const data = await res.json()
+      const data = await readApiResponse(res)
       if (data.success && data.cost_breakdown) { setResult(data); onResult(data.cost_breakdown) }
       else { setError(data.errors?.join(', ') || 'Evaluation failed') }
     } catch (err) { setError(`Network error: ${err.message}`) }
@@ -380,7 +380,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
         method: 'POST',
         body: JSON.stringify({ ...providerSearch, limit: 5 }),
       })
-      const data = await res.json()
+      const data = await readApiResponse(res)
       if (!res.ok) throw new Error(data.detail || 'Provider search failed')
       setProviderResults(data.results || [])
     } catch (err) {
@@ -404,7 +404,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
         method: 'POST',
         body: JSON.stringify({ npi: provider.npi, plan_name: policyProfile.plan_name }),
       })
-      const data = await res.json()
+      const data = await readApiResponse(res)
       if (!res.ok) throw new Error(data.detail || 'Network status check failed')
       setNetworkChecks(prev => ({ ...prev, [provider.npi]: data }))
     } catch (err) {
@@ -445,7 +445,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
             Evaluate your <span className="gradient-text">healthcare claim</span>
           </motion.h1>
           <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-subtitle" style={{ marginBottom: '2rem' }}>
-            Describe your medical encounter. The deterministic engine calculates your exact cost, and if denied, the AI drafts an appeal letter.
+            Describe your medical encounter. The system calculates your estimated cost, and if denied, it can help draft an appeal letter.
           </motion.p>
         </motion.div>
 
@@ -1026,7 +1026,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                       <div className="feature-icon red">⚖️</div>
                       <div>
                         <h3 style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '1.125rem' }}>Agent 5: Appeal Letter</h3>
-                        <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>RAG-powered regulatory response</p>
+                        <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Plan and legal references</p>
                       </div>
                     </div>
 

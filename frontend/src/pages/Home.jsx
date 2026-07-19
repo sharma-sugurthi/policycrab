@@ -42,8 +42,8 @@ export default function Home({ policyProfile }) {
               transition={{ duration: 0.55, delay: 0.1 }}
               style={{ fontSize: '1.125rem', color: 'var(--text-tertiary)', fontWeight: 500, lineHeight: 1.625, maxWidth: '36rem', marginBottom: '2.5rem' }}
             >
-              Upload your policy. Describe your claim. Get deterministic cost breakdowns, regulatory routing, 
-              and AI-drafted appeal letters — all grounded in ERISA, ACA, and the No Surprises Act.
+              Upload your policy. Describe your claim. Get clear cost breakdowns, guidance on the right review path,
+              and draft appeal letters based on your plan and the applicable rules.
             </motion.p>
 
             <motion.div variants={fadeUp} transition={{ duration: 0.55, delay: 0.18 }} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -56,7 +56,7 @@ export default function Home({ policyProfile }) {
             </motion.div>
 
             <motion.p variants={fadeUp} transition={{ duration: 0.5, delay: 0.3 }} style={{ marginTop: '1.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              46 regulatory knowledge chunks · 5 AI agents · Deterministic cost engine
+              Policy references · coverage guidance · straightforward cost estimates
             </motion.p>
           </motion.div>
         </div>
@@ -155,15 +155,15 @@ export default function Home({ policyProfile }) {
               Three steps to <span className="gradient-text">clarity</span>
             </motion.h2>
             <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-subtitle" style={{ marginBottom: '3rem' }}>
-              From raw policy text to a formal appeal letter — with deterministic cost calculations and zero hallucinated numbers.
+              From raw policy text to a formal appeal letter — with clear cost calculations and source-backed guidance.
             </motion.p>
           </motion.div>
 
           <div className="grid-3">
             {[
-              { step: '01', icon: '📋', title: 'Upload Your Policy', desc: 'Paste your SBC or EOB text. The AI Ingestion Agent extracts plan type, deductibles, coinsurance, copays, legal classification, and network rules into a structured profile.' },
-              { step: '02', icon: '⚡', title: 'Evaluate Your Claim', desc: 'Describe your medical encounter in plain English. The deterministic engine calculates your exact responsibility through the deductible → coinsurance → OOP max waterfall.' },
-              { step: '03', icon: '⚖️', title: 'Get Your Appeal', desc: 'If your claim is denied, the Grievance Agent drafts a formal appeal letter citing specific ERISA, ACA, or NSA regulations from our 46-chunk knowledge base.' },
+              { step: '01', icon: '📋', title: 'Upload Your Policy', desc: 'Paste your plan summary or EOB text. The app extracts the details needed for a clear coverage summary.' },
+              { step: '02', icon: '⚡', title: 'Evaluate Your Claim', desc: 'Describe your medical encounter in plain English. The system estimates your responsibility using deductible, coinsurance, and out-of-pocket limits.' },
+              { step: '03', icon: '⚖️', title: 'Get Your Appeal', desc: 'If your claim is denied, the app drafts a formal appeal letter using the right plan rules and legal references.' },
             ].map((item, i) => (
               <motion.div
                 key={item.step}
@@ -206,16 +206,16 @@ export default function Home({ policyProfile }) {
                 Every US framework, <span className="gradient-text">covered.</span>
               </motion.h2>
               <motion.p variants={fadeRight} transition={{ duration: 0.45 }} className="section-subtitle" style={{ marginBottom: '2rem' }}>
-                Our deterministic engine routes every claim to the correct appeal framework — no LLM guesswork on legal classifications or deadlines.
+                Our system routes every claim to the right review path and helps you understand which rules apply.
               </motion.p>
 
               <motion.div variants={fadeRight} transition={{ duration: 0.5, delay: 0.1 }}>
                 {[
-                  { icon: '🏛️', label: 'ERISA — Self-funded employer plans', cls: 'red' },
-                  { icon: '🛡️', label: 'ACA — Marketplace & essential benefits', cls: 'emerald' },
-                  { icon: '⚖️', label: 'No Surprises Act — Balance billing defense', cls: 'purple' },
-                  { icon: '🏥', label: 'Medicare — 5-level appeal process', cls: 'amber' },
-                  { icon: '🔒', label: 'HIPAA — Privacy & EDI compliance', cls: 'blue' },
+                  { icon: '🏛️', label: 'Employer plans and self-funded coverage', cls: 'red' },
+                  { icon: '🛡️', label: 'Marketplace plans and essential benefits', cls: 'emerald' },
+                  { icon: '⚖️', label: 'No Surprises Act protections', cls: 'purple' },
+                  { icon: '🏥', label: 'Medicare appeal steps', cls: 'amber' },
+                  { icon: '🔒', label: 'Privacy and billing data protections', cls: 'blue' },
                 ].map((f) => (
                   <div key={f.label} className="feature-item">
                     <div className={`feature-icon ${f.cls}`}>{f.icon}</div>
@@ -234,7 +234,7 @@ export default function Home({ policyProfile }) {
             >
               <div className="card" style={{ padding: '2rem' }}>
                 <h3 style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '-0.025em', marginBottom: '1.5rem' }}>
-                  {policyProfile ? '✅ Your Loaded Policy' : '📋 Policy Intelligence'}
+                  {policyProfile ? '✅ Your Plan Details' : '📋 Policy Summary'}
                 </h3>
                 {policyProfile ? (
                   <div>
@@ -256,7 +256,7 @@ export default function Home({ policyProfile }) {
                 ) : (
                   <div>
                     <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.625 }}>
-                      Upload your Summary of Benefits and Coverage to see your plan details extracted here automatically.
+                      Upload your plan summary to see your coverage details displayed here.
                     </p>
                     <button className="btn btn-red" onClick={() => navigate('/policy')}>Upload Policy →</button>
                   </div>
@@ -318,7 +318,7 @@ export default function Home({ policyProfile }) {
             transition={{ duration: 0.6, delay: 0.3 }}
             style={{ marginTop: '1.5rem', fontSize: '0.8125rem', color: '#52525b', fontWeight: 500 }}
           >
-            Deterministic calculations · RAG-powered citations · Zero hallucinations
+            Clear calculations · source-backed references · plain-language guidance
           </motion.p>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { apiFetch } from '../lib/api'
+import { apiFetch, readApiResponse } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
@@ -112,21 +112,19 @@ export default function PolicyUpload({ onPolicyParsed }) {
         })
       }
 
-      const data = await res.json()
-      if (data.success && data.policy_profile) {
+      const data = await readApiResponse(res)
+      if (data?.success && data.policy_profile) {
         setResult(data)
         setEditableProfile({ ...data.policy_profile })
         if (data.extracted_text) setPolicyText(data.extracted_text)
-      } else if (data.session_id && data.policy_indexed) {
-        // RAG indexing succeeded but profile extraction failed (e.g. rate limit on LLM)
-        // Still store the result so the user sees the RAG status
+      } else if (data?.session_id && data.policy_indexed) {
         setResult(data)
-        setError(data.errors?.join(', ') || 'Policy profile extraction failed, but document was indexed for RAG search.')
+        setError(data.errors?.join(', ') || 'Policy details were saved, but the summary could not be completed.')
       } else {
-        setError(data.errors?.join(', ') || 'Failed to parse policy')
+        setError((data && typeof data === 'object' && data.errors?.join(', ')) || (typeof data === 'string' ? data : 'We could not read this policy. Please try again.'))
       }
     } catch (err) {
-      setError(`Network error: ${err.message}`)
+      setError(`We could not reach the server: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -149,7 +147,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
             Upload your <span className="gradient-text">policy document</span>
           </motion.h1>
           <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-subtitle" style={{ marginBottom: '3rem' }}>
-            Upload your Summary of Benefits and Coverage (SBC) PDF or paste the text. Then review and confirm the extracted fields before evaluating claims.
+            Upload your plan summary or paste the text. Review the extracted details before evaluating a claim.
           </motion.p>
         </motion.div>
 
@@ -161,13 +159,13 @@ export default function PolicyUpload({ onPolicyParsed }) {
                 <div className="feature-icon red">📋</div>
                 <div>
                   <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#09090b' }}>Policy Document</h3>
-                  <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Upload a PDF or paste your SBC/EOB text</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Upload a PDF or paste your plan or claim text</p>
                 </div>
               </div>
 
               <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.75rem', padding: '1rem', marginBottom: '1.25rem', fontSize: '0.8125rem', color: '#1e40af' }}>
                 <strong style={{ display: 'block', marginBottom: '0.25rem' }}>💡 What should I upload?</strong>
-                Upload your <strong>Summary of Benefits and Coverage (SBC)</strong>. This is usually an 8-page document detailing deductibles, copays, and out-of-pocket maximums. Or, upload an <strong>Explanation of Benefits (EOB)</strong> for a specific claim.
+                Upload your <strong>plan summary</strong> or a document that lists deductibles, copays, and coverage limits. You can also upload an <strong>Explanation of Benefits (EOB)</strong> for a specific claim.
               </div>
 
               <div style={{ marginBottom: '1.25rem', background: '#fafafa', border: '1px dashed #d4d4d8', borderRadius: '0.75rem', padding: '1.25rem', textAlign: 'center' }}>
@@ -259,7 +257,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
                       </div>
                     )}
 
-                    {/* RAG Indexing Status Banner */}
+                    {/* Policy search status banner */}
                     {result?.session_id && (
                       <div style={{
                         display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
@@ -274,14 +272,14 @@ export default function PolicyUpload({ onPolicyParsed }) {
                         </span>
                         <div>
                           <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: result.policy_indexed ? '#065f46' : '#92400e', marginBottom: '0.25rem' }}>
-                            {result.policy_indexed
-                              ? `RAG Document Vault — ${result.policy_page_count || '?'} pages indexed`
-                              : 'RAG indexing failed — appeal letters will use regulations only'}
+                            {result?.policy_indexed
+                                        ? `Policy search ready — ${result.policy_page_count || '?'} pages indexed`
+                                        : 'Document indexing failed — appeal letters will use the available policy details'}
                           </p>
                           <p style={{ fontSize: '0.75rem', color: result.policy_indexed ? '#047857' : '#b45309', lineHeight: 1.5 }}>
                             {result.policy_indexed
-                              ? 'Your full policy is now searchable. The Policy Analyzer will cite exact page numbers when detecting contradictions in insurer denials.'
-                              : 'The document vault could not be populated. Check Supabase connection and try re-uploading.'}
+                                        ? 'Your policy is ready for reference, and appeal notes can point to exact page numbers.'
+                                        : 'The document could not be saved for later reference. Please try uploading again.'}
                           </p>
                           {result.policy_indexed && (
                             <p style={{ fontSize: '0.7rem', color: '#a1a1aa', marginTop: '0.25rem', fontFamily: 'monospace' }}>

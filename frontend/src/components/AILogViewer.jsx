@@ -2,8 +2,7 @@
  * AILogViewer — Real-time terminal-style AI step log viewer.
  *
  * Connects to the backend SSE endpoint (/api/stream/ai-logs) and
- * streams Gemini's reasoning steps live to the user. This provides
- * visual proof that AI is running in production — a core XPRIZE criterion.
+ * streams step-by-step progress updates live to the user.
  *
  * Usage:
  *   <AILogViewer task="legal_writing" active={isRunning} />
@@ -143,7 +142,7 @@ export default function AILogViewer({ task = 'legal_writing', active = false, on
             <span />
           </div>
           <span className="ai-log-title">
-            gemini-agent — {TASK_LABELS[task] || task}
+            Coverage assistant — {TASK_LABELS[task] || task}
           </span>
         </div>
 
@@ -204,7 +203,7 @@ export default function AILogViewer({ task = 'legal_writing', active = false, on
       <div className="ai-log-body" ref={bodyRef}>
         {logs.length === 0 && status === 'idle' && (
           <div style={{ color: '#4a526a', fontStyle: 'italic' }}>
-            Waiting for AI task to start...
+            Waiting for the task to start...
           </div>
         )}
 

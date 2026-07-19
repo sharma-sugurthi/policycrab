@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { apiFetch } from '../lib/api'
+import { apiFetch, readApiResponse } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
@@ -40,7 +40,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       try {
         const res = await apiFetch('/chat/session')
         if (!res.ok) return
-        const data = await res.json()
+        const data = await readApiResponse(res)
         if (!cancelled && data.messages?.length > 0) setMessages(data.messages)
       } catch (err) {
         console.error('Failed to load chat session', err)
@@ -75,13 +75,10 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
         method: 'POST',
         body: JSON.stringify({ message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }),
       })
-      let data
-      try {
-        data = await res.json()
-      } catch {
-        const text = await res.text().catch(() => '')
-        console.error('Backend non-JSON response:', text)
-        setMessages(prev => [...prev, { role: 'ai', content: 'The AI server is temporarily unavailable. Please try again in a few seconds.' }])
+      const data = await readApiResponse(res)
+      if (!data || typeof data === 'string') {
+        console.error('Backend non-JSON response:', data || '')
+        setMessages(prev => [...prev, { role: 'ai', content: 'The assistant is temporarily unavailable. Please try again in a few seconds.' }])
         return
       }
       if (data.messages?.length) setMessages(data.messages)
@@ -104,7 +101,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       <div className="main">
         <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '1.5rem' }}>
           <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-label">
-            <span className="line" /> RAG-Powered Chat
+            <span className="line" /> Coverage Help
           </motion.p>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
             <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
@@ -124,8 +121,8 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                 <div className="feature-icon purple">🧠</div>
                 <div>
-                  <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#09090b' }}>Active Context</h3>
-                  <p style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Injected into the LLM prompt</p>
+                  <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#09090b' }}>Conversation context</h3>
+                  <p style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Used to personalize your answer</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8125rem' }}>
@@ -138,8 +135,8 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
                   {costBreakdown ? <span className="badge badge-success">Loaded</span> : <span className="badge badge-zinc">None</span>}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#71717a', fontWeight: 500 }}>RAG Search</span>
-                  <span className="badge badge-info">Active · 46 chunks</span>
+                  <span style={{ color: '#71717a', fontWeight: 500 }}>Reference search</span>
+                  <span className="badge badge-info">Active · policy references</span>
                 </div>
               </div>
             </div>
