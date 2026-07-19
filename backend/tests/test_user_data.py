@@ -6,12 +6,23 @@ from app.services import user_data
 class _InsertCapture:
     def __init__(self):
         self.payload = None
+        self._mode = None  # tracks whether we're in "select" or "insert" flow
+
+    def select(self, *args, **kwargs):
+        self._mode = "select"
+        return self
+
+    def eq(self, *args, **kwargs):
+        return self
 
     def insert(self, payload):
+        self._mode = "insert"
         self.payload = payload
         return self
 
     def execute(self):
+        if self._mode == "select":
+            return SimpleNamespace(data=[], count=0)
         return SimpleNamespace(data=[self.payload])
 
 
