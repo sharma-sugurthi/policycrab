@@ -20,7 +20,7 @@ class ClaimCase(BaseModel):
     cpt_description: str = Field("", description="Human-readable procedure name (e.g., 'Total Knee Replacement')")
     icd_10_code: str = Field("", description="ICD-10-CM diagnosis code (e.g., 'M17.11')")
     icd_10_description: str = Field("", description="Human-readable diagnosis (e.g., 'Primary osteoarthritis, right knee')")
-    date_of_service: date = Field(..., description="Date the service was rendered")
+    date_of_service: date | None = Field(None, description="Date the service was rendered (YYYY-MM-DD)")
     billed_amount: float = Field(..., gt=0, description="Provider's billed charge (chargemaster rate)")
 
     # ── Provider Context ──────────────────────────────────────────
@@ -73,7 +73,7 @@ class ClaimCase(BaseModel):
     # ── Denial Info (populated if claim was already denied) ───────
     is_denied: bool = Field(False, description="True if this claim has been denied")
     denial_reason: DenialReason | None = Field(None, description="Reason for denial")
-    denial_date: date | None = Field(None, description="Date the denial was issued")
+    denial_date: date | None = Field(None, description="Date the denial was issued (YYYY-MM-DD)")
     denial_carc_code: str | None = Field(None, description="CARC code from EOB/ERA (e.g., 'CO-50')")
     denial_rarc_code: str | None = Field(None, description="RARC code from EOB/ERA (e.g., 'N115')")
 

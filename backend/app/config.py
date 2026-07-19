@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # ── LLM Model Defaults ────────────────────────────────────────
     llm_fast_model: str = "gemini-2.5-flash"
     llm_quality_model: str = "gemini-2.5-pro"
-    embedding_model: str = "gemini-embedding-001"
+    embedding_model: str = "text-embedding-004"
     embedding_dimensions: int = 768
 
     model_config = {

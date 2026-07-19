@@ -12,6 +12,7 @@ This agent:
 import json
 import ast
 import logging
+from datetime import date, datetime
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.state import AgentState
@@ -78,6 +79,42 @@ def _extract_json_text(content: str) -> str:
 
     return normalized
 
+
+def _parse_date_flexible(raw: str) -> str | None:
+    """
+    Parse a date string in various formats and return YYYY-MM-DD.
+    Handles: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY, MM-DD-YYYY, etc.
+    Returns None if parsing fails entirely.
+    """
+    if not raw or not raw.strip():
+        return None
+
+    raw = raw.strip()
+
+    # Try ISO format first (YYYY-MM-DD)
+    formats = [
+        "%Y-%m-%d",      # 2026-05-14
+        "%m/%d/%Y",      # 05/14/2026
+        "%d/%m/%Y",      # 14/05/2026
+        "%m-%d-%Y",      # 05-14-2026
+        "%d-%m-%Y",      # 14-05-2026
+        "%Y/%m/%d",      # 2026/05/14
+        "%B %d, %Y",     # May 14, 2026
+        "%b %d, %Y",     # May 14, 2026
+        "%d %B %Y",      # 14 May 2026
+    ]
+
+    for fmt in formats:
+        try:
+            parsed = datetime.strptime(raw, fmt)
+            return parsed.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+
+    logger.warning(f"Agent 2: Could not parse date '{raw}' — setting to None")
+    return None
+
+
 CLAIM_INTAKE_PROMPT = """You are a US medical billing intake specialist. Analyze the patient's 
 description of their healthcare encounter and extract structured claim information.
 
@@ -135,14 +172,17 @@ async def claim_intake_node(state: AgentState) -> dict:
         policy_context = ""
         if state.get("policy_profile"):
             policy = PolicyProfile(**state["policy_profile"])
+            plan_type_str = policy.plan_type.value if policy.plan_type else "Unknown"
+            deductible_str = f"${policy.in_network_deductible_individual:,.2f}" if policy.in_network_deductible_individual is not None else "N/A"
+            oop_max_str = f"${policy.in_network_oop_max_individual:,.2f}" if policy.in_network_oop_max_individual is not None else "N/A"
             policy_context = (
                 f"\n\nPatient's insurance plan context:\n"
-                f"- Plan: {policy.plan_name} ({policy.plan_type.value})\n"
+                f"- Plan: {policy.plan_name} ({plan_type_str})\n"
                 f"- Carrier: {policy.carrier_name}\n"
                 f"- Requires PCP Referral: {policy.requires_pcp_referral}\n"
                 f"- Prior Auth Categories: {', '.join(policy.prior_auth_required_categories) or 'None specified'}\n"
-                f"- Deductible Met: ${policy.deductible_met:,.2f} of ${policy.in_network_deductible_individual:,.2f}\n"
-                f"- OOP Met: ${policy.oop_met:,.2f} of ${policy.in_network_oop_max_individual:,.2f}\n"
+                f"- Deductible Met: ${policy.deductible_met:,.2f} of {deductible_str}\n"
+                f"- OOP Met: ${policy.oop_met:,.2f} of {oop_max_str}\n"
             )
 
         messages = [
@@ -214,6 +254,14 @@ async def claim_intake_node(state: AgentState) -> dict:
         # Ensure it falls back to False if omitted by the LLM.
         if "prior_auth_required" not in claim_data:
             claim_data["prior_auth_required"] = False
+
+        # Normalize date fields — LLMs often return dates in wrong formats
+        for date_field in ('date_of_service', 'denial_date'):
+            raw_date = claim_data.get(date_field)
+            if raw_date and isinstance(raw_date, str):
+                claim_data[date_field] = _parse_date_flexible(raw_date)
+            elif raw_date is None:
+                claim_data[date_field] = None
 
         # Validate through Pydantic
         claim = ClaimCase(**claim_data)
