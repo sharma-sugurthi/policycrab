@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch, readApiResponse } from '../lib/api'
+import { useNavigate } from 'react-router-dom'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 const MAX_POLICIES = 5
@@ -64,6 +65,7 @@ function EditableSelectField({ label, field, value, onChange, options }) {
 }
 
 export default function PolicyUpload({ onPolicyParsed }) {
+  const navigate = useNavigate()
   const [policyText, setPolicyText] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -499,14 +501,33 @@ export default function PolicyUpload({ onPolicyParsed }) {
                 </button>
 
                 {confirmed && (
-                  <motion.div
+                  <motion.button
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    style={{ marginTop: '1rem', padding: '0.875rem 1.25rem', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '1rem', fontSize: '0.875rem', color: '#065f46', fontWeight: 600 }}
+                    style={{ 
+                      marginTop: '1rem', 
+                      width: '100%',
+                      padding: '0.875rem 1.25rem', 
+                      background: '#ecfdf5', 
+                      border: '1px solid #a7f3d0', 
+                      borderRadius: '1rem', 
+                      fontSize: '0.9375rem', 
+                      color: '#065f46', 
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                    onClick={() => navigate('/claim')}
                   >
-                    ✅ Policy is active — go to <strong>Claim Evaluator</strong> to run a claim.
-                  </motion.div>
+                    <span>✅ Policy is active</span>
+                    <span style={{ color: '#047857' }}>—</span>
+                    <span style={{ textDecoration: 'underline' }}>Go to Claim Evaluator →</span>
+                  </motion.button>
                 )}
 
                 {result?.explanation && (
