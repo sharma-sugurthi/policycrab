@@ -19,11 +19,20 @@ CHAT_HTTP_RATE_LIMIT = rate_limit("chat:http", max_requests=20, window_seconds=6
 CHAT_WS_MESSAGE_LIMIT = RateLimitRule("chat:websocket", max_requests=30, window_seconds=60)
 
 
+def _extract_text_content(content) -> str:
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        return "".join([c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"])
+    return str(content)
+
+
 def _stored_messages_to_langchain(messages: list[dict]) -> list:
     converted = []
     for message in messages:
         role = message.get("role")
         content = message.get("content", "")
+        content = _extract_text_content(content)
         if not content:
             continue
         if role == "user":
@@ -38,9 +47,9 @@ def _langchain_messages_to_stored(messages: list) -> list[dict]:
     for message in messages:
         msg_type = getattr(message, "type", None)
         if msg_type == "human":
-            stored.append({"role": "user", "content": message.content})
+            stored.append({"role": "user", "content": _extract_text_content(message.content)})
         elif msg_type == "ai":
-            stored.append({"role": "ai", "content": message.content})
+            stored.append({"role": "ai", "content": _extract_text_content(message.content)})
     return stored
 
 
@@ -130,11 +139,11 @@ async def chat_websocket(websocket: WebSocket):
             
             if new_ai_messages:
                 conversation_state["messages"].extend(new_ai_messages)
-                response_text = new_ai_messages[-1].content
+                response_text = _extract_text_content(new_ai_messages[-1].content)
             else:
                 # Fallback: get the last AI message from the full result
                 all_ai = [m for m in result_messages if hasattr(m, 'type') and m.type == "ai"]
-                response_text = all_ai[-1].content if all_ai else "I couldn't generate a response."
+                response_text = _extract_text_content(all_ai[-1].content) if all_ai else "I couldn't generate a response."
                 # Sync state with full result to avoid drift
                 conversation_state["messages"] = result_messages
 
@@ -222,7 +231,7 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user), _:
         result = await graph.ainvoke(state)
 
         ai_messages = [m for m in result.get("messages", []) if hasattr(m, 'type') and m.type == "ai"]
-        response_text = ai_messages[-1].content if ai_messages else "I couldn't generate a response."
+        response_text = _extract_text_content(ai_messages[-1].content) if ai_messages else "I couldn't generate a response."
         stored_after = _langchain_messages_to_stored(result.get("messages", []))
         upsert_user_chat(user["id"], stored_after, policy_profile=policy_profile, cost_breakdown=cost_breakdown)
 
