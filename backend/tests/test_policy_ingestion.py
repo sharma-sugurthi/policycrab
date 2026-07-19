@@ -176,6 +176,47 @@ class TestPolicyIngestionNullHandling:
         assert confidence in ("MEDIUM", "LOW"), \
             f"Expected MEDIUM or LOW confidence with null fields, got: {confidence}"
 
+    @pytest.mark.asyncio
+    async def test_missing_state_and_list_fields_are_normalized(self):
+        """Missing required text/list fields should be backfilled before validation."""
+        from app.agents.policy_ingestion import policy_ingestion_node
+
+        response = json.dumps({
+            "plan_name": "BlueCross PPO Gold",
+            "carrier_name": "BlueCross BlueShield",
+            "plan_type": "PPO",
+            "legal_classification": "FULLY_INSURED",
+            "state": None,
+            "in_network_deductible_individual": 1500.0,
+            "in_network_oop_max_individual": 6000.0,
+            "in_network_coinsurance": 0.20,
+            "copay_schedule": {
+                "primary_care": 25.0,
+                "specialist": 50.0,
+            },
+            "is_hsa_eligible": False,
+            "requires_pcp_referral": False,
+            "prior_auth_required_categories": None,
+            "excluded_services": None,
+        })
+
+        state = {
+            "session_id": "test-session-normalize",
+            "raw_policy_text": "--- Page 1 ---\nState: CA\nBlueCross PPO Gold plan.",
+            "errors": [],
+        }
+
+        with patch("app.agents.policy_ingestion.get_llm", return_value=_make_llm(response)), \
+             patch("app.agents.policy_ingestion.embed_document_chunks", _make_embed_fn()), \
+             patch("app.agents.policy_ingestion.insert_policy_chunks", _make_insert_fn()):
+            result = await policy_ingestion_node(state)
+
+        profile = result.get("policy_profile", {})
+        assert profile.get("state") == "CA"
+        assert profile.get("prior_auth_required_categories") == []
+        assert profile.get("excluded_services") == []
+        assert result.get("errors", []) == []
+
 
 class TestPolicyIngestionValidData:
     """When the LLM returns a complete, valid response, the agent should parse it cleanly."""

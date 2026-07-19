@@ -16,6 +16,7 @@ Phase 2 — Profile Extraction (ENHANCED):
 
 import json
 import logging
+import re
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -59,7 +60,58 @@ Required fields:
 - prior_auth_required_categories: List of service categories requiring prior auth
 - excluded_services: List of explicitly excluded services
 
+Important: For list fields, return [] when no items are explicitly stated.
+If the plan state is not obvious, return the two-letter code when present in the document,
+or "XX" as a last-resort placeholder.
+
 Respond ONLY with a valid JSON object matching the schema above. No explanations."""
+
+
+STATE_CODE_PATTERN = re.compile(r"(?im)^(?:state|jurisdiction)\s*[:\-]?\s*([A-Z]{2})\b")
+
+
+def _infer_state_code(raw_text: str) -> str:
+    """Best-effort state inference from the raw policy text."""
+    if not raw_text:
+        return "XX"
+
+    match = STATE_CODE_PATTERN.search(raw_text)
+    if match:
+        return match.group(1).upper()
+
+    fallback_match = re.search(r"\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b", raw_text)
+    if fallback_match:
+        return fallback_match.group(1).upper()
+
+    return "XX"
+
+
+def _normalize_policy_data(policy_data: dict, raw_text: str) -> tuple[dict, list[str]]:
+    """Fill in safe defaults for fields Gemini may omit or return as null."""
+    normalized = dict(policy_data)
+    warnings: list[str] = []
+
+    if not normalized.get("state"):
+        inferred_state = _infer_state_code(raw_text)
+        normalized["state"] = inferred_state
+        warnings.append(f"State was missing from the extraction; inferred '{inferred_state}'.")
+
+    if normalized.get("plan_name") is None:
+        normalized["plan_name"] = "Unknown Plan"
+        warnings.append("Plan name was missing from the extraction; using a placeholder.")
+
+    if normalized.get("carrier_name") is None:
+        normalized["carrier_name"] = "Unknown Carrier"
+        warnings.append("Carrier name was missing from the extraction; using a placeholder.")
+
+    if normalized.get("copay_schedule") is None:
+        normalized["copay_schedule"] = {}
+
+    for field_name in ("prior_auth_required_categories", "excluded_services"):
+        if normalized.get(field_name) is None:
+            normalized[field_name] = []
+
+    return normalized, warnings
 
 
 def _build_page_chunks(pages: list[dict]) -> list[dict]:
@@ -171,6 +223,7 @@ async def policy_ingestion_node(state: AgentState) -> dict:
             content = content.split("```")[1].split("```")[0]
 
         policy_data = json.loads(content.strip())
+        policy_data, normalization_warnings = _normalize_policy_data(policy_data, first_pages_text)
 
         # Validate through Pydantic
         policy = PolicyProfile(**policy_data)
@@ -208,6 +261,11 @@ async def policy_ingestion_node(state: AgentState) -> dict:
         confidence = "HIGH" if len(warnings) == 0 else ("MEDIUM" if len(warnings) <= 2 else "LOW")
         if warnings:
             logger.warning(f"Agent 1: Extraction warnings ({confidence}): {warnings}")
+
+        if normalization_warnings:
+            warnings.extend(normalization_warnings)
+            confidence = "MEDIUM" if confidence == "HIGH" else confidence
+            logger.warning(f"Agent 1: Normalization warnings: {normalization_warnings}")
 
         logger.info(
             f"Agent 1: Phase 2 complete — Policy: {policy.plan_name} ({policy.carrier_name}), "

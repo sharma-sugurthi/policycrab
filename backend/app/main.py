@@ -12,8 +12,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.api.router import api_router
 from app.middleware.logging import RequestLoggingMiddleware
+
+# LangSmith tracing is only useful when a valid API key is configured.
+# If tracing is enabled without credentials, the client will emit 403 noise on every request.
+if os.environ.get("LANGCHAIN_TRACING_V2") == "true" and not (
+    os.environ.get("LANGSMITH_API_KEY") or os.environ.get("LANGCHAIN_API_KEY")
+):
+    os.environ["LANGCHAIN_TRACING_V2"] = "false"
+
+from app.api.router import api_router
 
 # Configure logging
 logging.basicConfig(
