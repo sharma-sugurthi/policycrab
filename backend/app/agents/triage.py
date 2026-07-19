@@ -174,7 +174,11 @@ async def triage_node(state: AgentState) -> dict:
     try:
         claim = ClaimCase(**state["claim_case"])
         policy = PolicyProfile(**state["policy_profile"]) if state.get("policy_profile") else None
-        cost = CostBreakdown(**state["cost_breakdown"]) if state.get("cost_breakdown") else None
+        cost_data = state.get("cost_breakdown") or {}
+        try:
+            cost = CostBreakdown(**cost_data) if cost_data else None
+        except Exception:
+            cost = None
         contradiction_analysis = state.get("contradiction_analysis")
 
         # ── Step 1: Run deterministic pre-checks first ────────────

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone
+from uuid import uuid4
 
 from app.services.supabase_client import get_supabase_client
 from app.security.phi_scrubber import scrub_phi
@@ -9,9 +10,14 @@ logger = logging.getLogger(__name__)
 
 def create_user_policy(user_id: str, policy_profile: dict) -> dict | None:
     client = get_supabase_client()
+    payload = {
+        "id": str(uuid4()),
+        "user_id": user_id,
+        "policy_profile_json": policy_profile,
+    }
     result = (
         client.table("user_policies")
-        .insert({"user_id": user_id, "policy_profile_json": policy_profile})
+        .insert(payload)
         .execute()
     )
     return result.data[0] if result.data else None
@@ -72,14 +78,18 @@ def list_user_claims(user_id: str) -> list[dict]:
 
 def get_user_chat(user_id: str) -> dict | None:
     client = get_supabase_client()
-    result = (
-        client.table("user_chats")
-        .select("id, messages, policy_profile_json, cost_breakdown_json, created_at, updated_at")
-        .eq("user_id", user_id)
-        .limit(1)
-        .execute()
-    )
-    return result.data[0] if result.data else None
+    try:
+        result = (
+            client.table("user_chats")
+            .select("id, messages, policy_profile_json, cost_breakdown_json, created_at, updated_at")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+    except Exception as exc:
+        logger.warning(f"get_user_chat: falling back to ephemeral chat state for user={user_id}: {exc}")
+        return None
 
 
 def upsert_user_chat(
@@ -96,10 +106,17 @@ def upsert_user_chat(
         "cost_breakdown_json": cost_breakdown,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    result = client.table("user_chats").upsert(payload, on_conflict="user_id").execute()
-    return result.data[0] if result.data else None
+    try:
+        result = client.table("user_chats").upsert(payload, on_conflict="user_id").execute()
+        return result.data[0] if result.data else None
+    except Exception as exc:
+        logger.warning(f"upsert_user_chat: skipping persistence for user={user_id}: {exc}")
+        return None
 
 
 def clear_user_chat(user_id: str) -> None:
     client = get_supabase_client()
-    client.table("user_chats").delete().eq("user_id", user_id).execute()
+    try:
+        client.table("user_chats").delete().eq("user_id", user_id).execute()
+    except Exception as exc:
+        logger.warning(f"clear_user_chat: skipping persistence for user={user_id}: {exc}")

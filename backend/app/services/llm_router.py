@@ -7,7 +7,10 @@ Strategy:
 - All calls are logged with structured step logs for the AI Transparency UI.
 """
 
+import asyncio
+import inspect
 import logging
+import time
 from enum import Enum
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models import BaseChatModel
@@ -153,31 +156,156 @@ def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChat
     return None
 
 
+class FallbackChatModel:
+    """Wrap several candidate chat models and fall back on runtime failures."""
+
+    def __init__(self, task: TaskType, candidates: list[dict], temperature: float = 0.0, max_retries: int = 3):
+        self.task = task
+        self.candidates = candidates
+        self.temperature = temperature
+        self.max_retries = max_retries
+        self.bound_tools = None
+        self._created_llms: dict[tuple[str, str], BaseChatModel] = {}
+
+    def _create_candidate(self, entry: dict) -> BaseChatModel | None:
+        key = (entry["provider"], entry["model"])
+        if key not in self._created_llms:
+            self._created_llms[key] = _create_llm(entry["provider"], entry["model"], self.temperature)
+        return self._created_llms[key]
+
+    def bind_tools(self, tools):
+        self.bound_tools = tools
+        return self
+
+    def _bind_if_needed(self, llm: BaseChatModel) -> BaseChatModel:
+        if self.bound_tools is not None and hasattr(llm, "bind_tools"):
+            return llm.bind_tools(self.bound_tools)
+        return llm
+
+    def _invoke_with_fallback(self, invoke_method, input_data, config=None, **kwargs):
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries):
+            for entry in self.candidates:
+                llm = self._create_candidate(entry)
+                if llm is None:
+                    continue
+
+                try:
+                    bound_llm = self._bind_if_needed(llm)
+                    logger.info(
+                        f"LLM selected for {self.task.value} (attempt {attempt + 1}): "
+                        f"{entry['provider']}/{entry['model']}"
+                    )
+                    return invoke_method(bound_llm, input_data, config=config, **kwargs)
+                except Exception as exc:
+                    last_error = exc
+                    logger.warning(
+                        f"LLM provider {entry['provider']}/{entry['model']} failed for task {self.task.value}: {exc}"
+                    )
+
+            if attempt < self.max_retries - 1:
+                wait_time = (2 ** attempt) * 2
+                logger.warning(
+                    f"Retrying LLM providers for task {self.task.value} in {wait_time}s"
+                )
+                time.sleep(wait_time)
+
+        if last_error is not None:
+            raise last_error
+
+        raise RuntimeError(
+            f"No LLM available for task '{self.task.value}' after {self.max_retries} retries. "
+            "Check that at least one API key is configured in .env"
+        )
+
+    def invoke(self, input_data, config=None, **kwargs):
+        return self._invoke_with_fallback(lambda llm, data, config=None, **call_kwargs: self._call_llm(llm, data, method_name="invoke", config=config, **call_kwargs), input_data, config=config, **kwargs)
+
+    async def ainvoke(self, input_data, config=None, **kwargs):
+        return await self._invoke_with_fallback_async(
+            lambda llm, data, config=None, **call_kwargs: self._call_llm_async(llm, data, method_name="ainvoke", config=config, **call_kwargs),
+            input_data,
+            config=config,
+            **kwargs,
+        )
+
+    async def _invoke_with_fallback_async(self, invoke_method, input_data, config=None, **kwargs):
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries):
+            for entry in self.candidates:
+                llm = self._create_candidate(entry)
+                if llm is None:
+                    continue
+
+                try:
+                    bound_llm = self._bind_if_needed(llm)
+                    logger.info(
+                        f"LLM selected for {self.task.value} (attempt {attempt + 1}): "
+                        f"{entry['provider']}/{entry['model']}"
+                    )
+                    return await invoke_method(bound_llm, input_data, config=config, **kwargs)
+                except Exception as exc:
+                    last_error = exc
+                    logger.warning(
+                        f"LLM provider {entry['provider']}/{entry['model']} failed for task {self.task.value}: {exc}"
+                    )
+
+            if attempt < self.max_retries - 1:
+                wait_time = (2 ** attempt) * 2
+                logger.warning(
+                    f"Retrying LLM providers for task {self.task.value} in {wait_time}s"
+                )
+                await asyncio.sleep(wait_time)
+
+        if last_error is not None:
+            raise last_error
+
+        raise RuntimeError(
+            f"No LLM available for task '{self.task.value}' after {self.max_retries} retries. "
+            "Check that at least one API key is configured in .env"
+        )
+
+    def _call_llm(self, llm, data, method_name: str, config=None, **kwargs):
+        method = getattr(llm, method_name)
+        params = inspect.signature(method).parameters
+        if "config" in params:
+            return method(data, config=config, **kwargs)
+        return method(data, **kwargs)
+
+    async def _call_llm_async(self, llm, data, method_name: str, config=None, **kwargs):
+        method = getattr(llm, method_name)
+        params = inspect.signature(method).parameters
+        if "config" in params:
+            return await method(data, config=config, **kwargs)
+        return await method(data, **kwargs)
+
+
 def get_llm(
     task: TaskType,
     temperature: float = 0.0,
 ) -> BaseChatModel:
     """
     Get the best available LLM for the given task type.
-    Tries models in priority order, skipping unavailable providers.
+    Uses a runtime fallback wrapper so provider errors during invocation are
+    retried against the next configured model.
     """
     candidates = _MODEL_REGISTRY.get(task, _MODEL_REGISTRY[TaskType.CHAT])
+    return FallbackChatModel(task, candidates, temperature=temperature, max_retries=3)
 
-    for entry in candidates:
-        llm = _create_llm(entry["provider"], entry["model"], temperature)
-        if llm is not None:
-            logger.info(f"LLM selected for {task.value}: {entry['provider']}/{entry['model']}")
-            return llm
 
-    # Final fallback — always try Gemini Flash
-    fallback = _create_llm("gemini", settings.llm_fast_model, temperature)
-    if fallback:
-        return fallback
-
-    raise RuntimeError(
-        f"No LLM available for task '{task.value}'. "
-        "Check that at least one API key is configured in .env"
-    )
+def get_llm_with_retry(
+    task: TaskType,
+    temperature: float = 0.0,
+    max_retries: int = 3,
+) -> BaseChatModel:
+    """
+    Get an LLM with automatic retry on provider errors.
+    The router tries the primary provider first, then falls back through the
+    candidate list. If a provider is configured but fails at runtime (for example
+    a 429 quota error), the next provider is attempted before giving up.
+    """
+    candidates = _MODEL_REGISTRY.get(task, _MODEL_REGISTRY[TaskType.CHAT])
+    return FallbackChatModel(task, candidates, temperature=temperature, max_retries=max_retries)
 
 
 def get_embedding_client():

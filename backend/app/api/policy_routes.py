@@ -104,7 +104,10 @@ async def upload_policy_text(
     try:
         response = await _run_ingestion(request.policy_text)
         if response.success and response.policy_profile:
-            create_user_policy(user["id"], response.policy_profile)
+            try:
+                create_user_policy(user["id"], response.policy_profile)
+            except Exception as db_error:
+                logger.warning(f"Failed to save policy to database (continuing anyway): {db_error}")
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")
@@ -217,7 +220,10 @@ async def upload_policy_pdf(
         )
 
         if base_resp.success and base_resp.policy_profile:
-            create_user_policy(user["id"], base_resp.policy_profile)
+            try:
+                create_user_policy(user["id"], base_resp.policy_profile)
+            except Exception as db_error:
+                logger.warning(f"Failed to save policy to database (continuing anyway): {db_error}")
 
         return base_resp
 

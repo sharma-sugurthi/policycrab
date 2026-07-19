@@ -986,12 +986,46 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
                 )}
 
                 {result.appeal_output && (
-                  <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+                  <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
+                    className="card card-zinc" style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                      <div className="feature-icon" style={{ background: '#3b82f6', color: '#fff' }}>🚦</div>
+                      <div>
+                        <h3 style={{ fontWeight: 800, color: '#09090b', fontSize: '1.0625rem' }}>Agent 4: Denial Triage</h3>
+                        <p style={{ fontSize: '0.8125rem', color: '#71717a' }}>Determining liability: Provider Billing Error vs. Payer Violation</p>
+                      </div>
+                    </div>
+                    
+                    <div style={{ padding: '1rem', background: '#fff', border: '1px solid #e4e4e7', borderRadius: '0.75rem', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#3f3f46' }}>Triage Path</span>
+                        <span className={`badge ${result.appeal_output.triage_path === 'PROVIDER_CODING_ERROR' ? 'badge-warning' : 'badge-danger'}`}>
+                          {result.appeal_output.triage_path === 'PROVIDER_CODING_ERROR' ? '⚠️ PROVIDER CODING ERROR' : '🚨 PAYER ILLEGAL DENIAL'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#3f3f46' }}>Confidence</span>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: result.appeal_output.triage_confidence === 'HIGH' ? '#16a34a' : '#d97706' }}>
+                          {result.appeal_output.triage_confidence}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.75rem', borderLeft: '4px solid #3b82f6' }}>
+                      <p style={{ fontSize: '0.875rem', color: '#334155', fontWeight: 500, lineHeight: 1.5 }}>
+                        {result.appeal_output.triage_action_summary}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {result.appeal_output && (
+                  <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
                     className="card" style={{ border: '1px solid #dc2626', boxShadow: '0 4px 24px rgba(220,38,38,0.15)', padding: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
                       <div className="feature-icon red">⚖️</div>
                       <div>
-                        <h3 style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '1.125rem' }}>Agent 4: Appeal Letter</h3>
+                        <h3 style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '1.125rem' }}>Agent 5: Appeal Letter</h3>
                         <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>RAG-powered regulatory response</p>
                       </div>
                     </div>

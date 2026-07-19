@@ -17,9 +17,9 @@ class ClaimCase(BaseModel):
 
     # ── Service Details ───────────────────────────────────────────
     cpt_code: str = Field(..., description="CPT/HCPCS procedure code (e.g., '27447')")
-    cpt_description: str = Field(..., description="Human-readable procedure name (e.g., 'Total Knee Replacement')")
-    icd_10_code: str = Field(..., description="ICD-10-CM diagnosis code (e.g., 'M17.11')")
-    icd_10_description: str = Field(..., description="Human-readable diagnosis (e.g., 'Primary osteoarthritis, right knee')")
+    cpt_description: str = Field("", description="Human-readable procedure name (e.g., 'Total Knee Replacement')")
+    icd_10_code: str = Field("", description="ICD-10-CM diagnosis code (e.g., 'M17.11')")
+    icd_10_description: str = Field("", description="Human-readable diagnosis (e.g., 'Primary osteoarthritis, right knee')")
     date_of_service: date = Field(..., description="Date the service was rendered")
     billed_amount: float = Field(..., gt=0, description="Provider's billed charge (chargemaster rate)")
 
