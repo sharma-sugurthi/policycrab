@@ -21,7 +21,8 @@ Redacts:
 """
 
 import logging
-from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
+from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import OperatorConfig
 
@@ -46,8 +47,17 @@ class HIPAADocumentScrubber:
         
         # Initialize the engines
         try:
-            # We use the lightweight en_core_web_sm to fit inside Heroku's Eco tier memory limits
-            self.analyzer = AnalyzerEngine()
+            # Use Presidio's slim SpaCy pipeline so we avoid the default large-model download.
+            nlp_provider = NlpEngineProvider(
+                nlp_configuration={
+                    "nlp_engine_name": "slim",
+                    "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
+                }
+            )
+            self.analyzer = AnalyzerEngine(
+                nlp_engine=nlp_provider.create_engine(),
+                supported_languages=["en"],
+            )
             self.anonymizer = AnonymizerEngine()
             logger.info("HIPAADocumentScrubber initialized with Microsoft Presidio.")
         except Exception as e:
