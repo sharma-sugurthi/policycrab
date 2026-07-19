@@ -48,13 +48,27 @@ async def explanation_node(state: AgentState) -> dict:
         # Build context based on current phase
         if phase == "ingestion" and state.get("policy_profile"):
             policy = PolicyProfile(**state["policy_profile"])
+            
+            # Guard all Optional enum/numeric fields — the LLM may not extract them
+            plan_type_str = policy.plan_type.value if policy.plan_type else "Unknown"
+            legal_class_str = policy.legal_classification.value if policy.legal_classification else "Unknown"
+            deductible_str = f"${policy.in_network_deductible_individual:,.2f}" if policy.in_network_deductible_individual is not None else "N/A"
+            oop_max_str = f"${policy.in_network_oop_max_individual:,.2f}" if policy.in_network_oop_max_individual is not None else "N/A"
+            
+            if policy.in_network_coinsurance is not None:
+                coinsurance_str = (
+                    f"{policy.in_network_coinsurance * 100:.0f}% patient / "
+                    f"{(1 - policy.in_network_coinsurance) * 100:.0f}% insurer"
+                )
+            else:
+                coinsurance_str = "N/A"
+            
             technical = (
                 f"Policy parsed: {policy.plan_name} by {policy.carrier_name}\n"
-                f"Type: {policy.plan_type.value} | Classification: {policy.legal_classification.value}\n"
-                f"Deductible: ${policy.in_network_deductible_individual:,.2f}\n"
-                f"OOP Max: ${policy.in_network_oop_max_individual:,.2f}\n"
-                f"Coinsurance: {policy.in_network_coinsurance * 100:.0f}% patient / "
-                f"{(1 - policy.in_network_coinsurance) * 100:.0f}% insurer\n"
+                f"Type: {plan_type_str} | Classification: {legal_class_str}\n"
+                f"Deductible: {deductible_str}\n"
+                f"OOP Max: {oop_max_str}\n"
+                f"Coinsurance: {coinsurance_str}\n"
                 f"Requires PCP Referral: {policy.requires_pcp_referral}\n"
                 f"HSA Eligible: {policy.is_hsa_eligible}"
             )

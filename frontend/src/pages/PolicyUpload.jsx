@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch, readApiResponse } from '../lib/api'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
+const MAX_POLICIES = 5
 
 // Editable numeric field row
 function EditableNumericField({ label, field, value, onChange, isDefaulted, prefix = '$' }) {
@@ -73,6 +74,49 @@ export default function PolicyUpload({ onPolicyParsed }) {
   const [editableProfile, setEditableProfile] = useState(null)
   const [confirmed, setConfirmed] = useState(false)
 
+  // Saved policies state
+  const [savedPolicies, setSavedPolicies] = useState([])
+  const [policiesLoading, setPoliciesLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState(null)
+
+  // Fetch saved policies on mount
+  const fetchPolicies = useCallback(async () => {
+    try {
+      setPoliciesLoading(true)
+      const res = await apiFetch('/history/policies')
+      const data = await readApiResponse(res)
+      setSavedPolicies(Array.isArray(data) ? data : [])
+    } catch {
+      // Silently fail — saved policies are a convenience feature
+    } finally {
+      setPoliciesLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchPolicies() }, [fetchPolicies])
+
+  const handleDeletePolicy = async (policyId) => {
+    if (!confirm('Delete this saved policy? This cannot be undone.')) return
+    setDeletingId(policyId)
+    try {
+      await apiFetch(`/history/policies/${policyId}`, { method: 'DELETE' })
+      setSavedPolicies(prev => prev.filter(p => p.id !== policyId))
+    } catch {
+      setError('Failed to delete policy. Please try again.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const handleLoadSaved = (policy) => {
+    const profile = policy.policy_profile
+    if (!profile) return
+    setEditableProfile({ ...profile })
+    setResult({ policy_profile: profile, extraction_confidence: 'HIGH' })
+    setConfirmed(false)
+    setError(null)
+  }
+
   const handleFieldChange = (field, value) => {
     setEditableProfile(prev => ({ ...prev, [field]: value }))
     setConfirmed(false)
@@ -117,6 +161,8 @@ export default function PolicyUpload({ onPolicyParsed }) {
         setResult(data)
         setEditableProfile({ ...data.policy_profile })
         if (data.extracted_text) setPolicyText(data.extracted_text)
+        // Refresh saved policies list
+        fetchPolicies()
       } else if (data?.session_id && data.policy_indexed) {
         setResult(data)
         setError(data.errors?.join(', ') || 'Policy details were saved, but the summary could not be completed.')
@@ -218,6 +264,93 @@ export default function PolicyUpload({ onPolicyParsed }) {
               {error && (
                 <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.8125rem', fontWeight: 500 }}>
                   ❌ {error}
+                </div>
+              )}
+            </div>
+
+            {/* ── Saved Policies Panel ────────────── */}
+            <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.125rem' }}>📂</span>
+                  <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#09090b' }}>Saved Policies</h3>
+                </div>
+                <span style={{
+                  fontSize: '0.6875rem', fontWeight: 700, padding: '0.25rem 0.625rem',
+                  borderRadius: '999px',
+                  background: savedPolicies.length >= MAX_POLICIES ? '#fef2f2' : '#f4f4f5',
+                  color: savedPolicies.length >= MAX_POLICIES ? '#dc2626' : '#71717a',
+                  border: `1px solid ${savedPolicies.length >= MAX_POLICIES ? '#fecaca' : '#e4e4e7'}`,
+                }}>
+                  {savedPolicies.length} / {MAX_POLICIES} slots
+                </span>
+              </div>
+
+              {policiesLoading ? (
+                <div style={{ textAlign: 'center', padding: '1.5rem', color: '#a1a1aa', fontSize: '0.8125rem' }}>
+                  <span className="spinner" style={{ marginRight: '0.5rem' }} /> Loading...
+                </div>
+              ) : savedPolicies.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '1.5rem', color: '#a1a1aa', fontSize: '0.8125rem' }}>
+                  No saved policies yet. Upload one above to get started.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {savedPolicies.map(p => {
+                    const profile = p.policy_profile
+                    const name = profile?.plan_name || 'Unnamed Policy'
+                    const carrier = profile?.carrier_name || ''
+                    const planType = profile?.plan_type || ''
+                    const date = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+                    return (
+                      <div key={p.id} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.75rem',
+                        padding: '0.625rem 0.875rem', borderRadius: '0.75rem',
+                        background: '#fafafa', border: '1px solid #f4f4f5',
+                        transition: 'border-color 0.15s',
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = '#d4d4d8'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = '#f4f4f5'}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#09090b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {name}
+                          </p>
+                          <p style={{ fontSize: '0.6875rem', color: '#a1a1aa' }}>
+                            {[carrier, planType, date].filter(Boolean).join(' · ')}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleLoadSaved(p)}
+                          style={{
+                            padding: '0.25rem 0.625rem', fontSize: '0.6875rem', fontWeight: 700,
+                            background: '#dc2626', color: '#fff', border: 'none',
+                            borderRadius: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Load
+                        </button>
+                        <button
+                          onClick={() => handleDeletePolicy(p.id)}
+                          disabled={deletingId === p.id}
+                          style={{
+                            padding: '0.25rem 0.5rem', fontSize: '0.6875rem', fontWeight: 600,
+                            background: 'transparent', color: '#a1a1aa', border: '1px solid #e4e4e7',
+                            borderRadius: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                            opacity: deletingId === p.id ? 0.5 : 1,
+                          }}
+                        >
+                          {deletingId === p.id ? '...' : '✕'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {savedPolicies.length >= MAX_POLICIES && (
+                <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '0.625rem', fontSize: '0.75rem', color: '#92400e' }}>
+                  ⚠️ You've reached the {MAX_POLICIES}-policy limit. Delete one to upload a new policy.
                 </div>
               )}
             </div>

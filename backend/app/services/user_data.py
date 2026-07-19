@@ -8,8 +8,24 @@ from app.security.phi_scrubber import scrub_phi
 logger = logging.getLogger(__name__)
 
 
+MAX_POLICIES_PER_USER = 5
+
+
 def create_user_policy(user_id: str, policy_profile: dict) -> dict | None:
     client = get_supabase_client()
+
+    # Enforce per-user policy limit
+    existing = count_user_policies(user_id)
+    if existing >= MAX_POLICIES_PER_USER:
+        logger.warning(
+            f"User {user_id} has reached the policy limit ({MAX_POLICIES_PER_USER}). "
+            f"Delete an existing policy before uploading a new one."
+        )
+        raise ValueError(
+            f"You have reached the maximum of {MAX_POLICIES_PER_USER} saved policies. "
+            f"Please delete an existing policy before uploading a new one."
+        )
+
     payload = {
         "id": str(uuid4()),
         "user_id": user_id,
@@ -33,6 +49,36 @@ def list_user_policies(user_id: str) -> list[dict]:
         .execute()
     )
     return result.data or []
+
+
+def count_user_policies(user_id: str) -> int:
+    """Return the count of policies for a user."""
+    client = get_supabase_client()
+    result = (
+        client.table("user_policies")
+        .select("id", count="exact")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return result.count or 0
+
+
+def delete_user_policy(user_id: str, policy_id: str) -> bool:
+    """Delete a policy by ID, scoped to the current user for security."""
+    client = get_supabase_client()
+    result = (
+        client.table("user_policies")
+        .delete()
+        .eq("id", policy_id)
+        .eq("user_id", user_id)  # Security: ensure user owns the policy
+        .execute()
+    )
+    deleted = bool(result.data)
+    if deleted:
+        logger.info(f"Deleted policy {policy_id} for user {user_id}")
+    else:
+        logger.warning(f"Policy {policy_id} not found or not owned by user {user_id}")
+    return deleted
 
 
 def create_user_claim(

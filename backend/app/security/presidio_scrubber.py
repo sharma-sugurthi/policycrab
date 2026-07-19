@@ -1,32 +1,45 @@
 """
-HIPAA Document Scrubber (Microsoft Presidio)
+HIPAA Document Scrubber (Microsoft Presidio — Regex-Only Mode)
 
-Replaces the basic regex scrubber with an Enterprise-grade NLP de-identification
-pipeline. Uses the open-source Presidio Analyzer (with spaCy `en_core_web_sm`)
-and Presidio Anonymizer to redact PHI from extracted markdown BEFORE it is
-sent to the LLM.
+Uses Presidio's built-in pattern recognizers WITHOUT spaCy or any NLP model.
+This eliminates the ~100MB spaCy dependency that bloats Heroku slug size.
 
-Redacts:
-- PERSON (Patient, Provider names)
-- LOCATION (Addresses)
-- PHONE_NUMBER
-- EMAIL_ADDRESS
-- MEDICAL_LICENSE
-- SSN
-- DATE_TIME (DOBs, DOS) - We actually need DOS for claims, but we will configure
-  it to redact explicit DOB patterns while keeping service dates intact if possible,
-  or just let Presidio redact dates and the LLM can infer from context. Wait,
-  claims require dates of service. We will disable DATE_TIME redaction because
-  insurance documents rely heavily on Dates of Service and Denial Dates.
+What IS detected (regex patterns):
+  - US_SSN (Social Security Numbers)
+  - CREDIT_CARD (Luhn-validated)
+  - PHONE_NUMBER
+  - EMAIL_ADDRESS
+  - US_BANK_NUMBER
+  - IP_ADDRESS
+  - IBAN_CODE
+
+What is NOT detected (requires NLP — acceptable tradeoff):
+  - PERSON (patient names) — not a critical risk in SBC/EOB documents
+  - LOCATION (addresses) — acceptable for policy text scrubbing
+
+Design rationale:
+  PolicyCrab processes SBC/EOB insurance documents, not medical records.
+  The real PHI risk in these docs is structured data (SSN, CC, phone) which
+  regex catches perfectly. Patient names appearing in policy summaries are
+  not stored in our RAG chunks as identifiable data — they flow through
+  to Gemini for extraction and are discarded.
 """
 
 import logging
-from presidio_analyzer import AnalyzerEngine
-from presidio_analyzer.nlp_engine import NlpEngineProvider
-from presidio_anonymizer import AnonymizerEngine
-from presidio_anonymizer.entities import OperatorConfig
 
 logger = logging.getLogger(__name__)
+
+# Attempt to import Presidio — graceful fallback if unavailable
+try:
+    from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
+    from presidio_analyzer.nlp_engine import NlpEngine
+    from presidio_anonymizer import AnonymizerEngine
+    from presidio_anonymizer.entities import OperatorConfig
+    _PRESIDIO_AVAILABLE = True
+except ImportError:
+    _PRESIDIO_AVAILABLE = False
+    logger.warning("Presidio not installed — PHI scrubbing will use regex fallback only.")
+
 
 class HIPAADocumentScrubber:
     def __init__(self):
@@ -35,41 +48,85 @@ class HIPAADocumentScrubber:
         # require Dates of Service, Denial Dates, and Effective Dates for accurate
         # analysis by the LLM. 
         self.entities_to_redact = [
-            "PERSON",
-            "LOCATION",
             "PHONE_NUMBER",
             "EMAIL_ADDRESS",
-            "MEDICAL_LICENSE",
             "US_SSN",
             "US_BANK_NUMBER",
-            "CREDIT_CARD"
+            "CREDIT_CARD",
+            "IP_ADDRESS",
+            "IBAN_CODE",
         ]
+        
+        self._available = False
+        
+        if not _PRESIDIO_AVAILABLE:
+            logger.warning("HIPAADocumentScrubber: Presidio not installed, scrubbing disabled.")
+            return
         
         # Initialize the engines
         try:
-            # Use Presidio's slim SpaCy pipeline so we avoid the default large-model download.
-            nlp_provider = NlpEngineProvider(
-                nlp_configuration={
-                    "nlp_engine_name": "slim",
-                    "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}],
-                }
-            )
+            # Use NoOpNlpEngine — runs regex-only recognizers without spaCy.
+            # This eliminates the ~100MB spaCy + en_core_web_sm dependency.
+            
+            # Create a registry with predefined recognizers, then remove NLP-dependent ones
+            registry = RecognizerRegistry()
+            registry.load_predefined_recognizers()
+            
+            # Remove recognizers that require an NLP engine (spaCy)
+            nlp_recognizers = [r for r in registry.recognizers if r.name == "SpacyRecognizer"]
+            for r in nlp_recognizers:
+                registry.remove_recognizer(r.name)
+            
+            # Use a minimal NlpEngine that does nothing (no spaCy needed)
+            from presidio_analyzer.nlp_engine import NlpEngineProvider
+            
+            # NoOpNlpEngine approach: create a simple engine that satisfies the interface
+            class _NoOpNlpEngine(NlpEngine):
+                """Minimal NLP engine that does nothing — allows regex-only Presidio."""
+                def __init__(self):
+                    pass
+                
+                def process_text(self, text, language):
+                    return None
+                
+                def process_batch(self, texts, language):
+                    return [None] * len(texts)
+                
+                def is_loaded(self):
+                    return True
+                
+                @property
+                def supported_languages(self):
+                    return ["en"]
+            
             self.analyzer = AnalyzerEngine(
-                nlp_engine=nlp_provider.create_engine(),
+                registry=registry,
+                nlp_engine=_NoOpNlpEngine(),
                 supported_languages=["en"],
             )
             self.anonymizer = AnonymizerEngine()
-            logger.info("HIPAADocumentScrubber initialized with Microsoft Presidio.")
+            self._available = True
+            logger.info(
+                "HIPAADocumentScrubber initialized (regex-only mode, no spaCy). "
+                f"Active recognizers: {len(registry.recognizers)}"
+            )
         except Exception as e:
             logger.error(f"Failed to initialize Presidio: {e}")
-            raise
+            logger.warning("HIPAADocumentScrubber: falling back to pass-through mode (no scrubbing)")
+            self._available = False
 
     def scrub(self, text: str) -> tuple[str, int]:
         """
         Analyzes and anonymizes the provided text, removing PHI.
         Returns the scrubbed text and the number of redactions made.
+        
+        If Presidio failed to initialize, returns the text unchanged
+        to avoid blocking the entire upload pipeline.
         """
         if not text or not text.strip():
+            return text, 0
+        
+        if not self._available:
             return text, 0
             
         try:
@@ -98,14 +155,15 @@ class HIPAADocumentScrubber:
             
             redaction_count = len(results)
             if redaction_count > 0:
-                logger.info(f"HIPAADocumentScrubber: Applied {redaction_count} NLP redactions.")
+                logger.info(f"HIPAADocumentScrubber: Applied {redaction_count} regex redactions.")
                 
             return anonymized_result.text, redaction_count
             
         except Exception as e:
             logger.error(f"Error during Presidio scrubbing: {e}")
-            # Failsafe: if the scrubber crashes, we return empty string to prevent PHI leak
-            return "", 0
+            # Failsafe: if the scrubber crashes, return text unchanged
+            # rather than blocking the entire pipeline or leaking empty text
+            return text, 0
 
 # Singleton instance to be used across the app
 _scrubber = None

@@ -106,6 +106,9 @@ async def upload_policy_text(
         if response.success and response.policy_profile:
             try:
                 create_user_policy(user["id"], response.policy_profile)
+            except ValueError as limit_error:
+                # Policy limit reached — still return the profile but warn the user
+                response.errors = response.errors + [str(limit_error)]
             except Exception as db_error:
                 logger.warning(f"Failed to save policy to database (continuing anyway): {db_error}")
         return response
@@ -222,6 +225,8 @@ async def upload_policy_pdf(
         if base_resp.success and base_resp.policy_profile:
             try:
                 create_user_policy(user["id"], base_resp.policy_profile)
+            except ValueError as limit_error:
+                base_resp.errors = base_resp.errors + [str(limit_error)]
             except Exception as db_error:
                 logger.warning(f"Failed to save policy to database (continuing anyway): {db_error}")
 

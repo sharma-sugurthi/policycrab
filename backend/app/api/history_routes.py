@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.auth import get_current_user
-from app.services.user_data import list_user_claims, list_user_policies
+from app.services.user_data import list_user_claims, list_user_policies, delete_user_policy
 
 router = APIRouter(prefix="/api/history", tags=["History"])
 
@@ -33,3 +33,13 @@ async def get_user_claims(user: dict = Depends(get_current_user)):
         }
         for claim in list_user_claims(user["id"])
     ]
+
+
+@router.delete("/policies/{policy_id}")
+async def remove_user_policy(policy_id: str, user: dict = Depends(get_current_user)):
+    """Delete a saved policy by ID (scoped to current user)."""
+    deleted = delete_user_policy(user["id"], policy_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Policy not found or not owned by you.")
+    return {"success": True, "deleted_id": policy_id}
+
