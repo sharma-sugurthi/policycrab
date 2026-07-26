@@ -288,3 +288,36 @@ class TestEOBExtractorErrorHandling:
         result = extract_eob_fields("EOB text", _make_sync_llm(truncated))
 
         assert "error" in result
+
+
+class TestEOBPostProcessing:
+    def test_labeled_fields_are_recovered_and_patient_name_removed(self):
+        from app.agents.eob_extractor import postprocess_eob_result
+
+        text = (
+            "Patient: Test Patient Member ID: TST123456789 "
+            "Date of Service: 2026-06-15 Provider: Bay Imaging Center "
+            "Facility: Bay Imaging Center Service: MRI right knee without contrast "
+            "CPT Code: 73721 ICD-10 Code: M25.561 Billed Amount: $3,500.00 "
+            "Allowed Amount: $1,200.00 Plan Paid: $0.00 "
+            "Patient Responsibility: $1,200.00 Claim Status: Denied "
+            "Denial Reason: CO-50 These services are not deemed medically necessary by the payer. "
+            "Denial Date: 2026-07-01 Appeal Deadline: 180 days from denial notice."
+        )
+        result = postprocess_eob_result({
+            "patient_name": "Test Patient",
+            "document_type": "eob",
+            "denial_reason_text": "Denied",
+            "service_lines": [{"denial_reason_text": "Denied"}],
+        }, text)
+
+        assert result["patient_name"] is None
+        assert result["provider_name"] == "Bay Imaging Center"
+        assert result["facility_name"] == "Bay Imaging Center"
+        assert result["date_of_service"] == "2026-06-15"
+        assert result["denial_date"] == "2026-07-01"
+        assert result["cpt_code"] == "73721"
+        assert result["icd_10_code"] == "M25.561"
+        assert result["denial_carc_code"] == "CO-50"
+        assert "medically necessary" in result["denial_reason_text"]
+        assert result["service_lines"][0]["denial_carc_code"] == "CO-50"

@@ -46,6 +46,7 @@ Analyze this document (EOB, medical bill, policy, or SBC) and extract structured
 
 RULES:
 - Extract ONLY what is explicitly stated. Do NOT infer or hallucinate.
+- Do not extract patient names. Always return patient_name as null.
 - For any field not present, return null.
 - Dates must be in ISO format: YYYY-MM-DD.
 - Amounts must be numeric floats (no $ or commas).
@@ -179,6 +180,9 @@ def extract_eob_safely(
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON response: {e}\nSnippet: {raw[:500]}")
         raise ValueError(f"Gemini returned unparseable output. JSON error: {e}")
+
+    from app.agents.eob_extractor import postprocess_eob_result
+    result = postprocess_eob_result(result, clean_text)
 
     logger.info(
         f"Extraction complete — "

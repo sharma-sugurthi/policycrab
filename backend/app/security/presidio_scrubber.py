@@ -78,22 +78,32 @@ class HIPAADocumentScrubber:
                 registry.remove_recognizer(r.name)
             
             # Use a minimal NlpEngine that does nothing (no spaCy needed)
-            from presidio_analyzer.nlp_engine import NlpEngineProvider
+            from presidio_analyzer.nlp_engine import NlpArtifacts
             
-            # NoOpNlpEngine approach: create a simple engine that satisfies the interface
+            # NoOpNlpEngine approach: create a simple engine that satisfies the interface.
             class _NoOpNlpEngine(NlpEngine):
-                """Minimal NLP engine that does nothing — allows regex-only Presidio."""
-                def __init__(self):
-                    pass
-                
-                def process_text(self, text, language):
+                """Minimal NLP engine for Presidio regex recognizers only."""
+                def load(self) -> None:
                     return None
+
+                def process_text(self, text, language):
+                    return NlpArtifacts([], [], [], [], self, language)
                 
-                def process_batch(self, texts, language):
-                    return [None] * len(texts)
+                def process_batch(self, texts, language, **kwargs):
+                    for text in texts:
+                        yield text, self.process_text(text, language)
                 
                 def is_loaded(self):
                     return True
+
+                def is_stopword(self, word: str, language: str) -> bool:
+                    return False
+
+                def is_punct(self, word: str, language: str) -> bool:
+                    return all(not char.isalnum() for char in word)
+
+                def get_supported_entities(self):
+                    return self.entities_to_redact if hasattr(self, "entities_to_redact") else []
                 
                 @property
                 def supported_languages(self):
@@ -112,7 +122,7 @@ class HIPAADocumentScrubber:
             )
         except Exception as e:
             logger.error(f"Failed to initialize Presidio: {e}")
-            logger.warning("HIPAADocumentScrubber: falling back to pass-through mode (no scrubbing)")
+            logger.warning("HIPAADocumentScrubber: Presidio unavailable; regex fallback will be used.")
             self._available = False
 
     def scrub(self, text: str) -> tuple[str, int]:
@@ -120,14 +130,13 @@ class HIPAADocumentScrubber:
         Analyzes and anonymizes the provided text, removing PHI.
         Returns the scrubbed text and the number of redactions made.
         
-        If Presidio failed to initialize, returns the text unchanged
-        to avoid blocking the entire upload pipeline.
+        If Presidio failed to initialize, uses a regex fallback for critical identifiers.
         """
         if not text or not text.strip():
             return text, 0
         
         if not self._available:
-            return text, 0
+            return self._regex_fallback(text)
             
         try:
             # 1. Analyze text for PHI entities
@@ -138,7 +147,7 @@ class HIPAADocumentScrubber:
             )
             
             if not results:
-                return text, 0
+                return self._regex_fallback(text)
                 
             # 2. Configure the anonymizer to replace with <REDACTED>
             operators = {
@@ -153,17 +162,36 @@ class HIPAADocumentScrubber:
                 operators=operators
             )
             
-            redaction_count = len(results)
+            fallback_text, fallback_count = self._regex_fallback(anonymized_result.text)
+            redaction_count = len(results) + fallback_count
             if redaction_count > 0:
-                logger.info(f"HIPAADocumentScrubber: Applied {redaction_count} regex redactions.")
+                logger.info(f"HIPAADocumentScrubber: Applied {redaction_count} redaction(s).")
                 
-            return anonymized_result.text, redaction_count
+            return fallback_text, redaction_count
             
         except Exception as e:
             logger.error(f"Error during Presidio scrubbing: {e}")
             # Failsafe: if the scrubber crashes, return text unchanged
             # rather than blocking the entire pipeline or leaking empty text
             return text, 0
+
+    def _regex_fallback(self, text: str) -> tuple[str, int]:
+        """Fallback redaction for critical structured identifiers."""
+        import re
+
+        patterns = [
+            r"\b\d{3}[-\s]\d{2}[-\s]\d{4}\b",
+            r"\b(?:\d{4}[-\s]?){3}\d{4}\b",
+            r"(\+?1[-.\s]?)?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})",
+            r"(?i)(?:member\s*(?:id|number|#)|policy\s*(?:id|number|#)|plan\s*(?:id|number|#))\s*:?\s*[A-Z0-9]{2,4}[-]?[A-Z0-9]{6,10}",
+        ]
+        count = 0
+        for pattern in patterns:
+            text, redactions = re.subn(pattern, "<REDACTED>", text)
+            count += redactions
+        if count:
+            logger.info(f"HIPAADocumentScrubber regex fallback: Applied {count} redaction(s).")
+        return text, count
 
 # Singleton instance to be used across the app
 _scrubber = None

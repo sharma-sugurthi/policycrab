@@ -27,6 +27,7 @@ The document could be an Explanation of Benefits (EOB), a medical bill/itemized 
 
 RULES:
 - Extract ONLY what is explicitly stated in the document. Do NOT guess or hallucinate.
+- Do not extract patient names. Always return patient_name as null.
 - For any field not found, return null.
 - Dates must be in ISO format: YYYY-MM-DD
 - Amounts must be numeric floats (no $ signs or commas)
@@ -98,6 +99,105 @@ DOCUMENT TEXT:
 Return ONLY the JSON object. No explanation, no markdown fences."""
 
 
+def _label_value(text: str, label: str) -> str | None:
+    labels = [
+        "Patient", "Member ID", "Claim ID", "Date of Service", "Provider", "Facility",
+        "Service", "CPT Code", "ICD-10 Code", "Billed Amount", "Allowed Amount",
+        "Plan Paid", "Patient Responsibility", "Claim Status", "Denial Reason",
+        "Denial Date", "Appeal Deadline", "Network Status", "Facility Network Status",
+    ]
+    other_labels = [re.escape(item) for item in labels if item.lower() != label.lower()]
+    pattern = rf"(?is)\b{re.escape(label)}\s*:\s*(.*?)(?=\s+(?:{'|'.join(other_labels)})\s*:|\n|$)"
+    match = re.search(pattern, text)
+    if not match:
+        return None
+    value = re.sub(r"\s+", " ", match.group(1)).strip(" -\t\r\n")
+    return value or None
+
+
+def _amount_from_label(text: str, label: str) -> float | None:
+    value = _label_value(text, label)
+    if not value:
+        return None
+    match = re.search(r"\$?\s*([0-9][0-9,]*(?:\.\d{1,2})?)", value)
+    if not match:
+        return None
+    return float(match.group(1).replace(",", ""))
+
+
+def _iso_date_from_label(text: str, label: str) -> str | None:
+    value = _label_value(text, label)
+    if not value:
+        return None
+    iso = re.search(r"\b(20\d{2}|19\d{2})-(\d{2})-(\d{2})\b", value)
+    if iso:
+        return iso.group(0)
+    us = re.search(r"\b(\d{1,2})/(\d{1,2})/(20\d{2}|19\d{2})\b", value)
+    if us:
+        month, day, year = us.groups()
+        return f"{year}-{int(month):02d}-{int(day):02d}"
+    return None
+
+
+def _first_code(text: str, pattern: str) -> str | None:
+    match = re.search(pattern, text, flags=re.IGNORECASE)
+    return match.group(1).upper() if match else None
+
+
+def postprocess_eob_result(result: dict, document_text: str) -> dict:
+    """Recover obvious labeled EOB fields and remove unnecessary patient identifiers."""
+    if not isinstance(result, dict):
+        return result
+
+    result = dict(result)
+    result["patient_name"] = None
+
+    field_labels = {
+        "date_of_service": ("Date of Service", _iso_date_from_label),
+        "denial_date": ("Denial Date", _iso_date_from_label),
+        "billed_amount": ("Billed Amount", _amount_from_label),
+        "allowed_amount": ("Allowed Amount", _amount_from_label),
+        "plan_paid_amount": ("Plan Paid", _amount_from_label),
+        "patient_responsibility": ("Patient Responsibility", _amount_from_label),
+        "provider_name": ("Provider", _label_value),
+        "facility_name": ("Facility", _label_value),
+        "cpt_description": ("Service", _label_value),
+    }
+
+    for field, (label, extractor) in field_labels.items():
+        recovered = extractor(document_text, label)
+        if recovered is not None and (result.get(field) in (None, "", "Denied")):
+            result[field] = recovered
+
+    cpt = _first_code(document_text, r"\bCPT(?:\s+Code)?\s*:\s*([A-Z]?\d{4,5})\b")
+    if cpt and not result.get("cpt_code"):
+        result["cpt_code"] = cpt
+
+    icd = _first_code(document_text, r"\bICD-?10(?:\s+Code)?\s*:\s*([A-Z]\d{2}(?:\.\d+)?)\b")
+    if icd and not result.get("icd_10_code"):
+        result["icd_10_code"] = icd
+
+    denial_text = _label_value(document_text, "Denial Reason")
+    if denial_text:
+        carc = _first_code(denial_text, r"\b((?:CO|PR|OA|PI)-\d{1,3})\b")
+        if carc and not result.get("denial_carc_code"):
+            result["denial_carc_code"] = carc
+        if result.get("denial_reason_text") in (None, "", "Denied") or len(str(result.get("denial_reason_text"))) < len(denial_text):
+            result["denial_reason_text"] = denial_text
+        result["is_denied"] = True
+
+    service_lines = result.get("service_lines")
+    if isinstance(service_lines, list) and service_lines:
+        first = dict(service_lines[0])
+        for field in ("provider_name", "network_status", "ancillary_service_type", "cpt_code", "cpt_description", "billed_amount", "allowed_amount", "plan_paid_amount", "patient_responsibility", "denial_carc_code", "denial_reason_text"):
+            if first.get(field) in (None, "", "Denied") and result.get(field) not in (None, ""):
+                first[field] = result.get(field)
+        service_lines[0] = first
+        result["service_lines"] = service_lines
+
+    return result
+
+
 def extract_eob_fields(eob_text: str, llm: Any) -> dict:
     """
     Run single-step LLM extraction on EOB document text.
@@ -124,7 +224,7 @@ def extract_eob_fields(eob_text: str, llm: Any) -> dict:
             raw = re.sub(r"^```(?:json)?\n?", "", raw)
             raw = re.sub(r"\n?```$", "", raw)
 
-        result = json.loads(raw)
+        result = postprocess_eob_result(json.loads(raw), eob_text)
         logger.info(
             f"EOB Extractor (fallback): Successfully extracted fields. "
             f"Denied={result.get('is_denied')}, "

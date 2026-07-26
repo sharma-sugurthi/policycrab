@@ -99,6 +99,7 @@ def create_user_claim(
 
     client = get_supabase_client()
     payload = {
+        "id": str(uuid4()),
         "user_id": user_id,
         "policy_id": policy_id,
         "claim_description": clean_description,
@@ -124,18 +125,14 @@ def list_user_claims(user_id: str) -> list[dict]:
 
 def get_user_chat(user_id: str) -> dict | None:
     client = get_supabase_client()
-    try:
-        result = (
-            client.table("user_chats")
-            .select("id, messages, policy_profile_json, cost_breakdown_json, created_at, updated_at")
-            .eq("user_id", user_id)
-            .limit(1)
-            .execute()
-        )
-        return result.data[0] if result.data else None
-    except Exception as exc:
-        logger.warning(f"get_user_chat: falling back to ephemeral chat state for user={user_id}: {exc}")
-        return None
+    result = (
+        client.table("user_chats")
+        .select("id, messages, policy_profile_json, cost_breakdown_json, created_at, updated_at")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+    return result.data[0] if result.data else None
 
 
 def upsert_user_chat(
@@ -152,17 +149,10 @@ def upsert_user_chat(
         "cost_breakdown_json": cost_breakdown,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    try:
-        result = client.table("user_chats").upsert(payload, on_conflict="user_id").execute()
-        return result.data[0] if result.data else None
-    except Exception as exc:
-        logger.warning(f"upsert_user_chat: skipping persistence for user={user_id}: {exc}")
-        return None
+    result = client.table("user_chats").upsert(payload, on_conflict="user_id").execute()
+    return result.data[0] if result.data else None
 
 
 def clear_user_chat(user_id: str) -> None:
     client = get_supabase_client()
-    try:
-        client.table("user_chats").delete().eq("user_id", user_id).execute()
-    except Exception as exc:
-        logger.warning(f"clear_user_chat: skipping persistence for user={user_id}: {exc}")
+    client.table("user_chats").delete().eq("user_id", user_id).execute()

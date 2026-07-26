@@ -2,6 +2,8 @@
 Claim API Routes — evaluate claims and calculate costs.
 """
 
+import logging
+
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from app.agents.graph import get_claim_evaluation_graph
@@ -11,6 +13,8 @@ from app.services.user_data import create_user_claim
 
 # Per-user: 5 evaluations per 60 seconds
 CLAIM_EVALUATE_RATE_LIMIT = rate_limit_user("claim:evaluate", max_requests=5, window_seconds=60)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/claim", tags=["Claims"])
 
@@ -103,15 +107,24 @@ async def evaluate_claim(
         )
 
         if response.success:
-            create_user_claim(
-                user_id=user["id"],
-                claim_description=request.claim_description,
-                cost_breakdown=response.cost_breakdown,
-                appeal_output=response.appeal_output,
-                route_decision=response.route_decision,
-            )
+            try:
+                create_user_claim(
+                    user_id=user["id"],
+                    claim_description=request.claim_description,
+                    cost_breakdown=response.cost_breakdown,
+                    appeal_output=response.appeal_output,
+                    route_decision=response.route_decision,
+                )
+            except Exception:
+                logger.error("Failed to save claim evaluation to Supabase", exc_info=True)
+                response.errors = response.errors + [
+                    "Claim evaluated, but it could not be saved to your history. Download or copy the result before leaving this page."
+                ]
 
         return response
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Claim evaluation failed: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("Claim evaluation failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Claim evaluation failed. Please try again.")

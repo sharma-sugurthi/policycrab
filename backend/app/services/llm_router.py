@@ -119,6 +119,8 @@ def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChat
                 google_api_key=settings.gemini_api_key,
                 temperature=temperature,
                 convert_system_message_to_human=False,
+                max_retries=0,
+                timeout=30,
             )
         elif provider == "groq" and settings.groq_api_key:
             from langchain_groq import ChatGroq

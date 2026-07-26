@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import AILogViewer from '../components/AILogViewer'
-import { apiFetch, readApiResponse } from '../lib/api'
+import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
 import { CPT_CODES } from '../data/cpt_codes'
 
@@ -135,6 +135,34 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
   const [escalatedLoading, setEscalatedLoading] = useState(false)
   const [escalatedError, setEscalatedError] = useState(null)
 
+  useEffect(() => {
+    let raw = null
+    try {
+      raw = sessionStorage.getItem('policycrab_eob_prefill')
+      if (raw) sessionStorage.removeItem('policycrab_eob_prefill')
+    } catch {}
+    if (!raw) return
+
+    try {
+      const eob = JSON.parse(raw)
+      prefillFromEob({
+        date_of_service: eob.date_of_service,
+        provider_name: eob.provider_name,
+        facility_name: eob.facility_name,
+        cpt_code: eob.cpt_code,
+        cpt_description: eob.cpt_description,
+        icd_10_code: eob.icd_10_code,
+        billed_amount: eob.billed_amount ? Number(eob.billed_amount) : null,
+        allowed_amount: eob.allowed_amount ? Number(eob.allowed_amount) : null,
+        denial_reason_text: eob.denial_reason_text,
+        denial_carc_code: eob.denial_carc_code,
+        denial_date: eob.denial_date,
+      })
+    } catch {
+      setError('Could not load the document prefill. Please enter claim details manually.')
+    }
+  }, [])
+
   const handleDraftEscalated = async (level) => {
     if (!result?.claim_case || !policyProfile) return
     setEscalatedLevel(level); setEscalatedLoading(true); setEscalatedResult(null); setEscalatedError(null)
@@ -153,7 +181,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
       if (data.success) {
         setEscalatedResult(data)
       } else {
-        setEscalatedError(data.detail || 'Draft failed.')
+        setEscalatedError(formatApiError(data, 'Draft failed.'))
       }
     } catch (err) {
       setEscalatedError(`Network error: ${err.message}`)
@@ -173,7 +201,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
       if (data.success && data.extracted) {
         setEobResult(data.extracted)
       } else {
-        setEobError(data.detail || 'EOB extraction failed.')
+        setEobError(formatApiError(data, 'EOB extraction failed.'))
       }
     } catch (err) {
       setEobError(`Network error: ${err.message}`)
@@ -348,6 +376,11 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
   const handleEvaluate = async () => {
     if (!policyProfile) { setError('Upload a policy first.'); return }
     if (claimText.trim().length < 20) { setError('Please describe the claim in more detail.'); return }
+    const normalizedAllowedAmount = allowedAmount === '' ? null : Number(allowedAmount)
+    if (normalizedAllowedAmount != null && (!Number.isFinite(normalizedAllowedAmount) || normalizedAllowedAmount <= 0)) {
+      setError('Allowed amount must be greater than $0, or leave it blank for an estimate.')
+      return
+    }
     setLoading(true); setError(null); setResult(null); setLetterActionStatus(''); setProgressStep(0)
     try {
       const res = await apiFetch('/claim/evaluate', { 
@@ -355,12 +388,12 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
         body: JSON.stringify({
           claim_description: claimText,
           policy_profile: policyProfile,
-          allowed_amount: allowedAmount ? Number(allowedAmount) : null,
+          allowed_amount: normalizedAllowedAmount,
         }) 
       })
       const data = await readApiResponse(res)
       if (data.success && data.cost_breakdown) { setResult(data); onResult(data.cost_breakdown) }
-      else { setError(data.errors?.join(', ') || 'Evaluation failed') }
+      else { setError(formatApiError(data, 'Evaluation failed')) }
     } catch (err) { setError(`Network error: ${err.message}`) }
     finally { setLoading(false) }
   }
@@ -381,7 +414,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
         body: JSON.stringify({ ...providerSearch, limit: 5 }),
       })
       const data = await readApiResponse(res)
-      if (!res.ok) throw new Error(data.detail || 'Provider search failed')
+      if (!res.ok) throw new Error(formatApiError(data, 'Provider search failed'))
       setProviderResults(data.results || [])
     } catch (err) {
       setProviderError(err.message)
@@ -405,7 +438,7 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
         body: JSON.stringify({ npi: provider.npi, plan_name: policyProfile.plan_name }),
       })
       const data = await readApiResponse(res)
-      if (!res.ok) throw new Error(data.detail || 'Network status check failed')
+      if (!res.ok) throw new Error(formatApiError(data, 'Network status check failed'))
       setNetworkChecks(prev => ({ ...prev, [provider.npi]: data }))
     } catch (err) {
       setNetworkChecks(prev => ({ ...prev, [provider.npi]: { error: err.message } }))

@@ -8,8 +8,8 @@ import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
-// ── localStorage keys ────────────────────────────────────────
-const LS_POLICY_KEY = 'policycrab_policy_profile'
+// ── Browser storage keys ─────────────────────────────────────
+const SS_POLICY_KEY = 'policycrab_policy_profile'
 const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
 const LS_ONBOARDED_KEY = 'policycrab_onboarded'
 const LS_THEME_KEY = 'policycrab_theme'
@@ -231,10 +231,10 @@ function OnboardingTutorial() {
 }
 
 function AppContent() {
-  // ── Restore policy from localStorage on mount ────────────
+  // ── Restore loaded policy for this browser session only ─────
   const [policyProfile, setPolicyProfileState] = useState(() => {
     try {
-      const stored = localStorage.getItem(LS_POLICY_KEY)
+      const stored = sessionStorage.getItem(SS_POLICY_KEY)
       return stored ? JSON.parse(stored) : null
     } catch {
       return null
@@ -250,13 +250,13 @@ function AppContent() {
     setMobileMenuOpen(false)
   }, [location.pathname])
 
-  // Persist policy to localStorage whenever it changes
+  // Keep loaded policy session-scoped to avoid persistent browser storage of plan details
   const setPolicyProfile = (profile) => {
     setPolicyProfileState(profile)
     if (profile) {
-      try { localStorage.setItem(LS_POLICY_KEY, JSON.stringify(profile)) } catch {}
+      try { sessionStorage.setItem(SS_POLICY_KEY, JSON.stringify(profile)) } catch {}
     } else {
-      localStorage.removeItem(LS_POLICY_KEY)
+      sessionStorage.removeItem(SS_POLICY_KEY)
     }
   }
 

@@ -6,7 +6,7 @@ from unittest.mock import Mock
 import pytest
 from fastapi import HTTPException
 
-from app.api.auth import get_websocket_token
+from app.api.auth import get_websocket_token, verify_supabase_token
 from app.security import rate_limit as limiter
 from app.security.rate_limit import RateLimitRule, check_rate_limit, request_identity, websocket_identity
 
@@ -78,3 +78,42 @@ def test_websocket_identity_does_not_expose_user_id():
 
     assert identity.startswith("user:")
     assert "user-123" not in identity
+
+
+def test_benchmark_token_disabled_by_default(monkeypatch):
+    from app.api import auth
+
+    monkeypatch.setattr(auth.settings, "debug", False)
+    monkeypatch.setattr(auth.settings, "allow_benchmark_auth", False)
+
+    with pytest.raises(HTTPException) as exc:
+        verify_supabase_token("BENCHMARK_TOKEN")
+
+    assert exc.value.status_code == 401
+    assert exc.value.detail == "Benchmark authentication is disabled"
+
+
+def test_benchmark_token_requires_explicit_non_production_gate(monkeypatch):
+    from app.api import auth
+
+    monkeypatch.setattr(auth.settings, "debug", False)
+    monkeypatch.setattr(auth.settings, "allow_benchmark_auth", True)
+
+    assert verify_supabase_token("BENCHMARK_TOKEN")["id"] == "benchmark_user"
+
+
+def test_document_scrubber_redacts_structured_identifiers():
+    from app.security import presidio_scrubber
+
+    presidio_scrubber._scrubber = None
+    clean, count = presidio_scrubber.scrub_phi(
+        "Patient: Test Patient Member ID: TST123456789 "
+        "Phone: 555-123-4567 SSN: 123-45-6789 "
+        "Card: 4111 1111 1111 1111"
+    )
+
+    assert count >= 4
+    assert "TST123456789" not in clean
+    assert "555-123-4567" not in clean
+    assert "123-45-6789" not in clean
+    assert "4111 1111 1111 1111" not in clean

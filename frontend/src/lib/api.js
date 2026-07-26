@@ -66,3 +66,22 @@ export async function readApiResponse(response) {
     return text
   }
 }
+
+
+export function formatApiError(data, fallback = 'Request failed') {
+  if (!data) return fallback
+  if (typeof data === 'string') return data
+  if (Array.isArray(data.errors) && data.errors.length) return data.errors.join(', ')
+  if (typeof data.detail === 'string') return data.detail
+  if (Array.isArray(data.detail) && data.detail.length) {
+    return data.detail
+      .map(item => {
+        const field = Array.isArray(item.loc) ? item.loc.filter(Boolean).slice(1).join('.') : ''
+        return field ? `${field}: ${item.msg}` : item.msg
+      })
+      .filter(Boolean)
+      .join(', ')
+  }
+  if (typeof data.message === 'string') return data.message
+  return fallback
+}

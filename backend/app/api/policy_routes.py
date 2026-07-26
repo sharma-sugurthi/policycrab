@@ -110,7 +110,11 @@ async def upload_policy_text(
                 # Policy limit reached — still return the profile but warn the user
                 response.errors = response.errors + [str(limit_error)]
             except Exception as db_error:
-                logger.warning(f"Failed to save policy to database (continuing anyway): {db_error}")
+                logger.error("Failed to save policy to Supabase", exc_info=True)
+                raise HTTPException(
+                    status_code=503,
+                    detail="Policy was parsed but could not be saved securely. Please try again before using it for claim evaluation.",
+                ) from db_error
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")
@@ -228,7 +232,11 @@ async def upload_policy_pdf(
             except ValueError as limit_error:
                 base_resp.errors = base_resp.errors + [str(limit_error)]
             except Exception as db_error:
-                logger.warning(f"Failed to save policy to database (continuing anyway): {db_error}")
+                logger.error("Failed to save policy to Supabase", exc_info=True)
+                raise HTTPException(
+                    status_code=503,
+                    detail="Policy PDF was parsed but could not be saved securely. Please try again before using it for claim evaluation.",
+                ) from db_error
 
         return base_resp
 

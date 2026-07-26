@@ -43,17 +43,47 @@ _CPT_LOOKUP: dict[str, dict] = {
     "stent": {"cpt": "92928", "desc": "Percutaneous Coronary Stent Placement", "range": "$15,000-$50,000"},
 
     # Imaging
-    "mri": {"cpt": "70553", "desc": "MRI Brain Without/With Contrast", "range": "$1,000-$5,000"},
-    "mri brain": {"cpt": "70553", "desc": "MRI Brain Without/With Contrast", "range": "$1,000-$5,000"},
+    "mri brain": {"cpt": "70551", "desc": "MRI Brain Without Contrast", "range": "$1,000-$5,000"},
+    "brain mri": {"cpt": "70551", "desc": "MRI Brain Without Contrast", "range": "$1,000-$5,000"},
+    "mri brain with contrast": {"cpt": "70552", "desc": "MRI Brain With Contrast", "range": "$1,200-$5,500"},
+    "mri brain without and with contrast": {"cpt": "70553", "desc": "MRI Brain Without/With Contrast", "range": "$1,500-$6,000"},
+    "mri head": {"cpt": "70551", "desc": "MRI Brain Without Contrast", "range": "$1,000-$5,000"},
     "mri knee": {"cpt": "73721", "desc": "MRI Lower Extremity Joint Without Contrast", "range": "$800-$3,500"},
-    "mri spine": {"cpt": "72148", "desc": "MRI Lumbar Spine Without Contrast", "range": "$1,000-$4,000"},
+    "knee mri": {"cpt": "73721", "desc": "MRI Lower Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri ankle": {"cpt": "73721", "desc": "MRI Lower Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri hip": {"cpt": "73721", "desc": "MRI Lower Extremity Joint Without Contrast", "range": "$900-$3,800"},
+    "mri foot": {"cpt": "73718", "desc": "MRI Lower Extremity Non-Joint Without Contrast", "range": "$800-$3,500"},
     "mri shoulder": {"cpt": "73221", "desc": "MRI Upper Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "shoulder mri": {"cpt": "73221", "desc": "MRI Upper Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri elbow": {"cpt": "73221", "desc": "MRI Upper Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri wrist": {"cpt": "73221", "desc": "MRI Upper Extremity Joint Without Contrast", "range": "$800-$3,500"},
+    "mri hand": {"cpt": "73218", "desc": "MRI Upper Extremity Non-Joint Without Contrast", "range": "$800-$3,500"},
+    "mri cervical spine": {"cpt": "72141", "desc": "MRI Cervical Spine Without Contrast", "range": "$1,000-$4,000"},
+    "cervical spine mri": {"cpt": "72141", "desc": "MRI Cervical Spine Without Contrast", "range": "$1,000-$4,000"},
+    "mri thoracic spine": {"cpt": "72146", "desc": "MRI Thoracic Spine Without Contrast", "range": "$1,000-$4,000"},
+    "mri lumbar spine": {"cpt": "72148", "desc": "MRI Lumbar Spine Without Contrast", "range": "$1,000-$4,000"},
+    "lumbar spine mri": {"cpt": "72148", "desc": "MRI Lumbar Spine Without Contrast", "range": "$1,000-$4,000"},
+    "mri spine": {"cpt": "72148", "desc": "MRI Lumbar Spine Without Contrast", "range": "$1,000-$4,000"},
     "mri abdomen": {"cpt": "74181", "desc": "MRI Abdomen Without Contrast", "range": "$1,000-$4,500"},
+    "abdomen mri": {"cpt": "74181", "desc": "MRI Abdomen Without Contrast", "range": "$1,000-$4,500"},
+    "mri abdomen with contrast": {"cpt": "74182", "desc": "MRI Abdomen With Contrast", "range": "$1,200-$5,000"},
+    "mri pelvis": {"cpt": "72195", "desc": "MRI Pelvis Without Contrast", "range": "$1,000-$4,500"},
+    "pelvis mri": {"cpt": "72195", "desc": "MRI Pelvis Without Contrast", "range": "$1,000-$4,500"},
+    "mri breast": {"cpt": "77046", "desc": "MRI Breast Without Contrast, Unilateral", "range": "$1,000-$5,000"},
+    "breast mri": {"cpt": "77046", "desc": "MRI Breast Without Contrast, Unilateral", "range": "$1,000-$5,000"},
     "ct scan": {"cpt": "74177", "desc": "CT Abdomen/Pelvis With Contrast", "range": "$500-$3,000"},
     "ct scan chest": {"cpt": "71260", "desc": "CT Chest With Contrast", "range": "$500-$3,000"},
+    "ct chest": {"cpt": "71260", "desc": "CT Chest With Contrast", "range": "$500-$3,000"},
+    "ct head": {"cpt": "70450", "desc": "CT Head/Brain Without Contrast", "range": "$300-$2,000"},
+    "ct abdomen": {"cpt": "74160", "desc": "CT Abdomen With Contrast", "range": "$500-$3,000"},
+    "ct abdomen pelvis": {"cpt": "74177", "desc": "CT Abdomen/Pelvis With Contrast", "range": "$500-$3,000"},
     "x-ray": {"cpt": "71046", "desc": "Chest X-Ray, 2 Views", "range": "$100-$400"},
+    "chest x-ray": {"cpt": "71046", "desc": "Chest X-Ray, 2 Views", "range": "$100-$400"},
+    "knee x-ray": {"cpt": "73562", "desc": "Knee X-Ray, 3 Views", "range": "$100-$500"},
     "mammogram": {"cpt": "77067", "desc": "Screening Mammography, Bilateral", "range": "$150-$500"},
     "ultrasound": {"cpt": "76856", "desc": "Ultrasound, Pelvic, Complete", "range": "$200-$800"},
+    "abdominal ultrasound": {"cpt": "76700", "desc": "Ultrasound, Abdomen, Complete", "range": "$200-$900"},
+    "pelvic ultrasound": {"cpt": "76856", "desc": "Ultrasound, Pelvic, Complete", "range": "$200-$800"},
     "pet scan": {"cpt": "78816", "desc": "PET Scan, Whole Body", "range": "$3,000-$10,000"},
 
     # General Surgery
@@ -120,6 +150,19 @@ def lookup_cpt_code(procedure_description: str) -> str:
                               (e.g., "knee replacement", "MRI", "blood work")
     """
     key = procedure_description.lower().strip()
+
+    if key in {"mri", "magnetic resonance imaging"}:
+        options = [
+            ("70551", "Brain MRI without contrast"),
+            ("73721", "Knee/hip/ankle MRI without contrast"),
+            ("73221", "Shoulder/elbow/wrist MRI without contrast"),
+            ("72148", "Lumbar spine MRI without contrast"),
+            ("74181", "Abdomen MRI without contrast"),
+        ]
+        return (
+            f"'MRI' is too broad for a single CPT code. Ask which body part and whether contrast was used.\n"
+            + "\n".join(f"  - CPT {code}: {desc}" for code, desc in options)
+        )
 
     # Exact match
     if key in _CPT_LOOKUP:

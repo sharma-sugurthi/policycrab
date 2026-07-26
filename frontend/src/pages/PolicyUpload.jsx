@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { apiFetch, readApiResponse } from '../lib/api'
+import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { useNavigate } from 'react-router-dom'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
@@ -167,9 +167,9 @@ export default function PolicyUpload({ onPolicyParsed }) {
         fetchPolicies()
       } else if (data?.session_id && data.policy_indexed) {
         setResult(data)
-        setError(data.errors?.join(', ') || 'Policy details were saved, but the summary could not be completed.')
+        setError(formatApiError(data, 'Policy details were saved, but the summary could not be completed.'))
       } else {
-        setError((data && typeof data === 'object' && data.errors?.join(', ')) || (typeof data === 'string' ? data : 'We could not read this policy. Please try again.'))
+        setError(formatApiError(data, 'We could not read this policy. Please try again.'))
       }
     } catch (err) {
       setError(`We could not reach the server: ${err.message}`)
@@ -207,13 +207,24 @@ export default function PolicyUpload({ onPolicyParsed }) {
                 <div className="feature-icon red">📋</div>
                 <div>
                   <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#09090b' }}>Policy Document</h3>
-                  <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Upload a PDF or paste your plan or claim text</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Upload the pages with costs, coverage, or denial details</p>
                 </div>
               </div>
 
               <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.75rem', padding: '1rem', marginBottom: '1.25rem', fontSize: '0.8125rem', color: '#1e40af' }}>
-                <strong style={{ display: 'block', marginBottom: '0.25rem' }}>💡 What should I upload?</strong>
-                Upload your <strong>plan summary</strong> or a document that lists deductibles, copays, and coverage limits. You can also upload an <strong>Explanation of Benefits (EOB)</strong> for a specific claim.
+                <strong style={{ display: 'block', marginBottom: '0.5rem' }}>What pages should I upload?</strong>
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                  {[
+                    ['SBC or plan summary', 'Look for pages labeled deductible, out-of-pocket maximum, copay, coinsurance, exclusions, prior authorization, or network benefits.'],
+                    ['EOB or claim letter', 'Use pages with billed amount, allowed amount, plan paid, patient responsibility, denial reason, CPT/ICD codes, and appeal deadline.'],
+                    ['Skip when possible', 'Avoid full ID cards, blank forms, duplicate pages, and unrelated medical records. Redact SSNs or member IDs before uploading.'],
+                  ].map(([title, body]) => (
+                    <div key={title} style={{ display: 'grid', gridTemplateColumns: '8px 1fr', gap: '0.625rem', alignItems: 'start' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', marginTop: '0.35rem' }} />
+                      <span><strong>{title}:</strong> {body}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div style={{ marginBottom: '1.25rem', background: '#fafafa', border: '1px dashed #d4d4d8', borderRadius: '0.75rem', padding: '1.25rem', textAlign: 'center' }}>

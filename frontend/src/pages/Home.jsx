@@ -74,16 +74,16 @@ export default function Home({ policyProfile }) {
               By the Numbers
             </motion.p>
             <motion.h2 variants={fadeUp} transition={{ duration: 0.5 }} className="section-title" style={{ textAlign: 'center' }}>
-              Trust the <span className="gradient-text">Engine</span>
+              Built around <span className="gradient-text">patient outcomes</span>
             </motion.h2>
           </motion.div>
 
           <div className="grid-4">
             {[
-              { value: '$1M+', label: 'Claims Evaluated', color: 'var(--accent)', bg: 'var(--accent-subtle)' },
-              { value: '10k+', label: 'Appeals Generated', color: 'var(--text-primary)', bg: 'var(--bg-secondary)' },
-              { value: '4.9/5', label: 'Average Rating', color: 'var(--success)', bg: 'var(--success-bg)' },
-              { value: '15+', label: 'Insurers Supported', color: 'var(--accent)', bg: 'var(--accent-subtle)' },
+              { value: 'EOB', label: 'Allowed Amount Review', color: 'var(--accent)', bg: 'var(--accent-subtle)' },
+              { value: 'Plan', label: 'Deductible and Copay Checks', color: 'var(--text-primary)', bg: 'var(--bg-secondary)' },
+              { value: 'Appeal', label: 'Denial Letter Drafting', color: 'var(--success)', bg: 'var(--success-bg)' },
+              { value: 'Rules', label: 'ERISA, ACA, NSA, Medicare', color: 'var(--accent)', bg: 'var(--accent-subtle)' },
             ].map((s, i) => (
               <motion.div
                 key={s.label}

@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { apiFetch, readApiResponse } from '../lib/api'
+import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
 
-// ── localStorage key for vault history ──────────────────────
-const LS_VAULT_KEY = 'policycrab_vault_docs'
+// ── Session-scoped key for document extraction summaries ─────
+const SS_VAULT_KEY = 'policycrab_vault_docs'
 
 // ── Confidence badge helper ─────────────────────────────────
 function ConfidenceBadge({ level }) {
@@ -72,7 +72,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
   const [result, setResult] = useState(null)        // last extraction result
   const [error, setError] = useState(null)
   const [history, setHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LS_VAULT_KEY) || '[]') } catch { return [] }
+    try { return JSON.parse(sessionStorage.getItem(SS_VAULT_KEY) || '[]') } catch { return [] }
   })
   const inputRef = useRef(null)
 
@@ -107,7 +107,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
   const saveToHistory = useCallback((entry) => {
     setHistory(prev => {
       const next = [entry, ...prev].slice(0, 10) // keep last 10
-      try { localStorage.setItem(LS_VAULT_KEY, JSON.stringify(next)) } catch {}
+      try { sessionStorage.setItem(SS_VAULT_KEY, JSON.stringify(next)) } catch {}
       return next
     })
   }, [])
@@ -130,7 +130,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
       form.append('file', file)
       const res = await apiFetch('/eob/parse', { method: 'POST', body: form })
       const data = await readApiResponse(res)
-      if (!res.ok) throw new Error(data.detail || 'Extraction failed')
+      if (!res.ok) throw new Error(formatApiError(data, 'Extraction failed'))
       setResult({ ...data, filename: file.name, uploadedAt: new Date().toISOString() })
       saveToHistory({
         filename: file.name,
@@ -366,7 +366,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
               style={{ fontSize: '0.7rem', padding: '0.25rem 0.625rem' }}
               onClick={() => {
                 setHistory([])
-                try { localStorage.removeItem(LS_VAULT_KEY) } catch {}
+                try { sessionStorage.removeItem(SS_VAULT_KEY) } catch {}
               }}
             >
               Clear history
@@ -692,7 +692,7 @@ function BillAuditor({ history }) {
       })
       
       const data = await res.json()
-      if (!res.ok) throw new Error(data.detail || 'Audit failed')
+      if (!res.ok) throw new Error(formatApiError(data, 'Audit failed'))
       
       setResult(data.audit_result)
     } catch (err) {
@@ -1025,7 +1025,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
   const [compareIds, setCompareIds] = useState(new Set())
   const [activeTab, setActiveTab] = useState('overview')
   const [vaultHistory, setVaultHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(LS_VAULT_KEY) || '[]') } catch { return [] }
+    try { return JSON.parse(sessionStorage.getItem(SS_VAULT_KEY) || '[]') } catch { return [] }
   })
 
 

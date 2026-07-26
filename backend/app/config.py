@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     app_name: str = "US Policy Claimer"
     app_version: str = "0.1.0"
     debug: bool = False
+    allow_benchmark_auth: bool = False
     cors_origins: str | list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",

@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, WebSocket, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.config import settings
 from app.services.supabase_client import get_supabase_client
 import logging
 
@@ -9,9 +10,16 @@ security = HTTPBearer()
 
 def verify_supabase_token(token: str) -> dict:
     """Validate a Supabase JWT token and return the user object."""
-    if token == "BENCHMARK_TOKEN" or token == "Bearer BENCHMARK_TOKEN":
-        return {"id": "benchmark_user", "email": "benchmark@policycrab.local"}
-        
+    benchmark_auth_enabled = settings.debug or settings.allow_benchmark_auth
+    if token in {"BENCHMARK_TOKEN", "Bearer BENCHMARK_TOKEN"}:
+        if benchmark_auth_enabled:
+            return {"id": "benchmark_user", "email": "benchmark@policycrab.local"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Benchmark authentication is disabled",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
