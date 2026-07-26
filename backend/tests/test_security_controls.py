@@ -99,7 +99,10 @@ def test_benchmark_token_requires_explicit_non_production_gate(monkeypatch):
     monkeypatch.setattr(auth.settings, "debug", False)
     monkeypatch.setattr(auth.settings, "allow_benchmark_auth", True)
 
-    assert verify_supabase_token("BENCHMARK_TOKEN")["id"] == "benchmark_user"
+    # The bypass emits auth.BENCHMARK_USER_ID (a stable UUIDv4-shaped string),
+    # not the literal "benchmark_user" — Supabase `user_id` columns are typed as
+    # uuid and reject ad-hoc strings with 22P02. See app/api/auth.py:11.
+    assert verify_supabase_token("BENCHMARK_TOKEN")["id"] == auth.BENCHMARK_USER_ID
 
 
 def test_document_scrubber_redacts_structured_identifiers():
