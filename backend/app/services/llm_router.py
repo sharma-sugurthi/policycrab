@@ -319,15 +319,20 @@ def get_embedding_client():
 async def generate_embedding(text: str) -> list[float]:
     """Generate a 768-dim embedding using Gemini Embedding — optimized for queries."""
     client = get_embedding_client()
-    result = client.models.embed_content(
-        model=settings.embedding_model,
-        contents=text,
-        config={
-            "task_type": "RETRIEVAL_QUERY",  # Optimized for query (not document)
-            "output_dimensionality": settings.embedding_dimensions,
-        },
-    )
-    return result.embeddings[0].values
+
+    def _sync_embed():
+        result = client.models.embed_content(
+            model=settings.embedding_model,
+            contents=text,
+            config={
+                "task_type": "RETRIEVAL_QUERY",  # Optimized for query (not document)
+                "output_dimensionality": settings.embedding_dimensions,
+            },
+        )
+        return result.embeddings[0].values
+
+    # Run the synchronous SDK call in a thread so the async event loop isn't blocked.
+    return await asyncio.to_thread(_sync_embed)
 
 
 async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> list[dict]:
@@ -346,7 +351,6 @@ async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> lis
         max_pages: Soft cap — chunks beyond this page number are skipped to prevent
                    runaway billing on extremely long documents. Default is 200 pages.
     """
-    import asyncio
     client = get_embedding_client()
     embedded_chunks = []
     batch_size = 50
@@ -371,14 +375,19 @@ async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> lis
         success = False
         for attempt in range(MAX_RETRIES):
             try:
-                result = client.models.embed_content(
-                    model=settings.embedding_model,
-                    contents=texts,
-                    config={
-                        "task_type": "RETRIEVAL_DOCUMENT",  # Optimized for document storage
-                        "output_dimensionality": settings.embedding_dimensions,
-                    },
-                )
+                # Run the synchronous SDK call in a thread pool so the event loop
+                # isn't blocked during multi-batch document ingestion.
+                def _batch_embed(t=texts):
+                    return client.models.embed_content(
+                        model=settings.embedding_model,
+                        contents=t,
+                        config={
+                            "task_type": "RETRIEVAL_DOCUMENT",  # Optimized for document storage
+                            "output_dimensionality": settings.embedding_dimensions,
+                        },
+                    )
+
+                result = await asyncio.to_thread(_batch_embed)
                 for chunk, emb in zip(batch, result.embeddings):
                     embedded_chunks.append({**chunk, "embedding": emb.values})
                 success = True

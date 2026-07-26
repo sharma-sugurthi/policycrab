@@ -249,6 +249,7 @@ async def upload_policy_pdf(
                     user["id"],
                     base_resp.policy_profile,
                     session_id=base_resp.session_id,
+                    raw_text=extracted_text,   # preserve for audit / re-extraction
                 )
             except ValueError as limit_error:
                 base_resp.errors = base_resp.errors + [str(limit_error)]

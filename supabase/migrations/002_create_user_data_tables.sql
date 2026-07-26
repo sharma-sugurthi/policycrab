@@ -53,3 +53,16 @@ drop policy if exists "Users can insert their claims" on public.user_claims;
 create policy "Users can insert their claims"
   on public.user_claims for insert
   with check (auth.uid() = user_id);
+
+-- ── Raw text column (added post-launch) ───────────────────────────
+-- Stores the first ~5 KB of the original raw SBC/policy text so the document
+-- can be audited or re-extracted without the user needing to re-upload.
+alter table public.user_policies
+  add column if not exists raw_text text;
+
+-- ── Service-role grants ──────────────────────────────────────────────
+-- These were applied to the live database by the Replit provisioner but were
+-- omitted from the published migration files. Without them the backend's
+-- service-role Supabase client cannot INSERT/SELECT from either table.
+GRANT ALL ON TABLE public.user_policies TO service_role;
+GRANT ALL ON TABLE public.user_claims   TO service_role;

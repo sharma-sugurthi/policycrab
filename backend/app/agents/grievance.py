@@ -9,6 +9,7 @@ base and constructs a formal, legally grounded appeal letter.
 
 import json
 import logging
+import re
 from datetime import date
 from langchain_core.messages import SystemMessage, HumanMessage
 
@@ -434,15 +435,52 @@ async def _draft_payer_appeal_letter(
         try:
             appeal_data = json.loads(content.strip())
         except json.JSONDecodeError:
-            # If JSON parsing fails, treat entire response as the letter
+            # First try: extract just the cited_regulations array via regex
+            # Gemini sometimes produces valid JSON but wraps it in extra prose.
+            rescued_citations = []
+            cite_match = re.search(
+                r'"cited_regulations"\s*:\s*(\[.*?\])',
+                response.content,
+                re.DOTALL,
+            )
+            if cite_match:
+                try:
+                    rescued_citations = json.loads(cite_match.group(1))
+                except json.JSONDecodeError:
+                    pass
+
+            # Second try: find the letter text directly
+            letter_match = re.search(
+                r'"appeal_letter"\s*:\s*"(.*?)"\s*[,}]',
+                response.content,
+                re.DOTALL,
+            )
+            rescued_letter = ""
+            if letter_match:
+                try:
+                    # Use json.loads on a minimal fragment to handle escape sequences
+                    rescued_letter = json.loads('"' + letter_match.group(1) + '"')
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
             appeal_data = {
-                "appeal_letter": response.content,
-                "cited_regulations": [],
+                "appeal_letter": rescued_letter or response.content,
+                "cited_regulations": rescued_citations,
                 "recommended_next_steps": [
                     "Send this letter via certified mail to the plan's appeals department",
                     f"File before the deadline: {deadline_info['deadline_date']}",
                 ],
             }
+            if rescued_citations:
+                logger.info(
+                    f"Agent 3 (Grievance): JSON parse failed but rescued "
+                    f"{len(rescued_citations)} citation(s) via regex fallback."
+                )
+            else:
+                logger.warning(
+                    "Agent 3 (Grievance): JSON parse failed and citation rescue returned 0 results. "
+                    "Check Gemini response format."
+                )
 
         # Build RegulatoryCitation objects
         citations = []

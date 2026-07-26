@@ -33,3 +33,9 @@ create policy "Users can update their chat"
   on public.user_chats for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- ── Service-role grant ───────────────────────────────────────────────
+-- Applied live by Replit provisioner; omitted from original migration file.
+-- Without this the service-role client cannot UPSERT chat history, causing
+-- /api/chat/message to 500 after every AI response.
+GRANT ALL ON TABLE public.user_chats TO service_role;

@@ -15,6 +15,7 @@ def create_user_policy(
     user_id: str,
     policy_profile: dict,
     session_id: str | None = None,
+    raw_text: str | None = None,
 ) -> dict | None:
     client = get_supabase_client()
 
@@ -35,6 +36,9 @@ def create_user_policy(
         "user_id": user_id,
         "session_id": session_id,
         "policy_profile_json": policy_profile,
+        # Store the first 5000 chars of raw text for auditing / re-extraction.
+        # None if the caller didn't supply it (text-paste path without raw PDF).
+        "raw_text": raw_text[:5000] if raw_text else None,
     }
     result = (
         client.table("user_policies")
@@ -42,6 +46,7 @@ def create_user_policy(
         .execute()
     )
     return result.data[0] if result.data else None
+
 
 
 def list_user_policies(user_id: str) -> list[dict]:

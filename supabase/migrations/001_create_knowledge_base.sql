@@ -72,3 +72,13 @@ BEGIN
     LIMIT match_count;
 END;
 $$;
+
+-- ── Service-role grants ──────────────────────────────────────────────
+-- The Supabase PostgREST service-role user needs explicit grants to
+-- SELECT from knowledge_chunks and EXECUTE the search function.
+-- Without these, /api/knowledge/search returns 500 on a fresh project.
+GRANT ALL ON TABLE public.knowledge_chunks TO service_role;
+GRANT ALL ON SEQUENCE public.knowledge_chunks_id_seq TO service_role;
+GRANT EXECUTE ON FUNCTION public.search_knowledge(
+    vector(768), text, text, int
+) TO service_role;
