@@ -117,3 +117,25 @@ def test_document_scrubber_redacts_structured_identifiers():
     assert "555-123-4567" not in clean
     assert "123-45-6789" not in clean
     assert "4111 1111 1111 1111" not in clean
+
+
+def test_document_scrubber_fails_closed_when_presidio_crashes(monkeypatch):
+    from app.security import presidio_scrubber
+
+    scrubber = presidio_scrubber.HIPAADocumentScrubber.__new__(
+        presidio_scrubber.HIPAADocumentScrubber
+    )
+    scrubber._available = True
+    scrubber.entities_to_redact = ["PHONE_NUMBER"]
+
+    class BrokenAnalyzer:
+        def analyze(self, **kwargs):
+            raise RuntimeError("simulated analyzer failure")
+
+    scrubber.analyzer = BrokenAnalyzer()
+    scrubber.anonymizer = object()
+
+    monkeypatch.setattr(presidio_scrubber, "_scrubber", scrubber)
+
+    with pytest.raises(presidio_scrubber.PHIScrubbingError):
+        presidio_scrubber.scrub_phi("Patient phone: 555-123-4567")

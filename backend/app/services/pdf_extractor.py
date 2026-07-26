@@ -28,7 +28,7 @@ import fitz  # PyMuPDF
 import pymupdf4llm
 
 from app.config import settings
-from app.security.presidio_scrubber import scrub_phi
+from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +147,10 @@ def extract_eob_safely(
         raise ValueError(f"Failed to read PDF document: {e}")
 
     # 2. Local PHI Scrubbing (Microsoft Presidio)
-    clean_text, redaction_count = scrub_phi(md_text)
+    try:
+        clean_text, redaction_count = scrub_phi(md_text)
+    except PHIScrubbingError as e:
+        raise ValueError(str(e)) from e
     
     if len(clean_text) < 50:
         raise ValueError("Document contains no extractable text (likely an image). OCR is currently disabled for HIPAA compliance.")
@@ -261,9 +264,11 @@ def extract_pages_from_pdf(pdf_bytes: bytes) -> list[dict]:
         raise ValueError("Scanned PDFs (images) cannot be scrubbed securely and are blocked.")
 
     # 3. Scrub PHI from all extracted pages before returning to the RAG pipeline
-    from app.security.presidio_scrubber import scrub_phi
     for p in pages:
-        p["text"], _ = scrub_phi(p["text"])
+        try:
+            p["text"], _ = scrub_phi(p["text"])
+        except PHIScrubbingError as e:
+            raise ValueError(str(e)) from e
 
     if not pages:
         raise ValueError("No text could be extracted from this PDF.")

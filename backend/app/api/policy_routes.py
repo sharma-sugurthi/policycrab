@@ -4,6 +4,7 @@ Supports both raw text paste and PDF file upload.
 """
 
 import logging
+from uuid import uuid4
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel, Field
 
@@ -11,6 +12,7 @@ from app.agents.graph import get_policy_ingestion_graph
 from app.services.pdf_extractor import extract_text_from_pdf
 from app.api.auth import get_current_user
 from app.security.rate_limit import rate_limit
+from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 from app.services.user_data import create_user_policy
 
 logger = logging.getLogger(__name__)
@@ -37,21 +39,31 @@ class PolicyUploadResponse(BaseModel):
     policy_profile: dict | None = None
     explanation: str | None = None
     extracted_text: str | None = None
-    extraction_warnings: list[str] = []
+    extraction_warnings: list[str] = Field(default_factory=list)
     extraction_confidence: str | None = None
-    errors: list[str] = []
+    errors: list[str] = Field(default_factory=list)
     session_id: str | None = None       # The Supabase session used for RAG indexing
     policy_indexed: bool = False         # True if the full doc was chunked/embedded for RAG
     policy_page_count: int | None = None # Number of pages processed
 
 
-async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
+async def _run_ingestion(
+    policy_text: str,
+    session_id: str | None = None,
+) -> PolicyUploadResponse:
     """Shared logic: run the policy ingestion graph on extracted text."""
     graph = get_policy_ingestion_graph()
+    try:
+        # Never pass user-provided policy text to an LLM before scrubbing it.
+        safe_policy_text, _ = scrub_phi(policy_text)
+    except PHIScrubbingError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+
+    session_id = session_id or uuid4().hex
 
     initial_state = {
         "messages": [],
-        "raw_policy_text": policy_text,
+        "raw_policy_text": safe_policy_text,
         "raw_claim_text": "",
         "policy_profile": None,
         "claim_case": None,
@@ -64,6 +76,7 @@ async def _run_ingestion(policy_text: str) -> PolicyUploadResponse:
         "extraction_warnings": [],
         "extraction_confidence": None,
         "explanations": {},
+        "session_id": session_id,
     }
 
     result = await graph.ainvoke(initial_state)
@@ -105,7 +118,11 @@ async def upload_policy_text(
         response = await _run_ingestion(request.policy_text)
         if response.success and response.policy_profile:
             try:
-                create_user_policy(user["id"], response.policy_profile)
+                create_user_policy(
+                    user["id"],
+                    response.policy_profile,
+                    session_id=response.session_id,
+                )
             except ValueError as limit_error:
                 # Policy limit reached — still return the profile but warn the user
                 response.errors = response.errors + [str(limit_error)]
@@ -116,8 +133,11 @@ async def upload_policy_text(
                     detail="Policy was parsed but could not be saved securely. Please try again before using it for claim evaluation.",
                 ) from db_error
         return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("Policy text ingestion failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Policy ingestion failed. Please try again.")
 
 
 @router.post("/upload-pdf", response_model=PolicyUploadResponse)
@@ -181,12 +201,9 @@ async def upload_policy_pdf(
         f"User: {user.get('id', 'unknown')}"
     )
 
-    # ── Build session_id from user id (stable across uploads) ──
-    # This ensures the Policy Analyzer always queries the correct user's chunks.
-    import hashlib
-    user_session_id = hashlib.sha256(
-        f"{user['id']}:{file.filename}:{len(pdf_bytes)}".encode()
-    ).hexdigest()[:16]
+    # Give every upload its own opaque session so distinct documents cannot
+    # collide or overwrite each other's policy chunks.
+    user_session_id = uuid4().hex
 
     try:
         from app.agents.graph import get_policy_ingestion_graph
@@ -228,7 +245,11 @@ async def upload_policy_pdf(
 
         if base_resp.success and base_resp.policy_profile:
             try:
-                create_user_policy(user["id"], base_resp.policy_profile)
+                create_user_policy(
+                    user["id"],
+                    base_resp.policy_profile,
+                    session_id=base_resp.session_id,
+                )
             except ValueError as limit_error:
                 base_resp.errors = base_resp.errors + [str(limit_error)]
             except Exception as db_error:
@@ -240,5 +261,8 @@ async def upload_policy_pdf(
 
         return base_resp
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Policy ingestion failed: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("Policy PDF ingestion failed", exc_info=True)
+        raise HTTPException(status_code=500, detail="Policy ingestion failed. Please try again.")

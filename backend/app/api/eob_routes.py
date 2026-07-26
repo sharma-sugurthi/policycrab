@@ -128,6 +128,14 @@ async def parse_eob(
                 "Please upload a PDF or an image (JPG, PNG, TIFF, WEBP)."
             ),
         )
+    if is_img:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Image uploads are unavailable because they cannot be scrubbed "
+                "locally before processing. Upload a text-based PDF instead."
+            ),
+        )
 
     # ── Read and validate size ────────────────────────────────────
     file_bytes = await file.read()

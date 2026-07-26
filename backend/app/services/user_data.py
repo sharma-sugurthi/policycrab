@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.services.supabase_client import get_supabase_client
-from app.security.phi_scrubber import scrub_phi
+from app.security.presidio_scrubber import scrub_phi
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,11 @@ logger = logging.getLogger(__name__)
 MAX_POLICIES_PER_USER = 5
 
 
-def create_user_policy(user_id: str, policy_profile: dict) -> dict | None:
+def create_user_policy(
+    user_id: str,
+    policy_profile: dict,
+    session_id: str | None = None,
+) -> dict | None:
     client = get_supabase_client()
 
     # Enforce per-user policy limit
@@ -29,6 +33,7 @@ def create_user_policy(user_id: str, policy_profile: dict) -> dict | None:
     payload = {
         "id": str(uuid4()),
         "user_id": user_id,
+        "session_id": session_id,
         "policy_profile_json": policy_profile,
     }
     result = (
@@ -43,7 +48,7 @@ def list_user_policies(user_id: str) -> list[dict]:
     client = get_supabase_client()
     result = (
         client.table("user_policies")
-        .select("id, policy_profile_json, created_at")
+        .select("id, session_id, policy_profile_json, created_at")
         .eq("user_id", user_id)
         .order("created_at", desc=True)
         .execute()

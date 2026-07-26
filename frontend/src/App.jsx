@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 
 // ── Browser storage keys ─────────────────────────────────────
 const SS_POLICY_KEY = 'policycrab_policy_profile'
+const SS_POLICY_SESSION_KEY = 'policycrab_policy_session'
 const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
 const LS_ONBOARDED_KEY = 'policycrab_onboarded'
 const LS_THEME_KEY = 'policycrab_theme'
@@ -240,6 +241,14 @@ function AppContent() {
       return null
     }
   })
+  const [policySession, setPolicySessionState] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem(SS_POLICY_SESSION_KEY)
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
   const [costBreakdown, setCostBreakdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
@@ -251,12 +260,19 @@ function AppContent() {
   }, [location.pathname])
 
   // Keep loaded policy session-scoped to avoid persistent browser storage of plan details
-  const setPolicyProfile = (profile) => {
+  const setPolicyProfile = (profile, session = null) => {
     setPolicyProfileState(profile)
     if (profile) {
       try { sessionStorage.setItem(SS_POLICY_KEY, JSON.stringify(profile)) } catch {}
+      setPolicySessionState(session)
+      try {
+        if (session) sessionStorage.setItem(SS_POLICY_SESSION_KEY, JSON.stringify(session))
+        else sessionStorage.removeItem(SS_POLICY_SESSION_KEY)
+      } catch {}
     } else {
       sessionStorage.removeItem(SS_POLICY_KEY)
+      setPolicySessionState(null)
+      sessionStorage.removeItem(SS_POLICY_SESSION_KEY)
     }
   }
 
@@ -392,7 +408,7 @@ function AppContent() {
         } />
         <Route path="/claim" element={
           <ProtectedRoute>
-            <ClaimEvaluator policyProfile={policyProfile} onResult={setCostBreakdown} />
+            <ClaimEvaluator policyProfile={policyProfile} policySession={policySession} onResult={setCostBreakdown} />
           </ProtectedRoute>
         } />
         <Route path="/chat" element={

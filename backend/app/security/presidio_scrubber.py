@@ -29,6 +29,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+class PHIScrubbingError(RuntimeError):
+    """Raised when a configured PHI scrubber cannot safely process text."""
+
+
 # Attempt to import Presidio — graceful fallback if unavailable
 try:
     from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
@@ -171,9 +176,11 @@ class HIPAADocumentScrubber:
             
         except Exception as e:
             logger.error(f"Error during Presidio scrubbing: {e}")
-            # Failsafe: if the scrubber crashes, return text unchanged
-            # rather than blocking the entire pipeline or leaking empty text
-            return text, 0
+            # Fail closed: callers must not persist or send potentially
+            # sensitive text when the configured scrubber cannot complete.
+            raise PHIScrubbingError(
+                "PHI scrubbing failed; the document was not processed."
+            ) from e
 
     def _regex_fallback(self, text: str) -> tuple[str, int]:
         """Fallback redaction for critical structured identifiers."""

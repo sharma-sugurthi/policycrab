@@ -12,6 +12,7 @@ async def get_user_policies(user: dict = Depends(get_current_user)):
     return [
         {
             "id": policy["id"],
+            "session_id": policy.get("session_id"),
             "policy_profile": policy.get("policy_profile_json"),
             "created_at": policy.get("created_at"),
         }

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
 from app.security.rate_limit import rate_limit_user
+from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 from app.services.user_data import create_user_claim
 
 # Per-user: 5 evaluations per 60 seconds
@@ -38,6 +39,14 @@ class ClaimEvaluationRequest(BaseModel):
     benchmark_policy_excerpt: str | None = Field(
         None,
         description="Hidden field for automated benchmarks. Injects policy excerpt directly, bypassing RAG."
+    )
+    session_id: str | None = Field(
+        None,
+        description="Policy RAG session returned by policy upload.",
+    )
+    policy_indexed: bool = Field(
+        False,
+        description="Whether the selected policy has searchable document chunks.",
     )
 
 
@@ -71,10 +80,15 @@ async def evaluate_claim(
     """
     graph = get_claim_evaluation_graph()
 
+    try:
+        safe_claim_description, _ = scrub_phi(request.claim_description)
+    except PHIScrubbingError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+
     initial_state = {
         "messages": [],
         "raw_policy_text": "",
-        "raw_claim_text": request.claim_description,
+        "raw_claim_text": safe_claim_description,
         "benchmark_policy_excerpt": request.benchmark_policy_excerpt,
         "policy_profile": request.policy_profile,
         "claim_case": None,
@@ -87,6 +101,8 @@ async def evaluate_claim(
         "extraction_warnings": [],
         "extraction_confidence": None,
         "explanations": {},
+        "session_id": request.session_id,
+        "policy_indexed": request.policy_indexed,
     }
 
     try:
@@ -110,7 +126,7 @@ async def evaluate_claim(
             try:
                 create_user_claim(
                     user_id=user["id"],
-                    claim_description=request.claim_description,
+                    claim_description=safe_claim_description,
                     cost_breakdown=response.cost_breakdown,
                     appeal_output=response.appeal_output,
                     route_decision=response.route_decision,

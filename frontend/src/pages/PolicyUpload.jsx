@@ -114,7 +114,12 @@ export default function PolicyUpload({ onPolicyParsed }) {
     const profile = policy.policy_profile
     if (!profile) return
     setEditableProfile({ ...profile })
-    setResult({ policy_profile: profile, extraction_confidence: 'HIGH' })
+    setResult({
+      policy_profile: profile,
+      extraction_confidence: 'HIGH',
+      session_id: policy.session_id,
+      policy_indexed: Boolean(policy.session_id),
+    })
     setConfirmed(false)
     setError(null)
   }
@@ -133,7 +138,10 @@ export default function PolicyUpload({ onPolicyParsed }) {
   }
 
   const handleConfirm = () => {
-    onPolicyParsed(editableProfile)
+    onPolicyParsed(editableProfile, {
+      session_id: result?.session_id || null,
+      policy_indexed: Boolean(result?.policy_indexed),
+    })
     setConfirmed(true)
   }
 
@@ -230,7 +238,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
               <div style={{ marginBottom: '1.25rem', background: '#fafafa', border: '1px dashed #d4d4d8', borderRadius: '0.75rem', padding: '1.25rem', textAlign: 'center' }}>
                 <input
                   type="file"
-                  accept="application/pdf"
+                   accept=".pdf,application/pdf"
                   onChange={e => setSelectedFile(e.target.files[0])}
                   style={{ display: 'none' }}
                   id="pdf-upload"

@@ -6,9 +6,13 @@ create extension if not exists pgcrypto;
 create table if not exists public.user_policies (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
+  session_id text,
   policy_profile_json jsonb not null,
   created_at timestamptz not null default now()
 );
+
+alter table public.user_policies
+  add column if not exists session_id text;
 
 create index if not exists idx_user_policies_user_created
   on public.user_policies (user_id, created_at desc);

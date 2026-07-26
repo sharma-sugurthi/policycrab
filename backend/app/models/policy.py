@@ -25,6 +25,8 @@ class PolicyProfile(BaseModel):
     Every field uses US-standard billing terminology.
     """
 
+    model_config = {"extra": "ignore"}
+
     # ── Plan Identification ───────────────────────────────────────
     plan_name: str = Field(..., description="Plan name as printed on the SBC")
     carrier_name: str = Field(..., description="Insurance carrier (e.g., UnitedHealthcare, Anthem)")

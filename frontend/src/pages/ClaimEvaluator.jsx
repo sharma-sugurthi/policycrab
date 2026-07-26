@@ -109,7 +109,7 @@ const APPEAL_LEVELS = [
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
-export default function ClaimEvaluator({ policyProfile, onResult }) {
+export default function ClaimEvaluator({ policyProfile, policySession, onResult }) {
   const navigate = useNavigate()
   const [claimText, setClaimText] = useState('')
   const [allowedAmount, setAllowedAmount] = useState('')
@@ -389,6 +389,8 @@ export default function ClaimEvaluator({ policyProfile, onResult }) {
           claim_description: claimText,
           policy_profile: policyProfile,
           allowed_amount: normalizedAllowedAmount,
+          session_id: policySession?.session_id || null,
+          policy_indexed: Boolean(policySession?.policy_indexed),
         }) 
       })
       const data = await readApiResponse(res)

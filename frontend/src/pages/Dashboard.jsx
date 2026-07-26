@@ -118,8 +118,12 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
     if (file.size > MAX) { setError('File too large. Maximum is 10 MB.'); return }
 
     const isPdf = file.type.includes('pdf') || file.name.toLowerCase().endsWith('.pdf')
-    const isImg = file.type.startsWith('image/')
-    if (!isPdf && !isImg) { setError('Unsupported type. Please upload a PDF or image (JPG, PNG, TIFF, WEBP).'); return }
+      const isImg = file.type.startsWith('image/')
+      if (!isPdf && !isImg) { setError('Unsupported type. Please upload a PDF or image (JPG, PNG, TIFF, WEBP).'); return }
+      if (isImg) {
+        setError('Image uploads are temporarily unavailable because they cannot be scrubbed locally before processing. Upload a text-based PDF instead.')
+        return
+      }
 
     setUploading(true)
     setError(null)
@@ -207,7 +211,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
           transition: 'all 0.2s ease',
         }}
       >
-        <input ref={inputRef} type="file" accept=".pdf,image/*" style={{ display: 'none' }} onChange={onFileChange} />
+        <input ref={inputRef} type="file" accept=".pdf,application/pdf" style={{ display: 'none' }} onChange={onFileChange} />
         {uploading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', width: '100%', maxWidth: '400px', margin: '0 auto' }}>
             <div style={{ width: '100%', height: '8px', background: '#e4e4e7', borderRadius: '4px', overflow: 'hidden' }}>
@@ -1054,7 +1058,13 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
   const activePolicy = policyProfile || policies[0]?.policy_profile
 
   const handleUsePolicyForClaim = (profile) => {
-    if (profile) onPolicySelected?.(profile)
+    if (profile) {
+      const selected = policies.find(p => p.policy_profile === profile)
+      onPolicySelected?.(profile, {
+        session_id: selected?.session_id || null,
+        policy_indexed: Boolean(selected?.session_id),
+      })
+    }
     navigate('/claim')
   }
 
