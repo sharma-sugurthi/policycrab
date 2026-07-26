@@ -432,8 +432,10 @@ async def _draft_payer_appeal_letter(
         elif "```" in content:
             content = content.split("```")[1].split("```")[0]
 
+        _json_parse_ok = False
         try:
             appeal_data = json.loads(content.strip())
+            _json_parse_ok = True
         except json.JSONDecodeError:
             # First try: extract just the cited_regulations array via regex
             # Gemini sometimes produces valid JSON but wraps it in extra prose.
@@ -491,6 +493,27 @@ async def _draft_payer_appeal_letter(
                     description=reg.get("description", ""),
                     relevance=reg.get("relevance", ""),
                 ))
+
+        # Fallback: when Gemini returned valid JSON but left cited_regulations=[]
+        # despite having been given RAG chunks, synthesize citations from the
+        # retrieved knowledge-base entries so AppealOutput always reflects what
+        # was consulted. NOT triggered when JSON parse itself failed — in that
+        # path the whole response is unreliable and we trust the regex rescue.
+        if _json_parse_ok and not citations and all_chunks:
+            for chunk in all_chunks[:5]:
+                citations.append(RegulatoryCitation(
+                    statute=chunk.get("concept_id", chunk.get("title", "Unknown")),
+                    description=(chunk.get("semantic_summary") or chunk.get("full_content", ""))[:300],
+                    relevance=(
+                        f"{chunk.get('domain', 'regulatory')} / "
+                        f"{chunk.get('jurisdiction', 'federal')} — "
+                        f"retrieved from knowledge base"
+                    ),
+                ))
+            logger.info(
+                f"Agent 3 (Grievance): cited_regulations was empty; synthesized "
+                f"{len(citations)} citation(s) from the {len(all_chunks)} retrieved RAG chunk(s)."
+            )
 
         # Build PolicyCitation objects from contradiction analysis
         from app.models.appeal import PolicyCitation

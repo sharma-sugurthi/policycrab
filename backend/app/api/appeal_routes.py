@@ -9,12 +9,12 @@ for each level, with level-specific legal grounds.
 import json
 import logging
 from datetime import date, timedelta
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from pydantic import BaseModel, Field
 
 from app.api.auth import get_current_user
 from app.security.rate_limit import rate_limit_user
-from app.services.llm_router import get_llm, TaskType, generate_embedding
+from app.services.llm_router import get_llm, TaskType, generate_embedding, LLMRateLimitError
 from app.services.supabase_client import search_knowledge_base
 from app.engine.regulatory_router import route_to_appeal_framework, get_appeal_framework_details
 from app.models.policy import PolicyProfile
@@ -234,6 +234,16 @@ async def draft_escalated_appeal(
             deadline_date=deadline,
         )
 
+    except LLMRateLimitError as e:
+        logger.warning(f"Draft Appeal Level {request.level}: all LLMs rate-limited — {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "All AI providers are currently rate-limited. "
+                "Please wait a few minutes and try again."
+            ),
+            headers={"Retry-After": "120"},
+        )
     except Exception as e:
         logger.error(f"Draft Appeal Level {request.level} failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Appeal drafting failed: {str(e)}")

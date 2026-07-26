@@ -60,6 +60,69 @@ async def main() -> None:
         except Exception as e:
             print(f"     !! error: {e}")
 
+    # ── Ensure user_id columns are uuid (not character varying) ─────────────
+    # Older live databases may have been created with text/varchar user_id before
+    # the migrations were corrected. This migration is idempotent — it is a no-op
+    # when the column is already typed as uuid.
+    print("\n== Ensuring user_id column types ==")
+    for tbl in ["user_policies", "user_claims", "user_chats"]:
+        try:
+            row = await conn.fetchrow(
+                """
+                SELECT data_type FROM information_schema.columns
+                WHERE table_schema='public' AND table_name=$1 AND column_name='user_id'
+                """,
+                tbl,
+            )
+            if row is None:
+                print(f"  {tbl}.user_id: table or column missing — skip")
+                continue
+            if row["data_type"] == "uuid":
+                print(f"  {tbl}.user_id: already uuid ✓")
+                continue
+            # Column exists but is text/varchar — delete any non-UUID rows then cast
+            deleted = await conn.fetchval(
+                f"DELETE FROM public.{tbl} WHERE user_id !~ "
+                r"'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' "
+                "RETURNING count(*)"
+            )
+            if deleted:
+                print(f"  {tbl}: deleted {deleted} non-UUID row(s)")
+            await conn.execute(
+                f"ALTER TABLE public.{tbl} ALTER COLUMN user_id TYPE uuid USING user_id::uuid;"
+            )
+            print(f"  {tbl}.user_id: migrated {row['data_type']} → uuid ✓")
+        except Exception as e:
+            print(f"  {tbl}.user_id: migration error — {e}")
+
+    # ── Re-apply RLS policies now that user_id is uuid everywhere ────────────
+    rls_defs = [
+        ("user_policies", "select", "USING",      "auth.uid() = user_id"),
+        ("user_policies", "insert", "WITH CHECK",  "auth.uid() = user_id"),
+        ("user_claims",   "select", "USING",       "auth.uid() = user_id"),
+        ("user_claims",   "insert", "WITH CHECK",  "auth.uid() = user_id"),
+        ("user_chats",    "select", "USING",       "auth.uid() = user_id"),
+        ("user_chats",    "insert", "WITH CHECK",  "auth.uid() = user_id"),
+        ("user_chats",    "update", "USING",       "auth.uid() = user_id"),
+    ]
+    for tbl, op, clause, expr in rls_defs:
+        pol = f'Users can {op} their {tbl.replace("user_", "")}'
+        try:
+            await conn.execute(f'DROP POLICY IF EXISTS "{pol}" ON public.{tbl};')
+            for_clause = f"FOR {op.upper()} {clause} ({expr})"
+            await conn.execute(
+                f'CREATE POLICY "{pol}" ON public.{tbl} {for_clause};'
+            )
+        except Exception as e:
+            print(f"  RLS {tbl} {op}: {e}")
+
+    # ── Service-role grants (belt-and-suspenders) ─────────────────────────────
+    for tbl in ["user_policies", "user_claims", "user_chats"]:
+        try:
+            await conn.execute(f"GRANT ALL ON TABLE public.{tbl} TO service_role;")
+        except Exception as e:
+            print(f"  GRANT {tbl}: {e}")
+
     print(f"\n== Refreshing PostgREST schema cache: {NOTIFY_RELOAD}")
     try:
         await conn.execute(NOTIFY_RELOAD)

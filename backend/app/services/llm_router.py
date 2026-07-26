@@ -19,6 +19,14 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+class LLMRateLimitError(RuntimeError):
+    """Raised when every configured LLM provider is currently rate-limited.
+
+    Callers (HTTP routes) should surface this as HTTP 503 with a Retry-After
+    header rather than a generic 500, so clients know to back off and retry.
+    """
+
+
 class TaskType(str, Enum):
     """Task types that determine which LLM to use."""
     EXTRACTION = "extraction"          # Policy parsing, structured output
@@ -213,6 +221,14 @@ class FallbackChatModel:
                 time.sleep(wait_time)
 
         if last_error is not None:
+            # Surface rate-limit exhaustion as a distinct error type so HTTP
+            # routes can return 503 / Retry-After instead of a generic 500.
+            err_str = str(last_error)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "rate_limit" in err_str.lower():
+                raise LLMRateLimitError(
+                    f"All LLM providers are rate-limited for task '{self.task.value}'. "
+                    f"Last error: {last_error}"
+                ) from last_error
             raise last_error
 
         raise RuntimeError(
@@ -260,6 +276,12 @@ class FallbackChatModel:
                 await asyncio.sleep(wait_time)
 
         if last_error is not None:
+            err_str = str(last_error)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "rate_limit" in err_str.lower():
+                raise LLMRateLimitError(
+                    f"All LLM providers are rate-limited for task '{self.task.value}'. "
+                    f"Last error: {last_error}"
+                ) from last_error
             raise last_error
 
         raise RuntimeError(
