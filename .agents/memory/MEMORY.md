@@ -1,0 +1,1 @@
+- [Policy RAG provisioning](imported-project-audit.md) — policy vector storage is outside the primary migration set and must be provisioned explicitly.
