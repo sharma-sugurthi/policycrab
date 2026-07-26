@@ -6,6 +6,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Stable UUID for the BENCHMARK_TOKEN bypass — Supabase tables with uuid user_id
+# columns will accept this; ad-hoc strings like "benchmark_user" cause 22P02 errors.
+BENCHMARK_USER_ID = "00000000-0000-4000-8000-000000000001"
+
 security = HTTPBearer()
 
 def verify_supabase_token(token: str) -> dict:
@@ -13,7 +17,7 @@ def verify_supabase_token(token: str) -> dict:
     benchmark_auth_enabled = settings.debug or settings.allow_benchmark_auth
     if token in {"BENCHMARK_TOKEN", "Bearer BENCHMARK_TOKEN"}:
         if benchmark_auth_enabled:
-            return {"id": "benchmark_user", "email": "benchmark@policycrab.local"}
+            return {"id": BENCHMARK_USER_ID, "email": "benchmark@policycrab.local"}
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Benchmark authentication is disabled",

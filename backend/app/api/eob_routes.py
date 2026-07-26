@@ -128,15 +128,9 @@ async def parse_eob(
                 "Please upload a PDF or an image (JPG, PNG, TIFF, WEBP)."
             ),
         )
-    if is_img:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Image uploads are unavailable because they cannot be scrubbed "
-                "locally before processing. Upload a text-based PDF instead."
-            ),
-        )
-
+    # Images go through Gemini Multimodal directly (visual reading).
+    # No PyMuPDF text-layer fallback for images — the hard-block that
+    # used to live here was incorrect (see fix-task #2).
     # ── Read and validate size ────────────────────────────────────
     file_bytes = await file.read()
 
@@ -190,7 +184,7 @@ async def parse_eob(
                         ),
                     )
 
-                llm = get_llm(TaskType.FAST)
+                llm = get_llm(TaskType.EXTRACTION)
                 result = extract_eob_fields(doc_text, llm)
                 extraction_method = "pymupdf+llm_fallback"
 
