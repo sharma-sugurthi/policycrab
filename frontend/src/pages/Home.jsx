@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import '../legacy.css'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 const fadeRight = { hidden: { opacity: 0, x: -24 }, show: { opacity: 1, x: 0 } }
@@ -8,7 +9,7 @@ export default function Home({ policyProfile }) {
   const navigate = useNavigate()
 
   return (
-    <>
+    <div className="legacy-theme">
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="hero">
         <div className="hero-glow" />
@@ -324,17 +325,53 @@ export default function Home({ policyProfile }) {
       </section>
 
       {/* ═══════════════ FOOTER ═══════════════ */}
-      <footer style={{ background: '#09090b', borderTop: '1px solid rgba(255,255,255,0.05)', padding: '2rem 0' }}>
-        <div className="main" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-            <img src="/logo.png" alt="PolicyCrab" style={{ width: '20px', height: '20px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
-            <span style={{ fontWeight: 800, fontSize: '1rem', color: '#fff', letterSpacing: '-0.02em' }}>PolicyCrab</span>
+      <footer style={{ background: '#0a0b0e', padding: '4rem 0 2rem' }}>
+        <div className="main">
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '2rem', borderBottom: '1px solid #222530', paddingBottom: '3rem', marginBottom: '2rem' }}>
+             
+             <div style={{ maxWidth: '300px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                  <img src="/logo.png" alt="PolicyCrab" style={{ width: '28px', height: '28px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+                  <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#fff', letterSpacing: '-0.02em', fontFamily: "'Outfit', sans-serif" }}>PolicyCrab</span>
+                </div>
+                <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                  AI-powered healthcare advocacy engine. Understand your coverage and fight unfair medical bills with confidence.
+                </p>
+                <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
+                   <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#e11d48', background: 'rgba(225,29,72,0.1)', padding: '0.25rem 0.625rem', borderRadius: '999px', border: '1px solid rgba(225,29,72,0.3)' }}>Built with Gemini</span>
+                </div>
+             </div>
+
+             <div style={{ display: 'flex', gap: '4rem', flexWrap: 'wrap' }}>
+                <div>
+                  <h4 style={{ color: '#fff', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>Product</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', color: '#94a3b8' }}>
+                     <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/policy')}>Upload Policy</button>
+                     <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/claim')}>Claim Evaluator</button>
+                     <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/chat')}>AI Assistant</button>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ color: '#fff', fontSize: '0.875rem', fontWeight: 700, marginBottom: '1rem' }}>Resources</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', color: '#94a3b8' }}>
+                     <span>No Surprises Act</span>
+                     <span>ERISA Appeals</span>
+                     <span>ACA Guidelines</span>
+                  </div>
+                </div>
+             </div>
           </div>
-          <p style={{ fontSize: '0.6875rem', color: '#71717a', fontWeight: 500, maxWidth: '36rem', lineHeight: 1.5, textAlign: 'right' }}>
-            Not legal or medical advice. For informational purposes only. Always verify with your insurer and consult a licensed professional. Use at your own risk.
-          </p>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+              &copy; {new Date().getFullYear()} PolicyCrab. All rights reserved.
+            </p>
+            <p style={{ fontSize: '0.6875rem', color: '#475569', fontWeight: 500, maxWidth: '28rem', lineHeight: 1.5, textAlign: 'right' }}>
+              Not legal or medical advice. For informational purposes only. Always verify with your insurer and consult a licensed professional. Use at your own risk.
+            </p>
+          </div>
         </div>
       </footer>
-    </>
+    </div>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { useNavigate } from 'react-router-dom'
+import { IconFileText, IconCheckCircle, IconUpload, IconSearch, IconFolder, IconX, IconAlertTriangle } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 const MAX_POLICIES = 5
@@ -15,7 +16,7 @@ function EditableNumericField({ label, field, value, onChange, isDefaulted, pref
         {isDefaulted && <span className="defaulted-tag">ESTIMATED</span>}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-        {prefix && <span style={{ fontSize: '0.875rem', color: '#71717a', fontWeight: 600 }}>{prefix}</span>}
+        {prefix && <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>{prefix}</span>}
         <input
           className={`policy-field-input${isDefaulted ? ' defaulted' : ''}`}
           type="number"
@@ -211,31 +212,35 @@ export default function PolicyUpload({ onPolicyParsed }) {
           {/* ── Input ─────────────────── */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <div className="card" style={{ padding: '2rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <div className="feature-icon red">📋</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div className="feature-icon red"><IconFileText size={20} /></div>
                 <div>
-                  <h3 style={{ fontWeight: 700, fontSize: '1rem', color: '#09090b' }}>Policy Document</h3>
-                  <p style={{ fontSize: '0.8125rem', color: '#a1a1aa' }}>Upload the pages with costs, coverage, or denial details</p>
+                  <h3 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Policy Document</h3>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>Upload the pages with costs, coverage, or denial details</p>
                 </div>
               </div>
 
-              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '0.75rem', padding: '1rem', marginBottom: '1.25rem', fontSize: '0.8125rem', color: '#1e40af' }}>
-                <strong style={{ display: 'block', marginBottom: '0.5rem' }}>What pages should I upload?</strong>
-                <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <div style={{ background: 'var(--info-bg)', border: '1px solid var(--info-border)', borderRadius: '0.75rem', padding: '1.25rem', marginBottom: '1.5rem', fontSize: '0.8125rem', color: 'var(--info)' }}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                  <IconCheckCircle size={16} /> What pages should I upload?
+                </strong>
+                <div style={{ display: 'grid', gap: '0.875rem' }}>
                   {[
                     ['SBC or plan summary', 'Look for pages labeled deductible, out-of-pocket maximum, copay, coinsurance, exclusions, prior authorization, or network benefits.'],
                     ['EOB or claim letter', 'Use pages with billed amount, allowed amount, plan paid, patient responsibility, denial reason, CPT/ICD codes, and appeal deadline.'],
                     ['Skip when possible', 'Avoid full ID cards, blank forms, duplicate pages, and unrelated medical records. Redact SSNs or member IDs before uploading.'],
                   ].map(([title, body]) => (
-                    <div key={title} style={{ display: 'grid', gridTemplateColumns: '8px 1fr', gap: '0.625rem', alignItems: 'start' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563eb', marginTop: '0.35rem' }} />
+                    <div key={title} style={{ display: 'grid', gridTemplateColumns: '6px 1fr', gap: '0.625rem', alignItems: 'start' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor', marginTop: '0.35rem', opacity: 0.5 }} />
                       <span><strong>{title}:</strong> {body}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.25rem', background: '#fafafa', border: '1px dashed #d4d4d8', borderRadius: '0.75rem', padding: '1.25rem', textAlign: 'center' }}>
+              <div style={{ marginBottom: '1.5rem', background: 'var(--bg-secondary)', border: '1px dashed var(--border-primary)', borderRadius: '1rem', padding: '1.5rem', textAlign: 'center', transition: 'all var(--transition-fast)' }}
+                   onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                   onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-primary)'}>
                 <input
                   type="file"
                    accept=".pdf,application/pdf"
@@ -243,76 +248,77 @@ export default function PolicyUpload({ onPolicyParsed }) {
                   style={{ display: 'none' }}
                   id="pdf-upload"
                 />
-                <label htmlFor="pdf-upload" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                  <div style={{ width: '40px', height: '40px', background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', color: '#dc2626' }}>
-                    📄
+                <label htmlFor="pdf-upload" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: '48px', height: '48px', background: 'var(--bg-primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-sm)', color: 'var(--accent)' }}>
+                    <IconUpload size={24} />
                   </div>
-                  <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.875rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--accent)', fontSize: '0.9375rem' }}>
                     {selectedFile ? selectedFile.name : 'Click to select a PDF'}
                   </span>
-                  {!selectedFile && <span style={{ fontSize: '0.75rem', color: '#71717a' }}>Max size: 10MB</span>}
+                  {!selectedFile && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Max size: 10MB</span>}
                 </label>
                 {selectedFile && (
-                  <button onClick={() => setSelectedFile(null)} style={{ background: 'transparent', border: 'none', color: '#71717a', fontSize: '0.75rem', marginTop: '0.5rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                  <button onClick={() => setSelectedFile(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}>
                     Clear selection
                   </button>
                 )}
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1rem 0' }}>
-                <div style={{ height: '1px', flex: 1, background: '#e4e4e7' }} />
-                <span style={{ fontSize: '0.75rem', color: '#a1a1aa', fontWeight: 600, textTransform: 'uppercase' }}>OR PASTE TEXT</span>
-                <div style={{ height: '1px', flex: 1, background: '#e4e4e7' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1.5rem 0' }}>
+                <div style={{ height: '1px', flex: 1, background: 'var(--border-primary)' }} />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>OR PASTE TEXT</span>
+                <div style={{ height: '1px', flex: 1, background: 'var(--border-primary)' }} />
               </div>
 
               <textarea
+                className="input"
                 value={policyText}
                 onChange={e => { setPolicyText(e.target.value); setSelectedFile(null); }}
                 placeholder="Paste your insurance policy document text here..."
-                style={{ minHeight: '180px', marginBottom: '1.25rem' }}
+                style={{ minHeight: '180px', marginBottom: '1.5rem' }}
                 disabled={!!selectedFile}
               />
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                <button className="btn btn-red" onClick={handleUpload} disabled={loading || (!selectedFile && policyText.trim().length < 50)}>
-                  {loading ? <><span className="spinner" /> Analyzing...</> : '🔍 Analyze Policy'}
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                <button className="btn btn-red" style={{ flex: 1 }} onClick={handleUpload} disabled={loading || (!selectedFile && policyText.trim().length < 50)}>
+                  {loading ? <><span className="spinner" /> Analyzing...</> : <><IconSearch size={18} /> Analyze Policy</>}
                 </button>
-                <button className="btn btn-ghost" onClick={() => { setPolicyText(sampleSBC); setSelectedFile(null); }}>
-                  📝 Load Sample Text
+                <button className="btn btn-outline" onClick={() => { setPolicyText(sampleSBC); setSelectedFile(null); }}>
+                  <IconFileText size={18} /> Sample Text
                 </button>
               </div>
 
               {error && (
-                <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem', color: '#dc2626', fontSize: '0.8125rem', fontWeight: 500 }}>
-                  ❌ {error}
+                <div style={{ marginTop: '1rem', padding: '0.875rem 1rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: '0.75rem', color: 'var(--danger)', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <IconAlertTriangle size={18} /> {error}
                 </div>
               )}
             </div>
 
             {/* ── Saved Policies Panel ────────────── */}
-            <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.125rem' }}>📂</span>
-                  <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#09090b' }}>Saved Policies</h3>
+            <div className="card" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                  <IconFolder size={20} style={{ color: 'var(--text-secondary)' }} />
+                  <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>Saved Policies</h3>
                 </div>
                 <span style={{
                   fontSize: '0.6875rem', fontWeight: 700, padding: '0.25rem 0.625rem',
                   borderRadius: '999px',
-                  background: savedPolicies.length >= MAX_POLICIES ? '#fef2f2' : '#f4f4f5',
-                  color: savedPolicies.length >= MAX_POLICIES ? '#dc2626' : '#71717a',
-                  border: `1px solid ${savedPolicies.length >= MAX_POLICIES ? '#fecaca' : '#e4e4e7'}`,
+                  background: savedPolicies.length >= MAX_POLICIES ? 'var(--danger-bg)' : 'var(--bg-secondary)',
+                  color: savedPolicies.length >= MAX_POLICIES ? 'var(--danger)' : 'var(--text-secondary)',
+                  border: `1px solid ${savedPolicies.length >= MAX_POLICIES ? 'var(--danger-border)' : 'var(--border-primary)'}`,
                 }}>
                   {savedPolicies.length} / {MAX_POLICIES} slots
                 </span>
               </div>
 
               {policiesLoading ? (
-                <div style={{ textAlign: 'center', padding: '1.5rem', color: '#a1a1aa', fontSize: '0.8125rem' }}>
-                  <span className="spinner" style={{ marginRight: '0.5rem' }} /> Loading...
+                <div style={{ textAlign: 'center', padding: '2rem 1.5rem', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
+                  <span className="spinner" style={{ marginRight: '0.5rem', borderColor: 'var(--border-primary)', borderTopColor: 'var(--text-tertiary)' }} /> Loading...
                 </div>
               ) : savedPolicies.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '1.5rem', color: '#a1a1aa', fontSize: '0.8125rem' }}>
+                <div style={{ textAlign: 'center', padding: '2rem 1.5rem', color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>
                   No saved policies yet. Upload one above to get started.
                 </div>
               ) : (
@@ -326,27 +332,26 @@ export default function PolicyUpload({ onPolicyParsed }) {
                     return (
                       <div key={p.id} style={{
                         display: 'flex', alignItems: 'center', gap: '0.75rem',
-                        padding: '0.625rem 0.875rem', borderRadius: '0.75rem',
-                        background: '#fafafa', border: '1px solid #f4f4f5',
-                        transition: 'border-color 0.15s',
+                        padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                        background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)',
+                        transition: 'border-color var(--transition-fast)',
                       }}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = '#d4d4d8'}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = '#f4f4f5'}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-primary)'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-secondary)'}
                       >
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#09090b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {name}
                           </p>
-                          <p style={{ fontSize: '0.6875rem', color: '#a1a1aa' }}>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                             {[carrier, planType, date].filter(Boolean).join(' · ')}
                           </p>
                         </div>
                         <button
                           onClick={() => handleLoadSaved(p)}
+                          className="btn btn-outline"
                           style={{
-                            padding: '0.25rem 0.625rem', fontSize: '0.6875rem', fontWeight: 700,
-                            background: '#dc2626', color: '#fff', border: 'none',
-                            borderRadius: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
+                            padding: '0.375rem 0.75rem', fontSize: '0.75rem',
                           }}
                         >
                           Load
@@ -355,13 +360,12 @@ export default function PolicyUpload({ onPolicyParsed }) {
                           onClick={() => handleDeletePolicy(p.id)}
                           disabled={deletingId === p.id}
                           style={{
-                            padding: '0.25rem 0.5rem', fontSize: '0.6875rem', fontWeight: 600,
-                            background: 'transparent', color: '#a1a1aa', border: '1px solid #e4e4e7',
-                            borderRadius: '0.5rem', cursor: 'pointer', whiteSpace: 'nowrap',
-                            opacity: deletingId === p.id ? 0.5 : 1,
+                            padding: '0.375rem', background: 'transparent', color: 'var(--text-tertiary)', border: 'none',
+                            borderRadius: '0.5rem', cursor: 'pointer', opacity: deletingId === p.id ? 0.5 : 1,
                           }}
+                          aria-label="Delete saved policy"
                         >
-                          {deletingId === p.id ? '...' : '✕'}
+                          {deletingId === p.id ? '...' : <IconX size={16} />}
                         </button>
                       </div>
                     )
@@ -370,8 +374,9 @@ export default function PolicyUpload({ onPolicyParsed }) {
               )}
 
               {savedPolicies.length >= MAX_POLICIES && (
-                <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '0.625rem', fontSize: '0.75rem', color: '#92400e' }}>
-                  ⚠️ You've reached the {MAX_POLICIES}-policy limit. Delete one to upload a new policy.
+                <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', borderRadius: '0.75rem', fontSize: '0.8125rem', color: 'var(--warning)', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <IconAlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <span>You've reached the {MAX_POLICIES}-policy limit. Delete one to upload a new policy.</span>
                 </div>
               )}
             </div>
@@ -382,10 +387,10 @@ export default function PolicyUpload({ onPolicyParsed }) {
             {editableProfile ? (
               <>
                 {/* Header */}
-                <div className="results-panel" style={{ marginBottom: '1.5rem' }}>
-                  <div className="results-header">
-                    <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>
-                      {confirmed ? '✅ Policy Confirmed' : '📝 Review & Confirm Extracted Fields'}
+                <div className="card" style={{ marginBottom: '1.5rem', overflow: 'hidden' }}>
+                  <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-secondary)' }}>
+                    <h3 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-primary)' }}>
+                      {confirmed ? '✅ Policy Confirmed' : '📝 Review Extracted Fields'}
                     </h3>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       {confidenceClass && (
@@ -400,11 +405,13 @@ export default function PolicyUpload({ onPolicyParsed }) {
                     </div>
                   </div>
 
-                  <div className="results-body">
+                  <div style={{ padding: '1.5rem' }}>
                     {/* Extraction warnings */}
                     {result?.extraction_warnings?.length > 0 && (
-                      <div className="extraction-warnings" style={{ marginBottom: '1rem' }}>
-                        <h5>⚠️ Please verify these extracted values:</h5>
+                      <div className="extraction-warnings" style={{ marginBottom: '1.5rem' }}>
+                        <h5 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <IconAlertTriangle size={16} /> Please verify these extracted values:
+                        </h5>
                         <ul>
                           {result.extraction_warnings.map((w, i) => <li key={i}>{w}</li>)}
                         </ul>
@@ -414,29 +421,29 @@ export default function PolicyUpload({ onPolicyParsed }) {
                     {/* Policy search status banner */}
                     {result?.session_id && (
                       <div style={{
-                        display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
-                        padding: '0.875rem 1rem',
-                        background: result.policy_indexed ? '#ecfdf5' : '#fef3c7',
-                        border: `1px solid ${result.policy_indexed ? '#a7f3d0' : '#fde68a'}`,
+                        display: 'flex', alignItems: 'flex-start', gap: '0.875rem',
+                        padding: '1rem',
+                        background: result.policy_indexed ? 'var(--success-bg)' : 'var(--warning-bg)',
+                        border: `1px solid ${result.policy_indexed ? 'var(--success-border)' : 'var(--warning-border)'}`,
                         borderRadius: '0.75rem',
-                        marginBottom: '1rem',
+                        marginBottom: '1.5rem',
                       }}>
-                        <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>
-                          {result.policy_indexed ? '🔒' : '⚠️'}
-                        </span>
+                        <div style={{ color: result.policy_indexed ? 'var(--success)' : 'var(--warning)', marginTop: '2px' }}>
+                          {result.policy_indexed ? <IconCheckCircle size={20} /> : <IconAlertTriangle size={20} />}
+                        </div>
                         <div>
-                          <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: result.policy_indexed ? '#065f46' : '#92400e', marginBottom: '0.25rem' }}>
+                          <p style={{ fontSize: '0.875rem', fontWeight: 700, color: result.policy_indexed ? 'var(--success)' : 'var(--warning)', marginBottom: '0.25rem' }}>
                             {result?.policy_indexed
                                         ? `Policy search ready — ${result.policy_page_count || '?'} pages indexed`
                                         : 'Document indexing failed — appeal letters will use the available policy details'}
                           </p>
-                          <p style={{ fontSize: '0.75rem', color: result.policy_indexed ? '#047857' : '#b45309', lineHeight: 1.5 }}>
+                          <p style={{ fontSize: '0.8125rem', color: result.policy_indexed ? 'var(--success)' : 'var(--warning)', opacity: 0.8, lineHeight: 1.5 }}>
                             {result.policy_indexed
                                         ? 'Your policy is ready for reference, and appeal notes can point to exact page numbers.'
                                         : 'The document could not be saved for later reference. Please try uploading again.'}
                           </p>
                           {result.policy_indexed && (
-                            <p style={{ fontSize: '0.7rem', color: '#a1a1aa', marginTop: '0.25rem', fontFamily: 'monospace' }}>
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontFamily: 'monospace' }}>
                               Session: {result.session_id}
                             </p>
                           )}
@@ -444,8 +451,8 @@ export default function PolicyUpload({ onPolicyParsed }) {
                       </div>
                     )}
 
-                    <p style={{ fontSize: '0.8125rem', color: '#71717a', marginBottom: '1rem', lineHeight: 1.5 }}>
-                      Review AI-extracted values below. <strong style={{ color: '#92400e' }}>Amber fields</strong> were estimated (not explicitly found in the document) — please verify before using.
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                      Review AI-extracted values below. <strong style={{ color: 'var(--warning)' }}>Amber fields</strong> were estimated (not explicitly found in the document) — please verify before using.
                     </p>
 
                     {/* Plan identity */}
@@ -464,8 +471,8 @@ export default function PolicyUpload({ onPolicyParsed }) {
                     <EditableTextField label="State" field="state" value={editableProfile.state} onChange={handleFieldChange} />
 
                     {/* Divider */}
-                    <div style={{ height: '1px', background: '#f4f4f5', margin: '0.75rem 0' }} />
-                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>In-Network Cost Sharing</p>
+                    <div style={{ height: '1px', background: 'var(--border-secondary)', margin: '1.25rem 0' }} />
+                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>In-Network Cost Sharing</p>
 
                     <EditableNumericField label="Individual Deductible" field="in_network_deductible_individual" value={editableProfile.in_network_deductible_individual} onChange={handleFieldChange} />
                     <EditableNumericField label="Individual OOP Max" field="in_network_oop_max_individual" value={editableProfile.in_network_oop_max_individual} onChange={handleFieldChange} />
@@ -478,13 +485,13 @@ export default function PolicyUpload({ onPolicyParsed }) {
                           value={editableProfile.in_network_coinsurance != null ? Math.round(editableProfile.in_network_coinsurance * 100) : ''}
                           onChange={e => handleFieldChange('in_network_coinsurance', e.target.value === '' ? null : Number(e.target.value) / 100)}
                         />
-                        <span style={{ fontSize: '0.875rem', color: '#71717a', fontWeight: 600 }}>%</span>
+                        <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>%</span>
                       </div>
                     </div>
 
                     {/* Copays */}
-                    <div style={{ height: '1px', background: '#f4f4f5', margin: '0.75rem 0' }} />
-                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.25rem' }}>Copay Schedule</p>
+                    <div style={{ height: '1px', background: 'var(--border-secondary)', margin: '1.25rem 0' }} />
+                    <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.5rem' }}>Copay Schedule</p>
 
                     {editableProfile.copay_schedule && Object.entries({
                       primary_care: 'Primary Care',
@@ -497,7 +504,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
                       <div className="policy-editable-field" key={key}>
                         <div className="policy-editable-label"><span>{label}</span></div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                          <span style={{ fontSize: '0.875rem', color: '#71717a', fontWeight: 600 }}>$</span>
+                          <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>$</span>
                           <input
                             className="policy-field-input"
                             type="number" min="0" step="1"
@@ -512,11 +519,11 @@ export default function PolicyUpload({ onPolicyParsed }) {
 
                 {/* Confirm button */}
                 <button
-                  className={confirmed ? 'btn btn-ghost' : 'btn btn-red'}
-                  style={{ width: '100%', padding: '0.875rem', fontSize: '0.9375rem' }}
+                  className={confirmed ? 'btn btn-outline' : 'btn btn-red'}
+                  style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
                   onClick={handleConfirm}
                 >
-                  {confirmed ? '✅ Policy Confirmed — Re-confirm after edits' : '✔ Confirm & Use This Policy →'}
+                  {confirmed ? 'Re-confirm after edits' : <><IconCheckCircle size={18} /> Confirm & Use This Policy</>}
                 </button>
 
                 {confirmed && (
@@ -527,40 +534,43 @@ export default function PolicyUpload({ onPolicyParsed }) {
                     style={{ 
                       marginTop: '1rem', 
                       width: '100%',
-                      padding: '0.875rem 1.25rem', 
-                      background: '#ecfdf5', 
-                      border: '1px solid #a7f3d0', 
-                      borderRadius: '1rem', 
+                      padding: '1rem 1.25rem', 
+                      background: 'var(--success-bg)', 
+                      border: '1px solid var(--success-border)', 
+                      borderRadius: 'var(--radius-full)', 
                       fontSize: '0.9375rem', 
-                      color: '#065f46', 
-                      fontWeight: 600,
+                      color: 'var(--success)', 
+                      fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.5rem',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                      boxShadow: 'var(--shadow-sm)'
                     }}
                     onClick={() => navigate('/claim')}
                   >
-                    <span>✅ Policy is active</span>
-                    <span style={{ color: '#047857' }}>—</span>
+                    <IconCheckCircle size={18} />
+                    <span>Policy is active</span>
+                    <span style={{ opacity: 0.5 }}>—</span>
                     <span style={{ textDecoration: 'underline' }}>Go to Claim Evaluator →</span>
                   </motion.button>
                 )}
 
                 {result?.explanation && (
-                  <div className="explanation-box" style={{ marginTop: '1.5rem' }}>
-                    <h4>💡 Plain English Summary</h4>
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{result.explanation}</div>
+                  <div className="explanation-box" style={{ marginTop: '1.5rem', background: 'var(--info-bg)', borderColor: 'var(--info-border)' }}>
+                    <h4 style={{ color: 'var(--info)' }}><IconFileText size={18} /> Plain English Summary</h4>
+                    <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>{result.explanation}</div>
                   </div>
                 )}
               </>
             ) : (
-              <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
-                <h3 style={{ fontWeight: 800, fontSize: '1.25rem', marginBottom: '0.5rem' }}>No Policy Loaded</h3>
-                <p style={{ color: '#71717a', fontSize: '0.875rem', maxWidth: '20rem', margin: '0 auto' }}>
+              <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem', color: 'var(--text-tertiary)' }}>
+                  <IconFileText size={40} />
+                </div>
+                <h3 style={{ fontWeight: 800, fontSize: '1.375rem', marginBottom: '0.5rem', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>No Policy Loaded</h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem', maxWidth: '20rem', margin: '0 auto', lineHeight: 1.5 }}>
                   Paste your policy text and click "Analyze Policy" to extract structured details.
                 </p>
               </div>

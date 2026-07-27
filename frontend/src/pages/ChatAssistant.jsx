@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch, readApiResponse } from '../lib/api'
+import { IconCpu, IconActivity, IconSearch, IconBriefcase, IconAlertTriangle, IconZap } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
@@ -12,7 +13,7 @@ function renderMessageContent(content) {
       <span key={lineIndex}>
         {parts.map((part, partIndex) => {
           if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={partIndex}>{part.slice(2, -2)}</strong>
+            return <strong key={partIndex} style={{ fontWeight: 800 }}>{part.slice(2, -2)}</strong>
           }
           return <span key={partIndex}>{part}</span>
         })}
@@ -107,7 +108,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
             <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
               AI <span className="gradient-text">Assistant</span>
             </motion.h1>
-            <button type="button" className="btn btn-ghost" onClick={handleClearChat}>Clear Chat</button>
+            <button type="button" className="btn btn-outline" style={{ fontSize: '0.8125rem', padding: '0.5rem 1rem' }} onClick={handleClearChat}>Clear Chat</button>
           </div>
         </motion.div>
 
@@ -117,39 +118,39 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
             style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
             {/* Context */}
-            <div className="card card-zinc" style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                <div className="feature-icon purple">🧠</div>
+            <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div className="feature-icon" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}><IconCpu size={20} /></div>
                 <div>
-                  <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#09090b' }}>Conversation context</h3>
-                  <p style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>Used to personalize your answer</p>
+                  <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>Conversation context</h3>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>Used to personalize your answer</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8125rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#71717a', fontWeight: 500 }}>Policy Profile</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-primary)' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconBriefcase size={16} style={{ color: 'var(--text-tertiary)' }} /> Policy Profile</span>
                   {policyProfile ? <span className="badge badge-success">Loaded</span> : <span className="badge badge-zinc">None</span>}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#71717a', fontWeight: 500 }}>Recent Claim</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-primary)' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconActivity size={16} style={{ color: 'var(--text-tertiary)' }} /> Recent Claim</span>
                   {costBreakdown ? <span className="badge badge-success">Loaded</span> : <span className="badge badge-zinc">None</span>}
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#71717a', fontWeight: 500 }}>Reference search</span>
-                  <span className="badge badge-info">Active · policy references</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconSearch size={16} style={{ color: 'var(--text-tertiary)' }} /> Reference search</span>
+                  <span className="badge badge-info">Active</span>
                 </div>
               </div>
             </div>
 
             {/* Suggested Questions */}
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <h3 style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#09090b', marginBottom: '1rem' }}>Suggested Questions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', boxShadow: 'var(--shadow-sm)' }}>
+              <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Suggested Questions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                 {quickQuestions.map((q, i) => (
-                  <button key={i} className="btn btn-ghost"
-                    style={{ textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.4, height: 'auto', justifyContent: 'flex-start' }}
+                  <button key={i} className="btn btn-outline"
+                    style={{ textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.5, height: 'auto', justifyContent: 'flex-start', padding: '0.875rem 1rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}
                     onClick={() => setInput(q)}>
-                    <span style={{ color: '#dc2626', fontWeight: 700 }}>→</span> {q}
+                    <span style={{ color: 'var(--accent)', fontWeight: 800, marginRight: '0.5rem' }}>→</span> {q}
                   </button>
                 ))}
               </div>
@@ -166,9 +167,9 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
                   </div>
                 ))}
                 {loading && (
-                  <div className="chat-bubble ai" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'fit-content' }}>
-                    <span className="spinner" style={{ width: '14px', height: '14px' }} />
-                    <em style={{ color: '#a1a1aa', fontSize: '0.875rem' }}>Thinking...</em>
+                  <div className="chat-bubble ai" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', width: 'fit-content' }}>
+                    <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                    <em style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', fontWeight: 500 }}>Thinking...</em>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -179,7 +180,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
                   placeholder="Ask about regulations, appeals, or your policy..." disabled={loading} />
                 <button type="submit" className="btn btn-red" disabled={!input.trim() || loading}
                   style={{ borderRadius: '9999px', padding: '0 1.5rem', flexShrink: 0 }}>
-                  Send
+                  <IconZap size={16} /> Send
                 </button>
               </form>
             </div>

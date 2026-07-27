@@ -63,6 +63,8 @@ const FIELD_DEFS = [
   { key: 'denial_reason_text',    label: 'Denial Reason' },
 ]
 
+import '../legacy.css'
+
 // ── Document Vault Component ────────────────────────────────
 function DocumentVault({ policyProfile, onGoToClaim }) {
   const [dragging, setDragging] = useState(false)
@@ -193,7 +195,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
   const conf = result?.extracted?.confidence || {}
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <div className="legacy-theme" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
       {/* ── Upload Zone ── */}
       <div
@@ -1131,6 +1133,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
   }
 
   return (
+    <div className="legacy-theme">
     <section className="section-white section-pad">
       <div className="main">
         <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '2rem' }}>
@@ -1453,6 +1456,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
 
       </div>
     </section>
+    </div>
   )
 }
 

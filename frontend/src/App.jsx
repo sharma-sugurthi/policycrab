@@ -7,6 +7,7 @@ import PolicyUpload from './pages/PolicyUpload'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut } from './components/Icons'
 
 // ── Browser storage keys ─────────────────────────────────────
 const SS_POLICY_KEY = 'policycrab_policy_profile'
@@ -53,10 +54,10 @@ function useTheme() {
     return 'system'
   })
 
-  const themeIcon = theme === 'dark' ? '☀️' : theme === 'light' ? '🌙' : '🖥️'
+  const ThemeIcon = theme === 'dark' ? IconSun : theme === 'light' ? IconMoon : IconMonitor
   const themeLabel = theme === 'dark' ? 'Switch to system' : theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
 
-  return { theme, toggleTheme, themeIcon, themeLabel }
+  return { theme, toggleTheme, ThemeIcon, themeLabel }
 }
 
 function ProtectedRoute({ children }) {
@@ -83,21 +84,24 @@ function DisclaimerBanner() {
   if (!visible) return null
 
   return (
-    <div className="disclaimer-banner" role="alert" aria-live="polite">
-      <span className="disclaimer-icon">⚠️</span>
-      <p className="disclaimer-text">
-        <strong>Not legal or medical advice.</strong> PolicyCrab is an informational tool only.
-        Always verify calculations with your insurer and consult a licensed professional for legal or medical decisions.
-        Use at your own risk.
-      </p>
-      <button
-        onClick={dismiss}
-        className="disclaimer-close"
-        aria-label="Dismiss disclaimer"
-        title="Dismiss"
-      >
-        ✕
-      </button>
+    <div style={{ background: 'var(--warning-bg)', borderBottom: '1px solid var(--warning-border)', padding: '0.625rem 1rem' }} role="alert" aria-live="polite">
+      <div className="main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <IconAlertTriangle size={18} style={{ color: 'var(--warning)' }} />
+          <p style={{ fontSize: '0.8125rem', color: 'var(--warning)', fontWeight: 500, lineHeight: 1.4 }}>
+            <strong style={{ fontWeight: 700 }}>Not legal or medical advice.</strong> PolicyCrab is an informational tool only.
+            Always verify calculations with your insurer and consult a licensed professional.
+          </p>
+        </div>
+        <button
+          onClick={dismiss}
+          style={{ background: 'transparent', border: 'none', color: 'var(--warning)', cursor: 'pointer', padding: '0.25rem', opacity: 0.7 }}
+          aria-label="Dismiss disclaimer"
+          title="Dismiss"
+        >
+          <IconX size={16} />
+        </button>
+      </div>
     </div>
   )
 }
@@ -105,25 +109,25 @@ function DisclaimerBanner() {
 // ── Onboarding Tutorial Modal ─────────────────────────────────
 const ONBOARDING_SLIDES = [
   {
-    icon: '📋',
+    icon: <IconFileText size={32} />,
     step: 'Step 1 of 3',
     title: 'Upload Your Insurance Policy',
     desc: 'Upload your plan summary or paste the text. PolicyCrab extracts the coverage details you need for review.',
-    color: '#dc2626',
+    color: '#0ea5e9', // Using premium blue instead of flat red
   },
   {
-    icon: '🧾',
+    icon: <IconCheckCircle size={32} />,
     step: 'Step 2 of 3',
     title: 'Describe Your Claim',
-    desc: 'Upload your Explanation of Benefits (EOB) or describe what happened — the service, provider, billed amount, and any denial reason. The app can help auto-fill details from your EOB.',
+    desc: 'Upload your Explanation of Benefits (EOB) or describe what happened. The app can help auto-fill details from your EOB.',
     color: '#d97706',
   },
   {
-    icon: '⚖️',
+    icon: <IconGavel size={32} />,
     step: 'Step 3 of 3',
     title: 'Get Your Appeal Letter',
-    desc: 'The app drafts a formally written appeal letter using your plan details, denial codes, and the applicable rules. Download it as a PDF and mail it certified.',
-    color: '#16a34a',
+    desc: 'The app drafts a formally written appeal letter using your plan details, denial codes, and the applicable rules.',
+    color: '#10b981',
   },
 ]
 
@@ -149,47 +153,47 @@ function OnboardingTutorial() {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(9,9,11,0.82)', backdropFilter: 'blur(6px)',
+      background: 'rgba(9,9,11,0.82)', backdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1.5rem',
     }} role="dialog" aria-modal="true" aria-label="Welcome to PolicyCrab">
       <div style={{
-        background: '#fff', borderRadius: '1.5rem', width: '100%', maxWidth: '420px',
-        padding: '2.5rem 2rem 2rem', boxShadow: '0 24px 80px rgba(0,0,0,0.28)',
-        position: 'relative', textAlign: 'center',
+        background: 'var(--bg-primary)', borderRadius: '1.5rem', width: '100%', maxWidth: '440px',
+        padding: '2.5rem 2.5rem 2rem', boxShadow: 'var(--shadow-card)',
+        position: 'relative', textAlign: 'center', border: '1px solid var(--border-primary)'
       }}>
         {/* Skip */}
         <button onClick={finish} aria-label="Skip tutorial" style={{
-          position: 'absolute', top: '1rem', right: '1rem',
-          background: 'none', border: 'none', color: '#a1a1aa',
+          position: 'absolute', top: '1.25rem', right: '1.25rem',
+          background: 'none', border: 'none', color: 'var(--text-tertiary)',
           fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
         }}>Skip tour</button>
 
         {/* Icon */}
         <div style={{
-          width: '64px', height: '64px', borderRadius: '50%',
+          width: '72px', height: '72px', borderRadius: '50%',
           background: `${current.color}15`, display: 'flex',
           alignItems: 'center', justifyContent: 'center',
-          fontSize: '2rem', margin: '0 auto 1.25rem',
+          color: current.color, margin: '0 auto 1.25rem',
           border: `2px solid ${current.color}30`,
         }}>
           {current.icon}
         </div>
 
         {/* Step label */}
-        <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: current.color,
-          textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.375rem' }}>
+        <p style={{ fontSize: '0.6875rem', fontWeight: 800, color: current.color,
+          textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem', fontFamily: "'JetBrains Mono', monospace" }}>
           {current.step}
         </p>
 
         {/* Title */}
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b',
-          marginBottom: '0.75rem', lineHeight: 1.3 }}>
+        <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-primary)',
+          marginBottom: '0.75rem', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
           {current.title}
         </h2>
 
         {/* Description */}
-        <p style={{ fontSize: '0.9rem', color: '#52525b', lineHeight: 1.65,
+        <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.65,
           marginBottom: '2rem' }}>
           {current.desc}
         </p>
@@ -198,10 +202,10 @@ function OnboardingTutorial() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.375rem', marginBottom: '1.5rem' }}>
           {ONBOARDING_SLIDES.map((_, i) => (
             <button key={i} onClick={() => setSlide(i)} aria-label={`Go to slide ${i + 1}`} style={{
-              width: i === slide ? '20px' : '8px', height: '8px',
+              width: i === slide ? '24px' : '8px', height: '8px',
               borderRadius: '999px', border: 'none', cursor: 'pointer',
-              background: i === slide ? current.color : '#e4e4e7',
-              transition: 'all 0.25s ease',
+              background: i === slide ? current.color : 'var(--border-primary)',
+              transition: 'all 0.3s ease',
               padding: 0,
             }} />
           ))}
@@ -210,20 +214,21 @@ function OnboardingTutorial() {
         {/* Actions */}
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           {slide > 0 && (
-            <button onClick={() => setSlide(s => s - 1)} className="btn btn-ghost" style={{ flex: 1 }}>
-              ← Back
+            <button onClick={() => setSlide(s => s - 1)} className="btn btn-ghost" style={{ flex: 1, height: '44px' }}>
+              Back
             </button>
           )}
           <button
             onClick={isLast ? finish : () => setSlide(s => s + 1)}
             style={{
-              flex: 1, padding: '0.75rem', borderRadius: '0.75rem',
+              flex: 1, height: '44px', borderRadius: '999px',
               background: current.color, color: '#fff', border: 'none',
               fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer',
-              transition: 'opacity 0.2s',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              boxShadow: `0 4px 14px ${current.color}40`,
             }}
           >
-            {isLast ? 'Get Started →' : 'Next →'}
+            {isLast ? 'Get Started' : 'Next'}
           </button>
         </div>
       </div>
@@ -253,7 +258,7 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const { user, signOut } = useAuth()
-  const { theme, toggleTheme, themeIcon, themeLabel } = useTheme()
+  const { theme, toggleTheme, ThemeIcon, themeLabel } = useTheme()
 
   useEffect(() => {
     setMobileMenuOpen(false)
@@ -306,21 +311,23 @@ function AppContent() {
       <header className="navbar">
         <div className="navbar-inner">
           <NavLink to="/" className="navbar-brand">
-            <img src="/logo.png" alt="PolicyCrab Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="PolicyCrab Logo" className="navbar-brand-logo" />
             <span>PolicyCrab</span>
           </NavLink>
 
           {/* Loaded policy pill */}
           {policyProfile && (
-            <div className="navbar-policy-pill" title={`${policyProfile.carrier_name} — ${policyProfile.plan_type}`}>
-              <span className="navbar-policy-dot" />
-              <span className="navbar-policy-name">{policyProfile.plan_name || 'Policy Loaded'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.375rem 0.25rem 0.75rem', background: 'var(--accent-subtle)', borderRadius: '999px', border: '1px solid var(--accent-border)' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', animation: 'pulseRed 2s infinite' }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {policyProfile.plan_name || 'Policy Loaded'}
+              </span>
               <button
                 onClick={clearPolicy}
-                className="navbar-policy-clear"
+                style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 aria-label="Clear loaded policy"
                 title="Clear policy"
-              >✕</button>
+              ><IconX size={12} /></button>
             </div>
           )}
 
@@ -333,16 +340,6 @@ function AppContent() {
           </nav>
 
           <div className="navbar-status" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {user ? (
-              <>
-                <span className="navbar-email">{user.email}</span>
-                <button onClick={handleSignOut} className="btn btn-ghost" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}>Sign Out</button>
-              </>
-            ) : (
-              <NavLink to="/auth" className="btn btn-red" style={{ padding: '0.5rem 1.25rem', fontSize: '0.8125rem' }}>
-                Sign In
-              </NavLink>
-            )}
             <button
               type="button"
               className="theme-toggle"
@@ -350,8 +347,20 @@ function AppContent() {
               aria-label={themeLabel}
               title={themeLabel}
             >
-              {themeIcon}
+              <ThemeIcon size={16} />
             </button>
+            
+            {user ? (
+              <>
+                <span className="navbar-email">{user.email}</span>
+                <button onClick={handleSignOut} className="btn btn-ghost" style={{ padding: '0.375rem 0.75rem', fontSize: '0.8125rem' }}>Sign Out</button>
+              </>
+            ) : (
+              <NavLink to="/auth" className="btn btn-red" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
+                Sign In
+              </NavLink>
+            )}
+            
             <button
               type="button"
               className={`mobile-menu-button${mobileMenuOpen ? ' active' : ''}`}
@@ -360,9 +369,7 @@ function AppContent() {
               aria-controls="mobile-navigation"
               onClick={() => setMobileMenuOpen(open => !open)}
             >
-              <span />
-              <span />
-              <span />
+              {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
             </button>
           </div>
         </div>
@@ -379,10 +386,10 @@ function AppContent() {
             {user ? (
               <>
                 <span>{user.email}</span>
-                <button onClick={handleSignOut} className="btn btn-ghost">Sign Out</button>
+                <button onClick={handleSignOut} className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
               </>
             ) : (
-              <NavLink to="/auth" className="btn btn-red">
+              <NavLink to="/auth" className="btn btn-red" style={{ display: 'flex', justifyContent: 'center' }}>
                 Sign In
               </NavLink>
             )}
