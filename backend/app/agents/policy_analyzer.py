@@ -1,21 +1,23 @@
 """
-Agent 4 (New): Policy Analyzer — Deep contradiction detection.
+Agent 4 (v2): Policy Analyzer — Deep contradiction detection with
+heading-aware structural anchor retrieval.
 
-This agent is the core of PolicyCrab's 10/10 capability.
-It performs structured legal reasoning over the patient's actual
-insurance policy document, finding places where the insurer's
-denial reason contradicts the policy's own written language.
+UPGRADE (Production v2):
+  - TWO-LAYER RETRIEVAL: Semantic search (denial-specific) + structural anchor
+    (always fetch EXCLUSIONS, APPEALS, DEFINITIONS sections by keyword).
+  - BATCH EMBEDDING: All semantic queries are embedded in one API call instead
+    of 6 separate calls.
+  - STARTUP CACHE: Fixed DENIAL_QUERIES embeddings are pre-computed at startup
+    and never re-embedded at runtime.
 
 Pipeline:
   1. Build denial-targeted search queries from the ClaimCase.
-  2. Semantic search the patient's policy chunks in Supabase.
-  3. Run Gemini Pro to compare denial reason vs. policy language.
-  4. Output structured ContradictionAnalysis with exact page citations.
-  5. Determine an honest appeal strength (WIN / UNLIKELY / INCORRECT_DENIAL).
-
-This agent runs AFTER cost_calculation and BEFORE grievance.
-Its output is injected directly into the grievance prompt so the
-appeal letter can cite exact page numbers from the patient's policy.
+  2. Batch-embed queries (using cached embeddings where available).
+  3. Semantic search the patient's policy chunks in Supabase.
+  4. Structural anchor: ALWAYS fetch EXCLUSIONS, APPEALS, DEFINITIONS chunks
+     by keyword match (no embedding needed).
+  5. Merge, deduplicate, and present unified context to Gemini.
+  6. Output structured ContradictionAnalysis with exact page citations.
 """
 
 import json
@@ -23,8 +25,14 @@ import logging
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.agents.state import AgentState
-from app.services.llm_router import get_llm, TaskType, generate_embedding
-from app.services.supabase_client import search_policy_document as search_knowledge_base
+from app.services.llm_router import (
+    get_llm, TaskType,
+    generate_embedding, generate_embeddings_batch,
+)
+from app.services.supabase_client import (
+    search_policy_document as search_knowledge_base,
+    fetch_structural_anchor,
+)
 from app.models.claim import ClaimCase
 from app.models.policy import PolicyProfile
 from app.models.enums import DenialReason, NetworkStatus
@@ -32,9 +40,64 @@ from app.models.enums import DenialReason, NetworkStatus
 logger = logging.getLogger(__name__)
 
 
+# ── Startup Embedding Cache ───────────────────────────────────────
+# Pre-computed at startup to eliminate all embedding API calls for
+# fixed (non-dynamic) denial queries at runtime.
+_CACHED_QUERY_EMBEDDINGS: dict[str, list[float]] = {}
+_CACHE_WARMED = False
+
+
+async def warm_query_cache() -> None:
+    """
+    Pre-embed all fixed DENIAL_QUERIES at startup.
+
+    Called once from main.py lifespan. After this, runtime embedding calls
+    are only needed for dynamic claim-specific queries (CPT description,
+    ICD-10 description), which cannot be pre-computed.
+    """
+    global _CACHE_WARMED
+    if _CACHE_WARMED:
+        return
+
+    all_fixed_queries = []
+    for queries in DENIAL_QUERIES.values():
+        all_fixed_queries.extend(queries)
+    # Also cache the default queries
+    all_fixed_queries.extend(_DEFAULT_QUERIES)
+
+    # Deduplicate (some queries may appear in multiple denial categories)
+    unique_queries = list(dict.fromkeys(all_fixed_queries))
+
+    if not unique_queries:
+        _CACHE_WARMED = True
+        return
+
+    try:
+        embeddings = await generate_embeddings_batch(unique_queries)
+        for query, emb in zip(unique_queries, embeddings):
+            _CACHED_QUERY_EMBEDDINGS[query] = emb
+        _CACHE_WARMED = True
+        logger.info(
+            f"Policy Analyzer: Warmed query cache with {len(unique_queries)} embeddings "
+            f"({len(_CACHED_QUERY_EMBEDDINGS)} unique)"
+        )
+    except Exception as e:
+        logger.warning(f"Policy Analyzer: Failed to warm query cache (will embed at runtime): {e}")
+
+
+# ── Structural Anchor Sections (always fetched) ──────────────────
+# These sections are retrieved by keyword match on section_heading column,
+# NOT by semantic similarity. This guarantees we never miss an exclusion
+# clause or appeals deadline, regardless of how semantically distant they
+# are from the denial reason.
+STRUCTURAL_ANCHOR_SECTIONS = [
+    "EXCLUSIONS",    # Exclusions & limitations — must always check
+    "APPEALS",       # Appeal rights & grievance procedures
+    "DEFINITIONS",   # Key terms used in the policy
+]
+
+
 # ── Denial-to-Query mapping ───────────────────────────────────────
-# These targeted queries maximize the chance of finding the exact
-# policy clause that contradicts the insurer's denial.
 DENIAL_QUERIES: dict[str, list[str]] = {
     DenialReason.PRIOR_AUTH_MISSING.value: [
         "prior authorization requirements emergency services",
@@ -97,7 +160,7 @@ own insurance policy document.
 You will be provided:
 1. DENIAL INFORMATION: The specific reason the insurer gave for denying the claim.
 2. POLICY CLAUSES: Relevant excerpts retrieved from the patient's actual policy document,
-   each with an exact page number.
+   each with an exact page number and the section they belong to.
 
 YOUR TASK:
 Analyze whether the denial reason is consistent with or contradicted by the policy language.
@@ -111,6 +174,7 @@ Output a JSON object with this EXACT structure:
   "contradictions": [
     {
       "page_number": 47,
+      "section": "EXCLUSIONS or BENEFITS or etc.",
       "exact_clause_text": "The exact text from the policy that contradicts the denial",
       "denial_basis": "What the insurer claimed as the reason",
       "contradiction_explanation": "Precise legal explanation of how this clause contradicts the denial",
@@ -120,6 +184,7 @@ Output a JSON object with this EXACT structure:
   "supporting_clauses": [
     {
       "page_number": 12,
+      "section": "EXCLUSIONS or BENEFITS or etc.",
       "exact_clause_text": "Text that SUPPORTS the insurer's position",
       "how_it_supports_denial": "Explanation"
     }
@@ -136,6 +201,8 @@ CRITICAL RULES:
 - If no contradictions exist, set is_contradiction=false and appeal_recommendation="CLAIM_CORRECTLY_DENIED".
 - Be honest. If the patient is unlikely to win, say so. False appeals waste months of a patient's life.
 - Provide exact verbatim quotes from the policy text, not paraphrases.
+- Pay SPECIAL ATTENTION to the EXCLUSIONS section — if the procedure is explicitly excluded,
+  set appeal_recommendation="CLAIM_CORRECTLY_DENIED" regardless of other clauses.
 
 EDGE CASE GUIDANCE (STRICT):
 1. **Emergency vs Prior Auth**: If it's an emergency (e.g. appendicitis) and the policy says emergency surgery is covered, but denial is "No prior authorization", this is a WRONG DENIAL. Recommend STRONG_APPEAL.
@@ -150,9 +217,11 @@ async def policy_analyzer_node(state: AgentState) -> dict:
     Deep contradiction detection: compares the denial reason against the
     patient's own policy document clauses retrieved from Supabase.
 
-    Runs AFTER cost_calculation, BEFORE grievance.
+    Two-layer retrieval:
+      Layer 1: Semantic search with batched embeddings (denial-specific)
+      Layer 2: Structural anchor keyword fetch (EXCLUSIONS, APPEALS, DEFINITIONS)
     """
-    logger.info("Agent 4 (Policy Analyzer): Starting deep contradiction analysis")
+    logger.info("Agent 4 (Policy Analyzer): Starting two-layer contradiction analysis")
 
     errors = state.get("errors", [])
     session_id = state.get("session_id")
@@ -165,9 +234,6 @@ async def policy_analyzer_node(state: AgentState) -> dict:
         policy_indexed = state.get("policy_indexed", False)
 
     if (not session_id and not benchmark_excerpt) or (not benchmark_excerpt and not policy_indexed):
-        # No policy document was indexed — skip and let grievance use regulations only.
-        # When tests patch the LLM path explicitly, we still allow the mocked analysis
-        # to run so the agent can return the structured response they expect.
         if state.get("claim_case"):
             logger.info("Agent 4: Continuing with LLM-only analysis because a claim case is present.")
         else:
@@ -226,7 +292,12 @@ async def policy_analyzer_node(state: AgentState) -> dict:
 
         if isinstance(claim_data.get("denial_reason"), str):
             normalized_denial = claim_data["denial_reason"].upper().replace(" ", "_")
-            if normalized_denial in {"NOT_COVERED", "PRIOR_AUTH_MISSING", "MEDICAL_NECESSITY", "TIMELY_FILING", "DUPLICATE_CLAIM", "COB_FAILURE", "UNBUNDLING", "NSA_BALANCE_BILLING", "PRE_EXISTING_CONDITION", "REFERRAL_MISSING", "OUT_OF_NETWORK_DENIAL", "OTHER"}:
+            if normalized_denial in {
+                "NOT_COVERED", "PRIOR_AUTH_MISSING", "MEDICAL_NECESSITY",
+                "TIMELY_FILING", "DUPLICATE_CLAIM", "COB_FAILURE", "UNBUNDLING",
+                "NSA_BALANCE_BILLING", "PRE_EXISTING_CONDITION", "REFERRAL_MISSING",
+                "OUT_OF_NETWORK_DENIAL", "OTHER",
+            }:
                 claim_data["denial_reason"] = normalized_denial
             else:
                 claim_data["denial_reason"] = "OTHER"
@@ -234,7 +305,6 @@ async def policy_analyzer_node(state: AgentState) -> dict:
         try:
             claim = ClaimCase(**claim_data)
         except Exception:
-            # Fall back to the most permissive synthetic claim object to keep the agent moving.
             claim = ClaimCase(
                 cpt_code=claim_data.get("cpt_code", "00000"),
                 cpt_description=claim_data.get("cpt_description", ""),
@@ -269,58 +339,118 @@ async def policy_analyzer_node(state: AgentState) -> dict:
         denial_reason = claim.denial_reason or DenialReason.OTHER
 
         # ── Step 1: Build targeted queries ───────────────────────────
-        targeted_queries = DENIAL_QUERIES.get(denial_reason.value, _DEFAULT_QUERIES)
+        targeted_queries = list(DENIAL_QUERIES.get(denial_reason.value, _DEFAULT_QUERIES))
 
-        # Add claim-specific context queries
+        # Add claim-specific dynamic queries (these cannot be pre-cached)
+        dynamic_queries = []
         if claim.cpt_description:
-            targeted_queries.append(f"{claim.cpt_description} coverage requirements")
+            dynamic_queries.append(f"{claim.cpt_description} coverage requirements")
         if claim.icd_10_description:
-            targeted_queries.append(f"{claim.icd_10_description} covered diagnosis")
+            dynamic_queries.append(f"{claim.icd_10_description} covered diagnosis")
         if claim.is_emergency:
-            targeted_queries.append("emergency services coverage prior authorization waiver")
+            dynamic_queries.append("emergency services coverage prior authorization waiver")
 
-        logger.info(f"Agent 4: Searching policy document with {len(targeted_queries)} queries")
+        all_semantic_queries = targeted_queries + dynamic_queries
+
+        logger.info(
+            f"Agent 4: Searching policy with {len(targeted_queries)} fixed queries "
+            f"+ {len(dynamic_queries)} dynamic queries"
+        )
 
         if benchmark_excerpt:
-            policy_excerpts = f"[PAGE 1 (BENCHMARK INJECTION)]\n{benchmark_excerpt}"
-            all_results = [{"page_number": 1, "chunk_text": benchmark_excerpt}]
-            targeted_queries = ["benchmark"]
+            policy_excerpts = f"[PAGE 1 — BENCHMARK INJECTION]\n{benchmark_excerpt}"
+            all_results = [{"page_number": 1, "chunk_text": benchmark_excerpt, "section_heading": "BENCHMARK"}]
         else:
-            # ── Step 2: Retrieve relevant policy chunks ───────────────────
-            all_results: list[dict] = []
-            seen_pages: set[int] = set()
+            # ── Step 2: Batch-embed semantic queries ─────────────────────
+            # Use cached embeddings for fixed queries, only embed dynamic ones
+            embeddings_for_queries: list[tuple[str, list[float]]] = []
 
-            for query in targeted_queries[:6]:  # Limit to top 6 queries
-                embedding = await generate_embedding(query)
+            # Separate cached vs. uncached queries
+            uncached_queries = []
+            for q in all_semantic_queries[:8]:  # Limit to 8 queries max
+                cached_emb = _CACHED_QUERY_EMBEDDINGS.get(q)
+                if cached_emb:
+                    embeddings_for_queries.append((q, cached_emb))
+                else:
+                    uncached_queries.append(q)
+
+            # Batch-embed any uncached (dynamic) queries in a single API call
+            if uncached_queries:
+                try:
+                    batch_embeddings = await generate_embeddings_batch(uncached_queries)
+                    for q, emb in zip(uncached_queries, batch_embeddings):
+                        embeddings_for_queries.append((q, emb))
+                except Exception as e:
+                    logger.warning(f"Agent 4: Batch embedding failed, falling back to individual: {e}")
+                    for q in uncached_queries:
+                        try:
+                            emb = await generate_embedding(q)
+                            embeddings_for_queries.append((q, emb))
+                        except Exception as e2:
+                            logger.warning(f"Agent 4: Individual embedding failed for '{q}': {e2}")
+
+            # ── Step 3a: Semantic search with embeddings ────────────────
+            all_results: list[dict] = []
+            seen_chunks: set[tuple[int, int]] = set()
+
+            for query, embedding in embeddings_for_queries:
                 results = await search_knowledge_base(
                     session_id=session_id,
                     query_embedding=embedding,
                     match_count=4,
-                    similarity_threshold=0.25,  # Lower threshold for policy docs (specialized language)
+                    similarity_threshold=0.25,
                 )
                 for r in results:
-                    page_key = (r["page_number"], r["chunk_index"])
-                    if page_key not in seen_pages:
-                        seen_pages.add(page_key)
+                    chunk_key = (r["page_number"], r.get("chunk_index", 0))
+                    if chunk_key not in seen_chunks:
+                        seen_chunks.add(chunk_key)
                         all_results.append(r)
+
+            semantic_count = len(all_results)
+            logger.info(f"Agent 4: Semantic search returned {semantic_count} unique chunks")
+
+            # ── Step 3b: Structural anchor retrieval (keyword-based) ─────
+            # ALWAYS fetch these sections regardless of denial reason.
+            # Zero embedding calls — uses keyword match on section_heading column.
+            structural_results: list[dict] = []
+            for section in STRUCTURAL_ANCHOR_SECTIONS:
+                try:
+                    anchor_chunks = await fetch_structural_anchor(
+                        session_id=session_id,
+                        section_type=section,
+                        max_chunks=3,
+                    )
+                    for r in anchor_chunks:
+                        chunk_key = (r["page_number"], r.get("chunk_index", 0))
+                        if chunk_key not in seen_chunks:
+                            seen_chunks.add(chunk_key)
+                            structural_results.append(r)
+                except Exception as e:
+                    logger.warning(f"Agent 4: Structural anchor '{section}' fetch failed: {e}")
+
+            logger.info(
+                f"Agent 4: Structural anchors returned {len(structural_results)} new chunks "
+                f"({', '.join(STRUCTURAL_ANCHOR_SECTIONS)})"
+            )
+
+            # ── Step 4: Merge and format context ──────────────────────────
+            # Semantic results come first (most relevant), then structural anchors
+            all_results.extend(structural_results)
 
             if not all_results:
                 logger.warning(
                     "Agent 4: No relevant policy clauses found in vector store. "
-                    "This may indicate the policy was not indexed or similarity threshold is too high."
+                    "This may indicate the policy was not indexed."
                 )
-                if benchmark_excerpt:
-                    policy_excerpts = benchmark_excerpt
-                else:
-                    policy_excerpts = "No policy clauses were retrieved from the policy document."
+                policy_excerpts = "No policy clauses were retrieved from the policy document."
             else:
                 # Sort by page number for logical presentation
                 all_results.sort(key=lambda r: (r["page_number"], r.get("chunk_index", 0)))
 
-                # ── Step 3: Build context for the LLM ────────────────────────
+                # Format with section tags for the LLM
                 policy_excerpts = "\n\n".join([
-                    f"[PAGE {r['page_number']}]\n{r['chunk_text']}"
-                    for r in all_results[:12]  # Top 12 unique chunks
+                    f"[PAGE {r['page_number']}] [{r.get('section_heading', 'UNTAGGED')}]\n{r['chunk_text']}"
+                    for r in all_results[:18]  # Increased cap: 18 chunks (was 12)
                 ])
 
         denial_context = (
@@ -340,7 +470,7 @@ async def policy_analyzer_node(state: AgentState) -> dict:
                 f"- Legal Classification: {policy.legal_classification.value}\n"
             )
 
-        # ── Step 4: Run Gemini Pro for contradiction analysis ─────────
+        # ── Step 5: Run LLM for contradiction analysis ────────────────
         llm = get_llm(TaskType.REASONING, temperature=0.0)
 
         messages = [
@@ -367,16 +497,19 @@ async def policy_analyzer_node(state: AgentState) -> dict:
         analysis_data = json.loads(content.strip())
 
         # Add metadata
-        analysis_data["policy_clauses_searched"] = len(targeted_queries)
+        analysis_data["policy_clauses_searched"] = len(all_semantic_queries) if not benchmark_excerpt else 1
         analysis_data["clauses_retrieved"] = len(all_results)
         analysis_data["pages_analyzed"] = sorted({r["page_number"] for r in all_results})
+        analysis_data["structural_sections_fetched"] = STRUCTURAL_ANCHOR_SECTIONS
 
         logger.info(
             f"Agent 4: Analysis complete — "
             f"Contradiction: {analysis_data.get('is_contradiction')}, "
             f"Strength: {analysis_data.get('contradiction_strength')}, "
             f"Recommendation: {analysis_data.get('appeal_recommendation')}, "
-            f"Clauses found: {len(all_results)}"
+            f"Total clauses: {len(all_results)} "
+            f"(semantic={semantic_count if not benchmark_excerpt else 0}, "
+            f"structural={len(structural_results) if not benchmark_excerpt else 0})"
         )
 
         return {

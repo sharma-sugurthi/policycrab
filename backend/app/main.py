@@ -56,6 +56,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"   Knowledge Base connection failed: {e}")
 
+    # Pre-warm the Policy Analyzer's embedding cache for fixed denial queries.
+    # This pre-computes embeddings for all DENIAL_QUERIES at startup so they are
+    # never re-embedded at runtime (saves ~6 embedding API calls per denied claim).
+    try:
+        from app.agents.policy_analyzer import warm_query_cache
+        await warm_query_cache()
+        logger.info("   Query Embedding Cache: warmed ✅")
+    except Exception as e:
+        logger.warning(f"   Query Embedding Cache: failed to warm (will embed at runtime): {e}")
+
     yield
 
     logger.info(f"👋 Shutting down {settings.app_name}")

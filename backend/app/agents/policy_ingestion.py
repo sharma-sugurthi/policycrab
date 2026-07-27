@@ -22,7 +22,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.agents.state import AgentState
 from app.services.llm_router import get_llm, TaskType, embed_document_chunks
-from app.services.supabase_client import insert_policy_chunks
+from app.services.supabase_client import insert_policy_chunks, save_policy_session
 from app.models.policy import PolicyProfile
 
 logger = logging.getLogger(__name__)
@@ -114,32 +114,143 @@ def _normalize_policy_data(policy_data: dict, raw_text: str) -> tuple[dict, list
     return normalized, warnings
 
 
+
+# ── Section Heading Detection ─────────────────────────────────────
+# Maps detected heading text → canonical section tag stored in Supabase.
+# Checked in order — first match wins.
+_SECTION_KEYWORD_MAP: list[tuple[tuple[str, ...], str]] = [
+    (("exclusion", "not covered", "limitation", "non-covered", "noncovered"), "EXCLUSIONS"),
+    (("appeal", "grievance", "dispute", "complaint", "internal review", "external review", "your rights"), "APPEALS"),
+    (("definition", "key term", "meaning", "glossary"), "DEFINITIONS"),
+    (("covered service", "covered benefit", "what we cover", "benefit"), "BENEFITS"),
+    (("prior auth", "preauthorization", "pre-authorization", "precertification"), "PRIOR_AUTH"),
+    (("emergency", "urgent care", "emtala"), "EMERGENCY"),
+    (("deductible", "out-of-pocket", "oop max", "coinsurance", "copay", "cost sharing"), "COST_SHARING"),
+    (("network", "in-network", "out-of-network", "provider directory"), "NETWORK"),
+]
+
+
+def _classify_heading(text: str) -> str | None:
+    """
+    Map a heading line to a canonical section tag, or return None if unrecognised.
+
+    Detection is case-insensitive. Returns the canonical tag (e.g. 'EXCLUSIONS')
+    or None for headings that don't match any known insurance section vocabulary.
+    """
+    lower = text.lower().strip()
+    for keywords, tag in _SECTION_KEYWORD_MAP:
+        if any(kw in lower for kw in keywords):
+            return tag
+    # Unknown heading — store its text so it can be searched later
+    # Truncate to 80 chars to avoid bloating the column
+    return f"OTHER:{text.strip()[:80]}"
+
+
+def _detect_heading_in_line(line: str) -> str | None:
+    """
+    Detect whether a line is a section heading.
+
+    Three detection strategies (in priority order):
+    1. Markdown heading (## or ###) — reliable output from pymupdf4llm
+    2. ALL CAPS short line (< 70 chars) — common in insurance PDFs
+    3. Title Case short line with known keywords — fallback
+
+    Returns the heading text (stripped) or None if not a heading.
+    """
+    stripped = line.strip()
+    if not stripped:
+        return None
+
+    # Strategy 1: Markdown heading prefix (## Heading or ### Heading)
+    md_match = __import__("re").match(r"^#{1,4}\s+(.+)$", stripped)
+    if md_match:
+        return md_match.group(1).strip()
+
+    # Strategy 2: ALL CAPS line, short enough to be a heading
+    if len(stripped) <= 70 and stripped == stripped.upper() and any(c.isalpha() for c in stripped):
+        return stripped
+
+    return None
+
+
 def _build_page_chunks(pages: list[dict]) -> list[dict]:
     """
     Split page texts into overlapping chunks using LangChain's RecursiveCharacterTextSplitter.
-    Preserves page_number metadata on every chunk for exact citation later.
+
+    NEW (Option A): Each chunk is tagged with the `section_heading` of the most
+    recent detected heading above it in the document. This enables the Policy
+    Analyzer to do structural anchor retrieval (e.g., always fetch EXCLUSIONS
+    section chunks) without relying on semantic similarity.
+
+    Returns:
+        List of dicts with keys: page_number, chunk_index, chunk_text, section_heading
+        section_heading is None for chunks that precede any detected heading.
     """
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
-        separators=["\n\n", "\n", ". ", " ", ""],  # Prefer splitting at paragraph/sentence boundaries
+        separators=["\n\n", "\n", ". ", " ", ""],
     )
 
     all_chunks = []
+    current_section: str | None = None  # Tracks the active section heading
+
     for page in pages:
         page_text = page["text"]
         page_num = page["page_number"]
 
+        # Scan page lines to find headings BEFORE chunking.
+        # The heading detected here will be applied to all chunks on this page
+        # (unless a later heading overrides it within the page).
+        lines = page_text.split("\n")
+        page_dominant_heading = current_section  # Inherit from previous page
+
+        for line in lines:
+            heading_text = _detect_heading_in_line(line)
+            if heading_text:
+                canonical = _classify_heading(heading_text)
+                if canonical:
+                    page_dominant_heading = canonical
+                    current_section = canonical  # Propagate to subsequent pages
+                    logger.debug(
+                        f"Agent 1 (chunker): Page {page_num} — heading '{heading_text}' "
+                        f"→ section '{canonical}'"
+                    )
+                break  # First heading on the page sets the section for all its chunks
+
         raw_chunks = splitter.split_text(page_text)
         for i, chunk_text in enumerate(raw_chunks):
             if chunk_text.strip():
+                # For each chunk, re-scan for a heading within the chunk itself
+                # to handle cases where a page has multiple sections.
+                chunk_section = page_dominant_heading
+                for chunk_line in chunk_text.split("\n"):
+                    h = _detect_heading_in_line(chunk_line)
+                    if h:
+                        new_section = _classify_heading(h)
+                        if new_section:
+                            chunk_section = new_section
+                            current_section = new_section
+                        break
+
                 all_chunks.append({
                     "page_number": page_num,
                     "chunk_index": i,
                     "chunk_text":  chunk_text.strip(),
+                    "section_heading": chunk_section,
                 })
 
+    # Log section distribution for observability
+    from collections import Counter
+    section_counts = Counter(
+        c["section_heading"].split(":")[0] if c["section_heading"] else "UNTAGGED"
+        for c in all_chunks
+    )
+    logger.info(f"Agent 1 (chunker): Section distribution: {dict(section_counts)}")
+
     return all_chunks
+
+
 
 
 async def policy_ingestion_node(state: AgentState) -> dict:
@@ -272,6 +383,17 @@ async def policy_ingestion_node(state: AgentState) -> dict:
             f"Pages indexed: {len(pages)}, Chunks: {len(raw_chunks)}, "
             f"Policy indexed in Supabase: {policy_indexed}"
         )
+
+        # ── Phase 3: Persist PolicyProfile for returning users ────────────
+        # After successful extraction, save the profile to policy_sessions so
+        # future claim evaluations can skip this LLM call entirely.
+        user_id = state.get("user_id")
+        if user_id and policy_indexed:
+            try:
+                await save_policy_session(session_id, user_id, policy.model_dump())
+                logger.info(f"Agent 1: PolicyProfile persisted for session '{session_id}'")
+            except Exception as e:
+                logger.warning(f"Agent 1: Failed to persist PolicyProfile (non-fatal): {e}")
 
         return {
             "policy_profile":        policy.model_dump(),

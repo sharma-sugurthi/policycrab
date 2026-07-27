@@ -357,6 +357,42 @@ async def generate_embedding(text: str) -> list[float]:
     return await asyncio.to_thread(_sync_embed)
 
 
+async def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
+    """
+    Generate embeddings for multiple query strings in a SINGLE API call.
+
+    Instead of N separate generate_embedding() calls (N round-trips to Gemini),
+    this sends all texts in one batch request and returns N embeddings.
+
+    Used by:
+      - policy_analyzer.py: batch-embed all targeted_queries at once
+      - _warm_query_cache(): pre-embed all fixed DENIAL_QUERIES at startup
+
+    Args:
+        texts: List of query strings to embed.
+
+    Returns:
+        List of 768-dim embedding vectors, one per input text, in the same order.
+    """
+    if not texts:
+        return []
+
+    client = get_embedding_client()
+
+    def _sync_batch_embed():
+        result = client.models.embed_content(
+            model=settings.embedding_model,
+            contents=texts,
+            config={
+                "task_type": "RETRIEVAL_QUERY",
+                "output_dimensionality": settings.embedding_dimensions,
+            },
+        )
+        return [emb.values for emb in result.embeddings]
+
+    return await asyncio.to_thread(_sync_batch_embed)
+
+
 async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> list[dict]:
     """
     Embed a list of page-aware text chunks using Gemini Embedding.
