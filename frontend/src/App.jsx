@@ -6,6 +6,7 @@ import ChatAssistant from './pages/ChatAssistant'
 import PolicyUpload from './pages/PolicyUpload'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
+import BillAuditor from './pages/BillAuditor'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut } from './components/Icons'
 
@@ -291,6 +292,7 @@ function AppContent() {
     ['/dashboard', 'Dashboard'],
     ['/policy', 'Policy Upload'],
     ['/claim', 'Claim Evaluator'],
+    ['/audit', 'Bill Auditor'],
     ['/chat', 'AI Assistant'],
   ]
 
@@ -416,6 +418,11 @@ function AppContent() {
         <Route path="/claim" element={
           <ProtectedRoute>
             <ClaimEvaluator policyProfile={policyProfile} policySession={policySession} onResult={setCostBreakdown} />
+          </ProtectedRoute>
+        } />
+        <Route path="/audit" element={
+          <ProtectedRoute>
+            <BillAuditor />
           </ProtectedRoute>
         } />
         <Route path="/chat" element={
