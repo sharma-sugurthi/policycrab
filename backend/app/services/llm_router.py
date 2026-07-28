@@ -90,32 +90,32 @@ TASK_STEP_LOGS: dict[TaskType, list[str]] = {
 _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     TaskType.EXTRACTION: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary
-        {"provider": "siliconflow", "model": "Qwen/Qwen2.5-72B-Instruct"},               # Fallback 1 (Free Qwen 72B)
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 2
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 2
     ],
     TaskType.TOOL_CALLING: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "siliconflow", "model": "Qwen/Qwen2.5-72B-Instruct"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},
     ],
     TaskType.LEGAL_WRITING: [
         {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
-        {"provider": "moonshot", "model": "moonshot-v1-32k"},                            # Fallback 1 (Kimi 32k)
-        {"provider": "siliconflow", "model": "deepseek-ai/DeepSeek-V3"},                 # Fallback 2 (Free DeepSeek-V3)
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 1
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 2
     ],
     TaskType.REASONING: [
-        {"provider": "siliconflow", "model": "deepseek-ai/DeepSeek-R1"},                 # Primary (Free DeepSeek-R1)
-        {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Fallback 1
-        {"provider": "moonshot", "model": "moonshot-v1-32k"},                            # Fallback 2 (Kimi)
+        {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 1
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 2
     ],
     TaskType.EXPLANATION: [
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Primary (Fast)
-        {"provider": "moonshot", "model": "moonshot-v1-8k"},                             # Fallback 1 (Kimi)
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Primary
+        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Fallback 1
     ],
     TaskType.CHAT: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "siliconflow", "model": "deepseek-ai/DeepSeek-V3"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},
     ],
 }
 
