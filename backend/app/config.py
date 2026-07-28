@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     cerebras_api_key: str = ""
     openrouter_api_key: str = ""
+    together_api_key: str = ""
     grok_api_key: str = ""          # x.ai
 
     # ── Application ───────────────────────────────────────────────

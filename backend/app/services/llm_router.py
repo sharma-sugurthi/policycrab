@@ -89,31 +89,33 @@ TASK_STEP_LOGS: dict[TaskType, list[str]] = {
 
 _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     TaskType.EXTRACTION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},   # PRIMARY
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
-        {"provider": "cerebras", "model": "llama3.1-8b"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary
+        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},            # Fallback 1
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 2
     ],
     TaskType.TOOL_CALLING: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},   # PRIMARY
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
-        {"provider": "cerebras", "model": "llama3.1-8b"},
     ],
     TaskType.LEGAL_WRITING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},     # PRIMARY — best for long-form legal reasoning
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
+        {"provider": "openrouter", "model": "deepseek/deepseek-chat:free"},              # Fallback 1
+        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},            # Fallback 2
     ],
     TaskType.REASONING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},     # PRIMARY — deep multi-document legal reasoning
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "openrouter", "model": "deepseek/deepseek-chat:free"},              # Primary (DeepSeek excels here)
+        {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Fallback 1
+        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},            # Fallback 2
     ],
     TaskType.EXPLANATION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},   # PRIMARY
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Primary (Fast)
+        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Fallback 1
     ],
     TaskType.CHAT: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},   # PRIMARY
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "openrouter", "model": "deepseek/deepseek-chat:free"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
-        {"provider": "cerebras", "model": "llama3.1-8b"},
     ],
 }
 
@@ -143,6 +145,14 @@ def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChat
                 model=model,
                 api_key=settings.openrouter_api_key,
                 base_url="https://openrouter.ai/api/v1",
+                temperature=temperature,
+            )
+        elif provider == "together" and settings.together_api_key:
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model=model,
+                api_key=settings.together_api_key,
+                base_url="https://api.together.xyz/v1",
                 temperature=temperature,
             )
         elif provider == "cerebras" and settings.cerebras_api_key:
