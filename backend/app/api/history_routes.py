@@ -1,7 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.auth import get_current_user
-from app.services.user_data import list_user_claims, list_user_policies, delete_user_policy
+from app.services.user_data import (
+    list_user_claims,
+    list_user_policies,
+    delete_user_policy,
+    list_user_documents,
+    delete_user_document,
+    list_user_audits,
+    delete_user_audit,
+)
 
 router = APIRouter(prefix="/api/history", tags=["History"])
 
@@ -43,4 +51,34 @@ async def remove_user_policy(policy_id: str, user: dict = Depends(get_current_us
     if not deleted:
         raise HTTPException(status_code=404, detail="Policy not found or not owned by you.")
     return {"success": True, "deleted_id": policy_id}
+
+
+@router.get("/documents")
+async def get_user_documents(user: dict = Depends(get_current_user)):
+    """Get all saved documents for the current user."""
+    return list_user_documents(user["id"])
+
+
+@router.delete("/documents/{document_id}")
+async def remove_user_document(document_id: str, user: dict = Depends(get_current_user)):
+    """Delete a saved document by ID (scoped to current user)."""
+    deleted = delete_user_document(user["id"], document_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Document not found or not owned by you.")
+    return {"success": True, "deleted_id": document_id}
+
+
+@router.get("/audits")
+async def get_user_audits(user: dict = Depends(get_current_user)):
+    """Get all saved bill audits for the current user."""
+    return list_user_audits(user["id"])
+
+
+@router.delete("/audits/{audit_id}")
+async def remove_user_audit(audit_id: str, user: dict = Depends(get_current_user)):
+    """Delete a saved bill audit by ID (scoped to current user)."""
+    deleted = delete_user_audit(user["id"], audit_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Audit report not found or not owned by you.")
+    return {"success": True, "deleted_id": audit_id}
 

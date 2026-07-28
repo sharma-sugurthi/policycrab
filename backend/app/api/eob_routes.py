@@ -28,6 +28,7 @@ from app.security.rate_limit import rate_limit_user
 from app.services.pdf_extractor import extract_eob_safely, extract_text_from_pdf
 from app.agents.eob_extractor import extract_eob_fields
 from app.services.llm_router import get_llm, TaskType
+from app.services.user_data import create_user_document
 
 logger = logging.getLogger(__name__)
 
@@ -226,10 +227,38 @@ async def parse_eob(
                 ),
             )
 
+    # ── Save structured fields to Supabase Document Vault ─────────
+    document_id = None
+    if user and user.get("id") and result:
+        try:
+            billed_val = None
+            if result.get("billed_amount") is not None:
+                try:
+                    billed_val = float(result["billed_amount"])
+                except (ValueError, TypeError):
+                    pass
+            saved_doc = create_user_document(
+                user_id=user["id"],
+                filename=filename,
+                document_type=result.get("document_type") or "unknown",
+                extraction_method=extraction_method,
+                extracted_json=result,
+                is_denied=result.get("is_denied", False),
+                billed_amount=billed_val,
+            )
+            if saved_doc:
+                document_id = saved_doc.get("id")
+                logger.info(f"Saved document '{filename}' to Supabase with ID {document_id}")
+        except ValueError as limit_err:
+            raise HTTPException(status_code=400, detail=str(limit_err))
+        except Exception as db_err:
+            logger.error(f"Failed to save extracted document to Supabase: {db_err}", exc_info=True)
+
     # ── Build the response ────────────────────────────────────────
     # Annotate with extraction metadata for the AI Transparency UI
     return {
         "success": True,
+        "document_id": document_id,
         "extracted": result,
         "extraction_method": extraction_method,
         "filename": filename,

@@ -67,16 +67,62 @@ import '../legacy.css'
 
 // ── Document Vault Component ────────────────────────────────
 function DocumentVault({ policyProfile, onGoToClaim }) {
+  const { session } = useAuth()
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [progressText, setProgressText] = useState('Uploading document...')
   const [result, setResult] = useState(null)        // last extraction result
   const [error, setError] = useState(null)
-  const [history, setHistory] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem(SS_VAULT_KEY) || '[]') } catch { return [] }
-  })
+  const [savedDocuments, setSavedDocuments] = useState([])
+  const [loadingDocs, setLoadingDocs] = useState(false)
   const inputRef = useRef(null)
+
+  const fetchDocuments = useCallback(async () => {
+    if (!session) return
+    setLoadingDocs(true)
+    try {
+      const res = await apiFetch('/history/documents')
+      if (res.ok) {
+        const data = await readApiResponse(res)
+        setSavedDocuments(Array.isArray(data) ? data : [])
+      }
+    } catch (e) {
+      console.error('Failed to fetch user documents:', e)
+    } finally {
+      setLoadingDocs(false)
+    }
+  }, [session])
+
+  useEffect(() => {
+    fetchDocuments()
+  }, [fetchDocuments])
+
+  const deleteDocument = async (id, e) => {
+    e.stopPropagation()
+    try {
+      const res = await apiFetch(`/history/documents/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSavedDocuments(prev => prev.filter(d => d.id !== id))
+        if (result?.document_id === id || result?.id === id) {
+          setResult(null)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete document:', err)
+    }
+  }
+
+  const selectSavedDoc = (doc) => {
+    setResult({
+      id: doc.id,
+      document_id: doc.id,
+      filename: doc.filename,
+      extraction_method: doc.extraction_method || 'cloud_synced',
+      extracted: doc.extracted_json,
+      uploadedAt: doc.created_at
+    })
+  }
 
   useEffect(() => {
     let interval;
@@ -106,14 +152,6 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
     return () => clearInterval(interval)
   }, [uploading, uploadProgress])
 
-  const saveToHistory = useCallback((entry) => {
-    setHistory(prev => {
-      const next = [entry, ...prev].slice(0, 10) // keep last 10
-      try { sessionStorage.setItem(SS_VAULT_KEY, JSON.stringify(next)) } catch {}
-      return next
-    })
-  }, [])
-
   const processFile = useCallback(async (file) => {
     if (!file) return
     const MAX = 10 * 1024 * 1024
@@ -137,23 +175,15 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
       const res = await apiFetch('/eob/parse', { method: 'POST', body: form })
       const data = await readApiResponse(res)
       if (!res.ok) throw new Error(formatApiError(data, 'Extraction failed'))
-      setResult({ ...data, filename: file.name, uploadedAt: new Date().toISOString() })
-      saveToHistory({
-        filename: file.name,
-        uploadedAt: new Date().toISOString(),
-        document_type: data.extracted?.document_type || 'unknown',
-        is_denied: data.extracted?.is_denied,
-        billed_amount: data.extracted?.billed_amount,
-        cpt_code: data.extracted?.cpt_code,
-        extraction_method: data.extraction_method,
-      })
+      setResult({ ...data, id: data.document_id, filename: file.name, uploadedAt: new Date().toISOString() })
+      fetchDocuments()
     } catch (e) {
       setError(e.message || 'Something went wrong.')
     } finally {
       setUploadProgress(100)
       setTimeout(() => setUploading(false), 500)
     }
-  }, [saveToHistory])
+  }, [fetchDocuments])
 
   const onDrop = useCallback((e) => {
     e.preventDefault(); setDragging(false)
@@ -362,46 +392,59 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
         </motion.div>
       )}
 
-      {/* ── Upload History ── */}
-      {history.length > 0 && (
+      {/* ── Cloud Synced Document Vault History ── */}
+      {(savedDocuments.length > 0 || loadingDocs) && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#3f3f46' }}>Recent Documents</h3>
-            <button
-              className="btn btn-ghost"
-              style={{ fontSize: '0.7rem', padding: '0.25rem 0.625rem' }}
-              onClick={() => {
-                setHistory([])
-                try { sessionStorage.removeItem(SS_VAULT_KEY) } catch {}
-              }}
-            >
-              Clear history
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#3f3f46' }}>Cloud Vault Documents</h3>
+              <span style={{
+                padding: '2px 8px', borderRadius: '9999px', background: '#ecfdf5', color: '#059669',
+                border: '1px solid #a7f3d0', fontSize: '0.65rem', fontWeight: 700
+              }}>
+                ☁ Cloud Synced
+              </span>
+            </div>
+            {loadingDocs && <span style={{ fontSize: '0.75rem', color: '#71717a' }}>Refreshing...</span>}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {history.map((h, i) => (
-              <div key={i} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '0.625rem 0.875rem', borderRadius: '0.75rem',
-                background: '#fafafa', border: '1px solid #f4f4f5', gap: '0.75rem', flexWrap: 'wrap',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                  <span style={{ fontSize: '1rem' }}>
+            {savedDocuments.map((h) => (
+              <div
+                key={h.id}
+                onClick={() => selectSavedDoc(h)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '0.75rem 1rem', borderRadius: '0.75rem',
+                  background: result?.id === h.id ? '#fef2f2' : '#fafafa',
+                  border: result?.id === h.id ? '1px solid #fecaca' : '1px solid #f4f4f5',
+                  gap: '0.75rem', flexWrap: 'wrap', cursor: 'pointer', transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+                  <span style={{ fontSize: '1.25rem' }}>
                     {h.document_type === 'eob' ? '📋' : h.document_type === 'bill' ? '🧾' : h.document_type === 'policy' ? '📑' : '📄'}
                   </span>
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#09090b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>{h.filename}</p>
-                    <p style={{ fontSize: '0.7rem', color: '#a1a1aa' }}>{new Date(h.uploadedAt).toLocaleString()}</p>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#09090b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px' }}>{h.filename}</p>
+                    <p style={{ fontSize: '0.7rem', color: '#a1a1aa' }}>{new Date(h.created_at).toLocaleDateString()} · Click to view</p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                   {h.document_type && <DocTypeBadge type={h.document_type} />}
-                  {h.is_denied && <span className="badge badge-danger" style={{ fontSize: '0.6rem' }}>Denied</span>}
+                  {h.is_denied && <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Denied</span>}
                   {h.billed_amount && (
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#3f3f46' }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#3f3f46', marginRight: '0.25rem' }}>
                       ${Number(h.billed_amount).toLocaleString()}
                     </span>
                   )}
+                  <button
+                    className="btn btn-ghost"
+                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#ef4444' }}
+                    onClick={(e) => deleteDocument(h.id, e)}
+                    title="Delete document from cloud vault"
+                  >
+                    🗑
+                  </button>
                 </div>
               </div>
             ))}
@@ -409,9 +452,9 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
         </div>
       )}
 
-      {history.length === 0 && !result && (
+      {savedDocuments.length === 0 && !loadingDocs && !result && (
         <p style={{ fontSize: '0.8125rem', color: '#a1a1aa', textAlign: 'center' }}>
-          No documents uploaded yet. Upload an EOB or medical bill above.
+          No documents in your cloud vault yet. Upload an EOB or medical bill above.
         </p>
       )}
     </div>
@@ -663,19 +706,96 @@ function PolicyCompareTable({ profiles, onClose }) {
 // ── Bill Auditor Component ──────────────────────────────────
 function BillAuditor() {
   const navigate = useNavigate()
-  
+  const { session } = useAuth()
+  const [savedAudits, setSavedAudits] = useState([])
+
+  useEffect(() => {
+    async function fetchAudits() {
+      if (!session) return
+      try {
+        const res = await apiFetch('/history/audits')
+        if (res.ok) {
+          const data = await readApiResponse(res)
+          setSavedAudits(Array.isArray(data) ? data : [])
+        }
+      } catch (e) {
+        console.error('Failed to fetch audits:', e)
+      }
+    }
+    fetchAudits()
+  }, [session])
+
+  const deleteAudit = async (id) => {
+    try {
+      const res = await apiFetch(`/history/audits/${id}`, { method: 'DELETE' })
+      if (res.ok) setSavedAudits(prev => prev.filter(a => a.id !== id))
+    } catch (e) {
+      console.error('Failed to delete audit:', e)
+    }
+  }
+
   return (
-    <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#fafafa', borderRadius: '1.25rem', border: '1px solid #e4e4e7' }}>
-      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '2rem' }}>
-        🧾
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#fafafa', borderRadius: '1.25rem', border: '1px solid #e4e4e7' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '2rem' }}>
+          🧾
+        </div>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', marginBottom: '0.75rem' }}>Bill Auditor has moved!</h3>
+        <p style={{ fontSize: '0.9375rem', color: '#71717a', maxWidth: '400px', margin: '0 auto 2rem' }}>
+          We've upgraded the Bill Auditor into a full-page experience. It now supports multi-line bill uploads, comprehensive error scanning, and automatic dispute letter generation.
+        </p>
+        <button className="btn btn-red" onClick={() => navigate('/audit')}>
+          Go to the new Bill Auditor →
+        </button>
       </div>
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', marginBottom: '0.75rem' }}>Bill Auditor has moved!</h3>
-      <p style={{ fontSize: '0.9375rem', color: '#71717a', maxWidth: '400px', margin: '0 auto 2rem' }}>
-        We've upgraded the Bill Auditor into a full-page experience. It now supports multi-line bill uploads, comprehensive error scanning, and automatic dispute letter generation.
-      </p>
-      <button className="btn btn-red" onClick={() => navigate('/audit')}>
-        Go to the new Bill Auditor →
-      </button>
+
+      {savedAudits.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>Past Audit Reports</h3>
+            <span style={{
+              padding: '2px 8px', borderRadius: '9999px', background: '#ecfdf5', color: '#059669',
+              border: '1px solid #a7f3d0', fontSize: '0.65rem', fontWeight: 700
+            }}>
+              ☁ Cloud Synced
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {savedAudits.map(a => (
+              <div key={a.id} className="card dashboard-history-card" style={{ padding: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div>
+                    <span className={`badge ${a.overall_risk === 'high' ? 'badge-danger' : a.overall_risk === 'medium' ? 'badge-warning' : 'badge-success'}`} style={{ marginRight: '0.5rem', textTransform: 'uppercase' }}>
+                      {a.overall_risk} Risk
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 600 }}>
+                      {a.source === 'upload' ? '📁 Uploaded Bill' : '✍ Manual Audit'} · {new Date(a.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', color: '#ef4444' }} onClick={() => deleteAudit(a.id)} title="Delete audit record">🗑</button>
+                </div>
+                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                  <div>
+                    <span style={{ color: '#71717a', fontSize: '0.75rem' }}>Total Billed: </span>
+                    <strong style={{ color: '#09090b' }}>${Number(a.total_billed || 0).toLocaleString()}</strong>
+                  </div>
+                  {a.potential_savings > 0 && (
+                    <div>
+                      <span style={{ color: '#059669', fontSize: '0.75rem' }}>Potential Savings: </span>
+                      <strong style={{ color: '#059669' }}>${Number(a.potential_savings).toLocaleString()}</strong>
+                    </div>
+                  )}
+                </div>
+                <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button className="btn btn-ghost" style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} onClick={() => navigate('/audit', { state: { loadAudit: a } })}>
+                    Open Report →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

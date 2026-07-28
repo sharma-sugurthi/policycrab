@@ -12,6 +12,7 @@ from app.agents.bill_auditor import run_bill_audit, generate_dispute_letter
 from app.models.bill_audit_models import ServiceLineInput, BillAuditResult
 from app.services.pdf_extractor import extract_eob_safely
 from app.api.eob_routes import _resolve_mime_type, _is_pdf, _is_image, MAX_FILE_SIZE
+from app.services.user_data import create_user_audit, update_user_audit_letter
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class AuditScanRequest(BaseModel):
 
 class DisputeLetterRequest(BaseModel):
     audit_result: BillAuditResult
+    audit_id: str | None = None
 
 
 @router.post("/scan")
@@ -45,7 +47,29 @@ async def scan_bill(
     
     try:
         result = await run_bill_audit(request.service_lines, request.policy_context or "")
-        return {"success": True, "audit_result": result.model_dump()}
+        res_dict = result.model_dump()
+        audit_id = None
+        if user and user.get("id"):
+            try:
+                saved = create_user_audit(
+                    user_id=user["id"],
+                    service_lines_json=[sl.model_dump() for sl in request.service_lines],
+                    audit_result_json=res_dict,
+                    overall_risk=result.overall_risk,
+                    total_billed=result.total_billed,
+                    potential_savings=result.potential_savings,
+                    source="manual",
+                )
+                if saved:
+                    audit_id = saved.get("id")
+            except ValueError as limit_err:
+                raise HTTPException(status_code=400, detail=str(limit_err))
+            except Exception as db_err:
+                logger.error(f"Failed to save manual audit to Supabase: {db_err}", exc_info=True)
+
+        return {"success": True, "audit_id": audit_id, "audit_result": res_dict}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Audit scan endpoint error: {e}")
         raise HTTPException(status_code=500, detail="Failed to run bill audit.")
@@ -136,13 +160,37 @@ async def upload_and_scan_bill(
 
         # 3. Run Audit
         audit_result = await run_bill_audit(service_lines)
+        res_dict = audit_result.model_dump()
+        extracted_lines = [sl.model_dump() for sl in service_lines]
+
+        audit_id = None
+        if user and user.get("id"):
+            try:
+                saved = create_user_audit(
+                    user_id=user["id"],
+                    service_lines_json=extracted_lines,
+                    audit_result_json=res_dict,
+                    overall_risk=audit_result.overall_risk,
+                    total_billed=audit_result.total_billed,
+                    potential_savings=audit_result.potential_savings,
+                    source="upload",
+                )
+                if saved:
+                    audit_id = saved.get("id")
+            except ValueError as limit_err:
+                raise HTTPException(status_code=400, detail=str(limit_err))
+            except Exception as db_err:
+                logger.error(f"Failed to save upload audit to Supabase: {db_err}", exc_info=True)
         
         return {
-            "success": True, 
-            "audit_result": audit_result.model_dump(),
-            "extracted_lines": [sl.model_dump() for sl in service_lines]
+            "success": True,
+            "audit_id": audit_id,
+            "audit_result": res_dict,
+            "extracted_lines": extracted_lines
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Audit upload endpoint error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to process bill: {str(e)}")
@@ -161,6 +209,11 @@ async def generate_letter(
     
     try:
         letter_text = await generate_dispute_letter(request.audit_result)
+        if request.audit_id and user and user.get("id"):
+            try:
+                update_user_audit_letter(user_id=user["id"], audit_id=request.audit_id, letter_text=letter_text)
+            except Exception as db_err:
+                logger.warning(f"Failed to update dispute letter in Supabase: {db_err}")
         return {"success": True, "letter_text": letter_text}
     except Exception as e:
         logger.error(f"Dispute letter endpoint error: {e}")

@@ -66,7 +66,7 @@ async def step_1_provision():
     conn = await asyncpg.connect(dsn, statement_cache_size=0)
     try:
         tables = ["knowledge_chunks", "policy_chunks", "user_policies",
-                  "user_claims", "user_chats"]
+                  "user_claims", "user_chats", "user_documents", "user_audits"]
         report = {}
         for t in tables:
             try:

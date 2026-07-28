@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { jsPDF } from 'jspdf'
+import { useLocation } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { 
   IconReceipt, IconUpload, IconPlus, IconX, IconCheckCircle, 
@@ -10,6 +12,9 @@ import {
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function BillAuditor() {
+  const location = useLocation()
+  const { session } = useAuth()
+
   // Input State
   const [lines, setLines] = useState([
     { line_number: 1, cpt_code: '', icd_10_code: '', billed_amount: '', date_of_service: '' }
@@ -22,8 +27,64 @@ export default function BillAuditor() {
   
   // Results State
   const [result, setResult] = useState(null)
+  const [auditId, setAuditId] = useState(null)
   const [letterLoading, setLetterLoading] = useState(false)
   const [letterStatus, setLetterStatus] = useState('')
+  const [savedAudits, setSavedAudits] = useState([])
+
+  const fetchAudits = useCallback(async () => {
+    if (!session) return
+    try {
+      const res = await apiFetch('/history/audits')
+      if (res.ok) {
+        const data = await readApiResponse(res)
+        setSavedAudits(Array.isArray(data) ? data : [])
+      }
+    } catch (e) {
+      console.error('Failed to fetch audits:', e)
+    }
+  }, [session])
+
+  useEffect(() => {
+    fetchAudits()
+  }, [fetchAudits])
+
+  useEffect(() => {
+    if (location.state?.loadAudit) {
+      const a = location.state.loadAudit
+      setAuditId(a.id)
+      setResult(a.audit_result_json)
+      if (Array.isArray(a.service_lines_json) && a.service_lines_json.length > 0) {
+        setLines(a.service_lines_json.map((l, idx) => ({ ...l, line_number: idx + 1, billed_amount: l.billed_amount?.toString() || '' })))
+      }
+      window.scrollTo({ top: 400, behavior: 'smooth' })
+    }
+  }, [location.state])
+
+  const deleteAudit = async (id, e) => {
+    if (e) e.stopPropagation()
+    try {
+      const res = await apiFetch(`/history/audits/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSavedAudits(prev => prev.filter(a => a.id !== id))
+        if (auditId === id) {
+          setResult(null)
+          setAuditId(null)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete audit:', err)
+    }
+  }
+
+  const loadSavedReport = (a) => {
+    setAuditId(a.id)
+    setResult(a.audit_result_json)
+    if (Array.isArray(a.service_lines_json) && a.service_lines_json.length > 0) {
+      setLines(a.service_lines_json.map((l, idx) => ({ ...l, line_number: idx + 1, billed_amount: l.billed_amount?.toString() || '' })))
+    }
+    window.scrollTo({ top: 300, behavior: 'smooth' })
+  }
 
   // ── Input Handlers ──────────────────────────────────────────────────
   const addLine = () => {
@@ -91,10 +152,13 @@ export default function BillAuditor() {
       const data = await readApiResponse(res)
       if (data.success && data.audit_result) {
         setResult(data.audit_result)
+        setAuditId(data.audit_id || null)
+        fetchAudits()
         if (data.extracted_lines) {
           // If upload mode, populate the lines table so user sees what was extracted
-          setLines(data.extracted_lines.map(l => ({
+          setLines(data.extracted_lines.map((l, idx) => ({
             ...l,
+            line_number: idx + 1,
             billed_amount: l.billed_amount?.toString() || ''
           })))
         }
@@ -117,7 +181,7 @@ export default function BillAuditor() {
     try {
       const res = await apiFetch('/audit/dispute-letter', {
         method: 'POST',
-        body: JSON.stringify({ audit_result: result })
+        body: JSON.stringify({ audit_result: result, audit_id: auditId })
       })
       const data = await readApiResponse(res)
       if (data.success && data.letter_text) {
@@ -349,6 +413,74 @@ export default function BillAuditor() {
             </AnimatePresence>
           </motion.div>
         </div>
+
+        {/* ── Saved Cloud Audits ── */}
+        {savedAudits.length > 0 && (
+          <div style={{ marginTop: '3.5rem', borderTop: '1px solid var(--border-secondary)', paddingTop: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>Saved Cloud Audits</h3>
+              <span style={{
+                padding: '2px 8px', borderRadius: '9999px', background: '#ecfdf5', color: '#059669',
+                border: '1px solid #a7f3d0', fontSize: '0.7rem', fontWeight: 700
+              }}>
+                ☁ Cloud Synced
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.25rem' }}>
+              {savedAudits.map((a) => (
+                <div
+                  key={a.id}
+                  onClick={() => loadSavedReport(a)}
+                  style={{
+                    background: auditId === a.id ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                    border: auditId === a.id ? '1.5px solid var(--danger)' : '1px solid var(--border-secondary)',
+                    borderRadius: '1.25rem', padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s ease',
+                    boxShadow: auditId === a.id ? '0 0 0 3px var(--danger-bg)' : 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className={`badge ${a.overall_risk === 'high' ? 'badge-danger' : a.overall_risk === 'medium' ? 'badge-warning' : 'badge-success'}`} style={{ textTransform: 'uppercase', fontSize: '0.65rem' }}>
+                        {a.overall_risk} Risk
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                        {a.source === 'upload' ? '📁 Uploaded Bill' : '✍ Manual Scan'}
+                      </span>
+                    </div>
+                    <button
+                      className="btn btn-ghost"
+                      style={{ padding: '0.25rem 0.5rem', color: 'var(--danger)', fontSize: '0.8rem' }}
+                      onClick={(e) => deleteAudit(a.id, e)}
+                      title="Delete saved audit"
+                    >
+                      🗑
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', background: 'var(--bg-secondary)', padding: '0.75rem 1rem', borderRadius: '0.75rem' }}>
+                    <div>
+                      <p style={{ fontSize: '0.7rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Billed Amount</p>
+                      <p style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)' }}>${Number(a.total_billed || 0).toLocaleString()}</p>
+                    </div>
+                    {a.potential_savings > 0 && (
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 600, color: '#059669', textTransform: 'uppercase' }}>Est. Savings</p>
+                        <p style={{ fontSize: '1.125rem', fontWeight: 800, color: '#059669' }}>-${Number(a.potential_savings).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                    <span>{new Date(a.created_at).toLocaleDateString()}</span>
+                    <span style={{ fontWeight: 700, color: auditId === a.id ? 'var(--danger)' : 'var(--text-primary)' }}>
+                      {auditId === a.id ? '✓ Currently Viewing' : 'Click to Load →'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

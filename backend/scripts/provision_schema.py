@@ -34,6 +34,14 @@ async def columns_for(conn, table: str) -> list[str]:
 
 async def main() -> None:
     url = os.environ.get("DATABASE_URL")
+    if not url:
+        try:
+            import sys
+            sys.path.insert(0, str(REPO / "backend"))
+            from app.config import settings
+            url = settings.database_url
+        except Exception:
+            pass
     assert url, "DATABASE_URL is required"
 
     # asyncpg uses the standard scheme postgresql://; strip asyncpg prefix
@@ -41,7 +49,7 @@ async def main() -> None:
 
     conn = await asyncpg.connect(dsn=dsn, statement_cache_size=0)
 
-    tables = ["knowledge_chunks", "policy_chunks", "user_policies", "user_claims", "user_chats"]
+    tables = ["knowledge_chunks", "policy_chunks", "user_policies", "user_claims", "user_chats", "user_documents", "user_audits"]
     print("== State before ==")
     for t in tables:
         try:
@@ -65,7 +73,7 @@ async def main() -> None:
     # the migrations were corrected. This migration is idempotent — it is a no-op
     # when the column is already typed as uuid.
     print("\n== Ensuring user_id column types ==")
-    for tbl in ["user_policies", "user_claims", "user_chats"]:
+    for tbl in ["user_policies", "user_claims", "user_chats", "user_documents", "user_audits"]:
         try:
             row = await conn.fetchrow(
                 """
@@ -104,6 +112,13 @@ async def main() -> None:
         ("user_chats",    "select", "USING",       "auth.uid() = user_id"),
         ("user_chats",    "insert", "WITH CHECK",  "auth.uid() = user_id"),
         ("user_chats",    "update", "USING",       "auth.uid() = user_id"),
+        ("user_documents", "select", "USING",      "auth.uid() = user_id"),
+        ("user_documents", "insert", "WITH CHECK", "auth.uid() = user_id"),
+        ("user_documents", "delete", "USING",      "auth.uid() = user_id"),
+        ("user_audits",   "select", "USING",       "auth.uid() = user_id"),
+        ("user_audits",   "insert", "WITH CHECK",  "auth.uid() = user_id"),
+        ("user_audits",   "update", "USING",       "auth.uid() = user_id"),
+        ("user_audits",   "delete", "USING",       "auth.uid() = user_id"),
     ]
     for tbl, op, clause, expr in rls_defs:
         pol = f'Users can {op} their {tbl.replace("user_", "")}'
@@ -117,7 +132,7 @@ async def main() -> None:
             print(f"  RLS {tbl} {op}: {e}")
 
     # ── Service-role grants (belt-and-suspenders) ─────────────────────────────
-    for tbl in ["user_policies", "user_claims", "user_chats"]:
+    for tbl in ["user_policies", "user_claims", "user_chats", "user_documents", "user_audits"]:
         try:
             await conn.execute(f"GRANT ALL ON TABLE public.{tbl} TO service_role;")
         except Exception as e:

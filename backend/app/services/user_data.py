@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 MAX_POLICIES_PER_USER = 5
+MAX_DOCUMENTS_PER_USER = 50
+MAX_AUDITS_PER_USER = 50
 
 
 def create_user_policy(
@@ -166,3 +168,168 @@ def upsert_user_chat(
 def clear_user_chat(user_id: str) -> None:
     client = get_supabase_client()
     client.table("user_chats").delete().eq("user_id", user_id).execute()
+
+
+# ── Document Vault Persistence ────────────────────────────────────────
+
+def count_user_documents(user_id: str) -> int:
+    client = get_supabase_client()
+    result = (
+        client.table("user_documents")
+        .select("id", count="exact")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return result.count or 0
+
+
+def create_user_document(
+    user_id: str,
+    filename: str,
+    document_type: str,
+    extraction_method: str | None,
+    extracted_json: dict,
+    is_denied: bool | None = False,
+    billed_amount: float | None = None,
+) -> dict | None:
+    client = get_supabase_client()
+
+    if count_user_documents(user_id) >= MAX_DOCUMENTS_PER_USER:
+        logger.warning(f"User {user_id} reached document limit ({MAX_DOCUMENTS_PER_USER}).")
+        raise ValueError(
+            f"You have reached the maximum of {MAX_DOCUMENTS_PER_USER} saved documents. "
+            f"Please delete older documents before uploading a new one."
+        )
+
+    payload = {
+        "id": str(uuid4()),
+        "user_id": user_id,
+        "filename": filename,
+        "document_type": document_type or "unknown",
+        "extraction_method": extraction_method,
+        "extracted_json": extracted_json,
+        "is_denied": bool(is_denied),
+        "billed_amount": billed_amount,
+    }
+    result = client.table("user_documents").insert(payload).execute()
+    return result.data[0] if result.data else None
+
+
+def list_user_documents(user_id: str) -> list[dict]:
+    client = get_supabase_client()
+    result = (
+        client.table("user_documents")
+        .select("id, filename, document_type, extraction_method, extracted_json, is_denied, billed_amount, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data or []
+
+
+def delete_user_document(user_id: str, document_id: str) -> bool:
+    client = get_supabase_client()
+    result = (
+        client.table("user_documents")
+        .delete()
+        .eq("id", document_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    deleted = bool(result.data)
+    if deleted:
+        logger.info(f"Deleted document {document_id} for user {user_id}")
+    else:
+        logger.warning(f"Document {document_id} not found or not owned by user {user_id}")
+    return deleted
+
+
+# ── Bill Auditor Persistence ──────────────────────────────────────────
+
+def count_user_audits(user_id: str) -> int:
+    client = get_supabase_client()
+    result = (
+        client.table("user_audits")
+        .select("id", count="exact")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return result.count or 0
+
+
+def create_user_audit(
+    user_id: str,
+    service_lines_json: list[dict],
+    audit_result_json: dict,
+    overall_risk: str = "low",
+    total_billed: float = 0.0,
+    potential_savings: float | None = None,
+    source: str = "manual",
+) -> dict | None:
+    client = get_supabase_client()
+
+    if count_user_audits(user_id) >= MAX_AUDITS_PER_USER:
+        logger.warning(f"User {user_id} reached audit reports limit ({MAX_AUDITS_PER_USER}).")
+        raise ValueError(
+            f"You have reached the maximum of {MAX_AUDITS_PER_USER} saved audit reports. "
+            f"Please delete older reports before running a new audit."
+        )
+
+    payload = {
+        "id": str(uuid4()),
+        "user_id": user_id,
+        "service_lines_json": service_lines_json,
+        "audit_result_json": audit_result_json,
+        "overall_risk": overall_risk or "low",
+        "total_billed": total_billed or 0.0,
+        "potential_savings": potential_savings,
+        "source": source or "manual",
+    }
+    result = client.table("user_audits").insert(payload).execute()
+    return result.data[0] if result.data else None
+
+
+def list_user_audits(user_id: str) -> list[dict]:
+    client = get_supabase_client()
+    result = (
+        client.table("user_audits")
+        .select("id, service_lines_json, audit_result_json, dispute_letter, overall_risk, total_billed, potential_savings, source, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return result.data or []
+
+
+def delete_user_audit(user_id: str, audit_id: str) -> bool:
+    client = get_supabase_client()
+    result = (
+        client.table("user_audits")
+        .delete()
+        .eq("id", audit_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    deleted = bool(result.data)
+    if deleted:
+        logger.info(f"Deleted audit {audit_id} for user {user_id}")
+    else:
+        logger.warning(f"Audit {audit_id} not found or not owned by user {user_id}")
+    return deleted
+
+
+def update_user_audit_letter(user_id: str, audit_id: str, letter_text: str) -> bool:
+    client = get_supabase_client()
+    result = (
+        client.table("user_audits")
+        .update({"dispute_letter": letter_text})
+        .eq("id", audit_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    updated = bool(result.data)
+    if updated:
+        logger.info(f"Updated dispute letter for audit {audit_id} (user {user_id})")
+    else:
+        logger.warning(f"Audit {audit_id} not found or not owned by user {user_id}")
+    return updated
