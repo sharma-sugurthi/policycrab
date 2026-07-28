@@ -9,8 +9,9 @@ import Dashboard from './pages/Dashboard'
 import BillAuditor from './pages/BillAuditor'
 import ProfilePage from './pages/ProfilePage'
 import BenchmarkDashboard from './pages/BenchmarkDashboard'
+import AdminDashboard from './pages/AdminDashboard'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from './components/Icons'
+import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
 
 // ── Browser storage keys ─────────────────────────────────────
 const SS_POLICY_KEY = 'policycrab_policy_profile'
@@ -260,7 +261,7 @@ function AppContent() {
   const [costBreakdown, setCostBreakdown] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
-  const { user, signOut } = useAuth()
+  const { user, signOut, isAdmin } = useAuth()
   const { theme, toggleTheme, ThemeIcon, themeLabel } = useTheme()
 
   // User Dropdown State
@@ -409,6 +410,11 @@ function AppContent() {
                     <NavLink to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)', borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
                       <IconUser size={16} /> Profile
                     </NavLink>
+                    {isAdmin && (
+                      <NavLink to="/admin" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: '#4f46e5', fontWeight: 700, borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
+                        <IconActivity size={16} /> Admin Console
+                      </NavLink>
+                    )}
                     <button onClick={() => { setDropdownOpen(false); handleSignOut(); }} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--danger)', borderRadius: '0.375rem', background: 'transparent', border: 'none', cursor: 'pointer' }} className="dropdown-item">
                       <IconLogOut size={16} /> Sign Out
                     </button>
@@ -447,6 +453,9 @@ function AppContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{user.user_metadata?.full_name || user.email}</span>
                 <NavLink to="/profile" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setMobileMenuOpen(false)}><IconUser size={16} /> Profile</NavLink>
+                {isAdmin && (
+                  <NavLink to="/admin" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center', color: '#4f46e5', borderColor: '#818cf8', fontWeight: 700 }} onClick={() => setMobileMenuOpen(false)}><IconActivity size={16} /> Admin Console</NavLink>
+                )}
                 <button onClick={handleSignOut} className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
               </div>
             ) : (
@@ -492,6 +501,11 @@ function AppContent() {
         <Route path="/chat" element={
           <ProtectedRoute>
             <ChatAssistant policyProfile={policyProfile} costBreakdown={costBreakdown} />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminDashboard />
           </ProtectedRoute>
         } />
         <Route path="/benchmarks" element={<BenchmarkDashboard />} />

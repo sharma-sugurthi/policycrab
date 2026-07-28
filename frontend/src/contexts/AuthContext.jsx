@@ -6,18 +6,41 @@ const AuthContext = createContext({})
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [session, setSession] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    async function checkAdmin(token) {
+      if (!token) {
+        setIsAdmin(false)
+        return
+      }
+      try {
+        const res = await fetch('/api/admin/check', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setIsAdmin(Boolean(data.is_admin))
+        } else {
+          setIsAdmin(false)
+        }
+      } catch (e) {
+        setIsAdmin(false)
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+      checkAdmin(session?.access_token)
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
+      checkAdmin(session?.access_token)
       setLoading(false)
     })
 
@@ -42,7 +65,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, verifyOtp, signIn, signOut, updateProfile, updatePassword }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, loading, signUp, verifyOtp, signIn, signOut, updateProfile, updatePassword }}>
       {!loading && children}
     </AuthContext.Provider>
   )
