@@ -101,10 +101,10 @@ _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     TaskType.LEGAL_WRITING: [
         {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
         {"provider": "moonshot", "model": "moonshot-v1-32k"},                            # Fallback 1 (Kimi 32k)
-        {"provider": "deepseek", "model": "deepseek-chat"},                              # Fallback 2 (Direct DeepSeek-V3)
+        {"provider": "siliconflow", "model": "deepseek-ai/DeepSeek-V3"},                 # Fallback 2 (Free DeepSeek-V3)
     ],
     TaskType.REASONING: [
-        {"provider": "deepseek", "model": "deepseek-reasoner"},                          # Primary (DeepSeek-R1 Direct)
+        {"provider": "siliconflow", "model": "deepseek-ai/DeepSeek-R1"},                 # Primary (Free DeepSeek-R1)
         {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Fallback 1
         {"provider": "moonshot", "model": "moonshot-v1-32k"},                            # Fallback 2 (Kimi)
     ],
@@ -114,8 +114,8 @@ _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     ],
     TaskType.CHAT: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "deepseek", "model": "deepseek-chat"},
-        {"provider": "siliconflow", "model": "Qwen/Qwen2.5-72B-Instruct"},
+        {"provider": "siliconflow", "model": "deepseek-ai/DeepSeek-V3"},
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
     ],
 }
 
@@ -147,14 +147,7 @@ def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChat
                 base_url="https://openrouter.ai/api/v1",
                 temperature=temperature,
             )
-        elif provider == "deepseek" and settings.deepseek_api_key:
-            from langchain_openai import ChatOpenAI
-            return ChatOpenAI(
-                model=model,
-                api_key=settings.deepseek_api_key,
-                base_url="https://api.deepseek.com",
-                temperature=temperature,
-            )
+
         elif provider == "moonshot" and settings.moonshot_api_key:
             from langchain_openai import ChatOpenAI
             return ChatOpenAI(
