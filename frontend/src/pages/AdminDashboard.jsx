@@ -22,7 +22,7 @@ export default function AdminDashboard() {
   const usersPerPage = 15
 
   useEffect(() => {
-    if (!isAdmin || authLoading) return
+    if (authLoading || !user) return
 
     async function loadAdminData() {
       setFetching(true)
@@ -33,6 +33,12 @@ export default function AdminDashboard() {
           apiFetch('/admin/activity?days=30'),
           apiFetch('/admin/users')
         ])
+
+        if (statsRes.status === 403 || actRes.status === 403 || usersRes.status === 403) {
+          setError('403')
+          setFetching(false)
+          return
+        }
 
         if (statsRes.ok && actRes.ok && usersRes.ok) {
           const statsData = await readApiResponse(statsRes)
@@ -53,7 +59,7 @@ export default function AdminDashboard() {
     }
 
     loadAdminData()
-  }, [isAdmin, authLoading])
+  }, [authLoading, user, isAdmin])
 
   if (authLoading) {
     return (
@@ -64,7 +70,7 @@ export default function AdminDashboard() {
   }
 
   // 403 Forbidden Screen for non-admins
-  if (!isAdmin) {
+  if (error === '403' || (!isAdmin && !fetching && !stats)) {
     return (
       <section className="section" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderRadius: '1.5rem', padding: '3rem', maxWidth: '480px', boxShadow: 'var(--shadow-lg)' }}>

@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     cloudflare_enabled: bool = False   # Master switch — activates CF middleware
     cloudflare_only: bool = False      # Block non-CF traffic (set True after DNS migration)
 
-    # ── Admin Authorization ────────────────────────────────────────
+    # ── Admin Authorization (configured via ADMIN_EMAILS environment variable) ──────────
     admin_emails: str = ""
 
     @property
@@ -67,7 +67,11 @@ class Settings(BaseSettings):
     def parsed_admin_emails(self) -> set[str]:
         if not self.admin_emails:
             return set()
-        return {x.strip().lower() for x in self.admin_emails.split(",") if x.strip()}
+        return {
+            x.strip().strip("'").strip('"').lower()
+            for x in self.admin_emails.split(",")
+            if x.strip()
+        }
 
     # ── LLM Model Defaults ────────────────────────────────────────
     llm_fast_model: str = "gemini-2.5-flash"

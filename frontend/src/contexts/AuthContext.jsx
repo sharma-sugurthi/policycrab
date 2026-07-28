@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { apiFetch, readApiResponse } from '../lib/api'
 
 const AuthContext = createContext({})
 
@@ -16,17 +17,15 @@ export function AuthProvider({ children }) {
         return
       }
       try {
-        const res = await fetch('/api/admin/check', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+        const res = await apiFetch('/admin/check')
         if (res.ok) {
-          const data = await res.json()
-          setIsAdmin(Boolean(data.is_admin))
+          const data = await readApiResponse(res)
+          setIsAdmin(Boolean(data?.is_admin))
         } else {
           setIsAdmin(false)
         }
       } catch (e) {
-        console.error('Admin check failed:', e)
+        console.error('Admin role verification check failed or backend offline:', e.message || e)
         setIsAdmin(false)
       }
     }
