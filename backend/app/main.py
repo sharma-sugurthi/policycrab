@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.middleware.logging import RequestLoggingMiddleware
+from app.middleware.cloudflare import CloudflareMiddleware
 
 # LangSmith tracing is only useful when a valid API key is configured.
 # If tracing is enabled without credentials, the client will emit 403 noise on every request.
@@ -45,6 +46,11 @@ async def lifespan(app: FastAPI):
         logger.info(f"   Observability: LangSmith tracing ENABLED (Project: {os.environ.get('LANGCHAIN_PROJECT', 'default')}) ✅")
     else:
         logger.info("   Observability: LangSmith tracing DISABLED ⚠️")
+
+    if settings.cloudflare_enabled:
+        logger.info(f"   Cloudflare: ENABLED (cloudflare_only={settings.cloudflare_only}) 🛡️")
+    else:
+        logger.info("   Cloudflare: DISABLED (direct access mode) ⚠️")
 
     # Validate critical connections on startup
     try:
@@ -92,6 +98,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# ── Cloudflare IP Trust Middleware ────────────────────────────────
+# Must be registered BEFORE logging middleware so the real client IP
+# is available when the log line is emitted.
+app.add_middleware(
+    CloudflareMiddleware,
+    enabled=settings.cloudflare_enabled,
+    cloudflare_only=settings.cloudflare_only,
 )
 
 # ── Request Logging Middleware ────────────────────────────────────

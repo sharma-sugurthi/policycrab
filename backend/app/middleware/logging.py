@@ -77,7 +77,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
         elapsed_ms = round((time.perf_counter() - start) * 1000, 1)
-        _emit(request.method, path, status_code, elapsed_ms, user_hash)
+
+        # Cloudflare metadata (set by CloudflareMiddleware if active)
+        cf_ray = getattr(request.state, "cf_ray", "") or ""
+        cf_country = getattr(request.state, "cf_country", "") or ""
+
+        _emit(request.method, path, status_code, elapsed_ms, user_hash,
+              cf_ray=cf_ray, cf_country=cf_country)
         return response
 
 
@@ -88,6 +94,8 @@ def _emit(
     latency_ms: float,
     user_hash: str | None,
     error: str | None = None,
+    cf_ray: str = "",
+    cf_country: str = "",
 ) -> None:
     record: dict = {
         "method": method,
@@ -97,6 +105,10 @@ def _emit(
     }
     if user_hash:
         record["user"] = user_hash
+    if cf_ray:
+        record["cf_ray"] = cf_ray
+    if cf_country:
+        record["cf_country"] = cf_country
     if error:
         record["error"] = error
 

@@ -47,8 +47,9 @@ class Settings(BaseSettings):
     # persisting background task progress/results inside the web dyno.
     redis_url: str = ""  # Set to your Upstash rediss:// URL in production
 
-    # ── Cloudflare (Phase 2) ──────────────────────────────────────
-    cloudflare_enabled: bool = False
+    # ── Cloudflare ─────────────────────────────────────────────────
+    cloudflare_enabled: bool = False   # Master switch — activates CF middleware
+    cloudflare_only: bool = False      # Block non-CF traffic (set True after DNS migration)
 
     @property
     def parsed_cors_origins(self) -> list[str]:

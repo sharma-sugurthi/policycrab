@@ -41,10 +41,20 @@ def _fingerprint(value: str) -> str:
 
 
 def request_identity(request: Request) -> str:
-    """Build a non-PII limiter identity from bearer token or client IP."""
+    """Build a non-PII limiter identity from bearer token or client IP.
+    
+    When Cloudflare is active, CF-Connecting-IP contains the real visitor IP.
+    The CloudflareMiddleware also overwrites request.client.host, but we
+    check the header directly as an extra safety layer.
+    """
     auth_header = request.headers.get("authorization", "")
     if auth_header.lower().startswith("bearer "):
         return f"token:{_fingerprint(auth_header[7:].strip())}"
+
+    # Prefer CF-Connecting-IP (set by Cloudflare edge) over X-Forwarded-For
+    cf_ip = request.headers.get("cf-connecting-ip", "")
+    if cf_ip:
+        return f"ip:{cf_ip.strip()}"
 
     forwarded_for = request.headers.get("x-forwarded-for", "")
     if forwarded_for:
