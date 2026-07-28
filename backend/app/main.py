@@ -8,7 +8,8 @@ Evaluates eligibility, estimates costs, and drafts formal appeals.
 import logging
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
@@ -99,6 +100,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Global Empathetic Exception Guards ────────────────────────────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Intercept all unhandled server or AI provider errors and translate them into friendly UX messaging."""
+    logger.error(f"Unhandled error on {request.method} {request.url.path}: {exc}", exc_info=True)
+    error_str = str(exc).lower()
+    if any(k in error_str for k in ["429", "quota", "rate limit", "resource_exhausted", "too many requests", "traffic"]):
+        message = "We are currently experiencing high AI traffic! Please give us just a moment and try again shortly."
+        status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    elif any(k in error_str for k in ["timeout", "timed out", "too large", "context length", "token limit"]):
+        message = "We encountered a processing timeout due to high load or document size. Please try again later, or try uploading a smaller or compressed document!"
+        status_code = status.HTTP_504_GATEWAY_TIMEOUT
+    else:
+        message = "Our backend servers are currently loading or undergoing brief maintenance. Please try again shortly! The problem is definitely with our systems, not with your request or data."
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        
+    return JSONResponse(
+        status_code=status_code,
+        content={"error": message, "code": "SERVICE_NOTICE", "detail": message}
+    )
 
 # ── Cloudflare IP Trust Middleware ────────────────────────────────
 # Must be registered BEFORE logging middleware so the real client IP
