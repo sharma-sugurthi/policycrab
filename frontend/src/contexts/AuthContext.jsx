@@ -43,10 +43,14 @@ export function AuthProvider({ children }) {
         
         setSession(currentSession)
         setUser(currentSession?.user ?? null)
+        
+        // UNBLOCK THE UI IMMEDIATELY! Do not wait for Heroku API cold starts.
+        if (mounted) setLoading(false)
+        
+        // Run slow role verification in the background
         await checkAdmin(currentSession?.access_token)
       } catch (err) {
         console.error('Fatal auth initialization error:', err)
-      } finally {
         if (mounted) setLoading(false)
       }
     }
@@ -58,10 +62,14 @@ export function AuthProvider({ children }) {
         if (!mounted) return
         setSession(newSession || null)
         setUser(newSession?.user ?? null)
+        
+        // UNBLOCK THE UI IMMEDIATELY!
+        if (mounted) setLoading(false)
+
+        // Run slow role verification in the background
         await checkAdmin(newSession?.access_token)
       } catch (err) {
         console.error('Auth state change error:', err)
-      } finally {
         if (mounted) setLoading(false)
       }
     })
