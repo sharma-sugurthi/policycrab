@@ -26,21 +26,22 @@ export function AuthProvider({ children }) {
           setIsAdmin(false)
         }
       } catch (e) {
+        console.error('Admin check failed:', e)
         setIsAdmin(false)
       }
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
-      checkAdmin(session?.access_token)
+      await checkAdmin(session?.access_token)
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
-      checkAdmin(session?.access_token)
+      await checkAdmin(session?.access_token)
       setLoading(false)
     })
 
