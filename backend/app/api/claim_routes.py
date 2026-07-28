@@ -4,7 +4,7 @@ Claim API Routes — evaluate claims and calculate costs.
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 from pydantic import BaseModel, Field
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
@@ -144,3 +144,56 @@ async def evaluate_claim(
     except Exception:
         logger.error("Claim evaluation failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Claim evaluation failed. Please try again.")
+
+
+# ── Async (Celery) Endpoint ───────────────────────────────────────
+
+
+@router.post("/evaluate/async", status_code=202)
+async def evaluate_claim_async(
+    background_tasks: BackgroundTasks,
+    request: ClaimEvaluationRequest,
+    user: dict = Depends(get_current_user),
+    _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT),
+):
+    """
+    Async version of /evaluate — returns instantly with a task_id.
+
+    The full 6-node LangGraph pipeline runs as a background asyncio task
+    inside the web dyno — no extra worker dyno cost.
+
+    Poll progress: GET /api/tasks/{task_id}
+    Stream progress: GET /api/tasks/{task_id}/stream (SSE)
+    """
+    try:
+        safe_claim_description, _ = scrub_phi(request.claim_description)
+    except PHIScrubbingError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+
+    from app.worker import new_task_id, init_task
+    from app.tasks.claim_tasks import run_claim_evaluation
+
+    task_id = new_task_id()
+    init_task(task_id, "claim_evaluation")
+    background_tasks.add_task(
+        run_claim_evaluation,
+        task_id=task_id,
+        claim_description=safe_claim_description,
+        policy_profile=request.policy_profile,
+        allowed_amount=request.allowed_amount,
+        benchmark_policy_excerpt=request.benchmark_policy_excerpt,
+        session_id=request.session_id,
+        policy_indexed=request.policy_indexed,
+        user_id=user.get("id"),
+    )
+
+    logger.info(
+        f"Claim evaluate async: task={task_id}, user={user.get('id', 'unknown')}"
+    )
+
+    return {
+        "task_id": task_id,
+        "status_url": f"/api/tasks/{task_id}",
+        "stream_url": f"/api/tasks/{task_id}/stream",
+        "message": "Claim evaluation started. Poll status_url for progress.",
+    }

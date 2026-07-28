@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     email_from: str = "PolicyCrab <info@policycrab.tech>"
 
+    # ── Redis (task status tracking only — no worker dyno needed) ──
+    # Upstash free tier: 10K commands/day, 256MB. Used only for
+    # persisting background task progress/results inside the web dyno.
+    redis_url: str = ""  # Set to your Upstash rediss:// URL in production
+
+    # ── Cloudflare (Phase 2) ──────────────────────────────────────
+    cloudflare_enabled: bool = False
+
     @property
     def parsed_cors_origins(self) -> list[str]:
         if isinstance(self.cors_origins, str):

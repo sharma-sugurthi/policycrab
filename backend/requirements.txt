@@ -43,3 +43,7 @@ pillow==12.3.0
 
 # Optional outbound email integration
 resend==2.32.2
+
+# Redis client — task status storage (Upstash free tier)
+# Used by app/worker.py to persist background task progress/results.
+redis>=4.5.2,<=5.2.1

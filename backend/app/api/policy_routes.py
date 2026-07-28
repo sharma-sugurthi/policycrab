@@ -5,7 +5,7 @@ Supports both raw text paste and PDF file upload.
 
 import logging
 from uuid import uuid4
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel, Field
 
 from app.agents.graph import get_policy_ingestion_graph
@@ -267,3 +267,138 @@ async def upload_policy_pdf(
     except Exception:
         logger.error("Policy PDF ingestion failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Policy ingestion failed. Please try again.")
+
+
+# ── Async (Celery) Endpoints ──────────────────────────────────────
+# These return instantly with a task_id that the frontend polls via
+# GET /api/tasks/{task_id} or streams via GET /api/tasks/{task_id}/stream.
+
+
+@router.post("/upload-pdf/async", status_code=202)
+async def upload_policy_pdf_async(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+    _: None = Depends(POLICY_UPLOAD_RATE_LIMIT),
+):
+    """
+    Async version of /upload-pdf — returns instantly with a task_id.
+
+    The heavy AI work (chunking, embedding, LLM extraction) runs in a
+    Celery background worker, avoiding Heroku's 30-second HTTP timeout.
+
+    Poll progress: GET /api/tasks/{task_id}
+    Stream progress: GET /api/tasks/{task_id}/stream (SSE)
+    Cancel: DELETE /api/tasks/{task_id}
+    """
+    # ── Validate file type ────────────────────────────────────
+    ct = (file.content_type or "").lower()
+    fn = (file.filename or "").lower()
+    if "pdf" not in ct and not fn.endswith(".pdf"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type: {file.content_type}. Please upload a PDF file.",
+        )
+
+    # ── Read and validate size ────────────────────────────────
+    pdf_bytes = await file.read()
+
+    if len(pdf_bytes) > MAX_PDF_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large ({len(pdf_bytes) / 1024 / 1024:.1f} MB). Maximum is 10 MB.",
+        )
+
+    if len(pdf_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    # ── Extract text synchronously (fast, local, no LLM) ──────
+    try:
+        extracted_text = extract_text_from_pdf(pdf_bytes)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if len(extracted_text.strip()) < 50:
+        raise HTTPException(
+            status_code=400,
+            detail="PDF produced too little text. Try pasting the text manually.",
+        )
+
+    # ── PHI scrubbing (synchronous — before it leaves the web dyno) ──
+    try:
+        safe_text, _ = scrub_phi(extracted_text)
+    except PHIScrubbingError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    # ── Dispatch as background task (no extra dyno) ───────────
+    session_id = uuid4().hex
+
+    from app.worker import new_task_id, init_task
+    from app.tasks.policy_tasks import run_policy_ingestion
+
+    task_id = new_task_id()
+    init_task(task_id, "policy_ingestion", session_id=session_id)
+    background_tasks.add_task(
+        run_policy_ingestion,
+        task_id=task_id,
+        pdf_text=safe_text,
+        session_id=session_id,
+        user_id=user.get("id"),
+    )
+
+    logger.info(
+        f"Policy PDF async: task={task_id}, file='{file.filename}', "
+        f"session={session_id}, user={user.get('id', 'unknown')}"
+    )
+
+    return {
+        "task_id": task_id,
+        "session_id": session_id,
+        "status_url": f"/api/tasks/{task_id}",
+        "stream_url": f"/api/tasks/{task_id}/stream",
+        "message": "Policy ingestion started. Poll status_url for progress.",
+    }
+
+
+@router.post("/upload/async", status_code=202)
+async def upload_policy_text_async(
+    background_tasks: BackgroundTasks,
+    request: PolicyUploadRequest,
+    user: dict = Depends(get_current_user),
+    _: None = Depends(POLICY_UPLOAD_RATE_LIMIT),
+):
+    """
+    Async version of /upload — background text-based policy ingestion.
+    """
+    try:
+        safe_text, _ = scrub_phi(request.policy_text)
+    except PHIScrubbingError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    session_id = uuid4().hex
+
+    from app.worker import new_task_id, init_task
+    from app.tasks.policy_tasks import run_policy_ingestion
+
+    task_id = new_task_id()
+    init_task(task_id, "policy_ingestion", session_id=session_id)
+    background_tasks.add_task(
+        run_policy_ingestion,
+        task_id=task_id,
+        pdf_text=safe_text,
+        session_id=session_id,
+        user_id=user.get("id"),
+    )
+
+    logger.info(
+        f"Policy text async: task={task_id}, session={session_id}, "
+        f"user={user.get('id', 'unknown')}"
+    )
+
+    return {
+        "task_id": task_id,
+        "session_id": session_id,
+        "status_url": f"/api/tasks/{task_id}",
+        "stream_url": f"/api/tasks/{task_id}/stream",
+        "message": "Policy ingestion started. Poll status_url for progress.",
+    }
