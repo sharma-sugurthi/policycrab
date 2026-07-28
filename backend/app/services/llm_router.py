@@ -90,32 +90,32 @@ TASK_STEP_LOGS: dict[TaskType, list[str]] = {
 _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     TaskType.EXTRACTION: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary
-        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},            # Fallback 1
+        {"provider": "siliconflow", "model": "Qwen/Qwen2.5-72B-Instruct"},               # Fallback 1 (Free Qwen 72B)
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 2
     ],
     TaskType.TOOL_CALLING: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},
+        {"provider": "siliconflow", "model": "Qwen/Qwen2.5-72B-Instruct"},
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},
     ],
     TaskType.LEGAL_WRITING: [
         {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
-        {"provider": "openrouter", "model": "deepseek/deepseek-chat:free"},              # Fallback 1
-        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},            # Fallback 2
+        {"provider": "moonshot", "model": "moonshot-v1-32k"},                            # Fallback 1 (Kimi 32k)
+        {"provider": "deepseek", "model": "deepseek-chat"},                              # Fallback 2 (Direct DeepSeek-V3)
     ],
     TaskType.REASONING: [
-        {"provider": "openrouter", "model": "deepseek/deepseek-chat:free"},              # Primary (DeepSeek excels here)
+        {"provider": "deepseek", "model": "deepseek-reasoner"},                          # Primary (DeepSeek-R1 Direct)
         {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Fallback 1
-        {"provider": "together", "model": "Qwen/Qwen2.5-72B-Instruct-Turbo"},            # Fallback 2
+        {"provider": "moonshot", "model": "moonshot-v1-32k"},                            # Fallback 2 (Kimi)
     ],
     TaskType.EXPLANATION: [
         {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Primary (Fast)
-        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Fallback 1
+        {"provider": "moonshot", "model": "moonshot-v1-8k"},                             # Fallback 1 (Kimi)
     ],
     TaskType.CHAT: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "openrouter", "model": "deepseek/deepseek-chat:free"},
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
+        {"provider": "deepseek", "model": "deepseek-chat"},
+        {"provider": "siliconflow", "model": "Qwen/Qwen2.5-72B-Instruct"},
     ],
 }
 
@@ -147,12 +147,28 @@ def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChat
                 base_url="https://openrouter.ai/api/v1",
                 temperature=temperature,
             )
-        elif provider == "together" and settings.together_api_key:
+        elif provider == "deepseek" and settings.deepseek_api_key:
             from langchain_openai import ChatOpenAI
             return ChatOpenAI(
                 model=model,
-                api_key=settings.together_api_key,
-                base_url="https://api.together.xyz/v1",
+                api_key=settings.deepseek_api_key,
+                base_url="https://api.deepseek.com",
+                temperature=temperature,
+            )
+        elif provider == "moonshot" and settings.moonshot_api_key:
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model=model,
+                api_key=settings.moonshot_api_key,
+                base_url="https://api.moonshot.cn/v1",
+                temperature=temperature,
+            )
+        elif provider == "siliconflow" and settings.siliconflow_api_key:
+            from langchain_openai import ChatOpenAI
+            return ChatOpenAI(
+                model=model,
+                api_key=settings.siliconflow_api_key,
+                base_url="https://api.siliconflow.cn/v1",
                 temperature=temperature,
             )
         elif provider == "cerebras" and settings.cerebras_api_key:

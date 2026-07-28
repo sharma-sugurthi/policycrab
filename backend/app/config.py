@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     cerebras_api_key: str = ""
     openrouter_api_key: str = ""
-    together_api_key: str = ""
+    deepseek_api_key: str = ""      # Direct DeepSeek API
+    moonshot_api_key: str = ""      # Kimi (Moonshot AI)
+    siliconflow_api_key: str = ""   # Aggregator (free Qwen 72B)
     grok_api_key: str = ""          # x.ai
 
     # ── Application ───────────────────────────────────────────────
