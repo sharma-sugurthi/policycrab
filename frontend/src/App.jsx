@@ -1,5 +1,5 @@
 import { Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Home from './pages/Home'
 import ClaimEvaluator from './pages/ClaimEvaluator'
 import ChatAssistant from './pages/ChatAssistant'
@@ -7,8 +7,9 @@ import PolicyUpload from './pages/PolicyUpload'
 import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import BillAuditor from './pages/BillAuditor'
+import ProfilePage from './pages/ProfilePage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut } from './components/Icons'
+import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from './components/Icons'
 
 // ── Browser storage keys ─────────────────────────────────────
 const SS_POLICY_KEY = 'policycrab_policy_profile'
@@ -261,6 +262,20 @@ function AppContent() {
   const { user, signOut } = useAuth()
   const { theme, toggleTheme, ThemeIcon, themeLabel } = useTheme()
 
+  // User Dropdown State
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [location.pathname])
@@ -353,10 +368,52 @@ function AppContent() {
             </button>
             
             {user ? (
-              <>
-                <span className="navbar-email">{user.email}</span>
-                <button onClick={handleSignOut} className="btn btn-ghost" style={{ padding: '0.375rem 0.75rem', fontSize: '0.8125rem' }}>Sign Out</button>
-              </>
+              <div style={{ position: 'relative' }} ref={dropdownRef}>
+                <button 
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', 
+                    padding: '0.25rem 0.75rem 0.25rem 0.25rem', borderRadius: '999px', cursor: 'pointer',
+                    transition: 'border-color 0.2s', color: 'var(--text-primary)'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-secondary)'}
+                >
+                  <div style={{ 
+                    width: '32px', height: '32px', borderRadius: '50%', 
+                    background: 'var(--accent)', color: 'white', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    fontSize: '0.875rem', fontWeight: 800 
+                  }}>
+                    {user.user_metadata?.full_name ? user.user_metadata.full_name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                  </div>
+                  <span style={{ fontSize: '0.875rem', fontWeight: 600, maxWidth: '100px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.user_metadata?.full_name ? user.user_metadata.full_name.split(' ')[0] : 'Account'}
+                  </span>
+                  <IconChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
+                </button>
+                
+                {dropdownOpen && (
+                  <div style={{ 
+                    position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem', 
+                    background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', 
+                    borderRadius: '0.75rem', padding: '0.5rem', minWidth: '200px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', zIndex: 50
+                  }}>
+                    <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-secondary)', marginBottom: '0.5rem' }}>
+                      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.user_metadata?.full_name || 'User'}</p>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</p>
+                    </div>
+                    <NavLink to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)', borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
+                      <IconUser size={16} /> Profile
+                    </NavLink>
+                    <button onClick={() => { setDropdownOpen(false); handleSignOut(); }} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--danger)', borderRadius: '0.375rem', background: 'transparent', border: 'none', cursor: 'pointer' }} className="dropdown-item">
+                      <IconLogOut size={16} /> Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <NavLink to="/auth" className="btn btn-red" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
                 Sign In
@@ -386,10 +443,11 @@ function AppContent() {
           </nav>
           <div className="mobile-nav-account">
             {user ? (
-              <>
-                <span>{user.email}</span>
-                <button onClick={handleSignOut} className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{user.user_metadata?.full_name || user.email}</span>
+                <NavLink to="/profile" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setMobileMenuOpen(false)}><IconUser size={16} /> Profile</NavLink>
+                <button onClick={handleSignOut} className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
+              </div>
             ) : (
               <NavLink to="/auth" className="btn btn-red" style={{ display: 'flex', justifyContent: 'center' }}>
                 Sign In
@@ -423,6 +481,11 @@ function AppContent() {
         <Route path="/audit" element={
           <ProtectedRoute>
             <BillAuditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         } />
         <Route path="/chat" element={
