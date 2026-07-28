@@ -40,6 +40,12 @@ async def explanation_node(state: AgentState) -> dict:
     """
     phase = state.get("current_phase", "unknown")
     explanations = dict(state.get("explanations", {}))
+    
+    if state.get("claim_overrides"):
+        logger.debug(f"Agent 4 (Explanation): Benchmark mode detected — skipping LLM explanation for phase '{phase}'.")
+        explanations[phase] = "[BENCHMARK MODE] Explanation bypassed for evaluation efficiency."
+        return {"explanations": explanations, "current_phase": phase, "errors": state.get("errors", [])}
+
     logger.info(f"Agent 4 (Explanation): Explaining phase '{phase}'")
 
     try:

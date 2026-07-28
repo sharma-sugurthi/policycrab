@@ -17,6 +17,7 @@ from app.api.audit_routes import router as audit_router
 from app.api.stream_routes import router as stream_router
 from app.api.email_routes import router as email_router
 from app.api.task_routes import router as task_router
+from app.api.benchmark_routes import router as benchmark_router
 from app.security.rate_limit import rate_limit
 from app.api.auth import get_current_user
 
@@ -35,6 +36,7 @@ api_router.include_router(audit_router)
 api_router.include_router(stream_router)
 api_router.include_router(email_router)
 api_router.include_router(task_router)
+api_router.include_router(benchmark_router)
 
 
 @api_router.get("/health", tags=["System"])

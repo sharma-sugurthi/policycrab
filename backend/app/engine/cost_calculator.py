@@ -46,28 +46,29 @@ def _determine_copay(policy: PolicyProfile, claim: ClaimCase) -> float:
     cpt = claim.cpt_code.upper().strip()
     desc = claim.cpt_description.lower()
 
+    val = 0.0
     # Emergency Room
     if cpt.startswith("9928") or "emergency" in desc or "er visit" in desc:
-        return copay.emergency_room
+        val = copay.emergency_room
 
     # Urgent Care
-    if "urgent care" in desc:
-        return copay.urgent_care
+    elif "urgent care" in desc:
+        val = copay.urgent_care
 
     # Specialty Rx (HCPCS J-codes are injectable/infusion drugs)
-    if cpt.startswith("J"):
-        return copay.specialty_rx
+    elif cpt.startswith("J"):
+        val = copay.specialty_rx
 
     # Psychiatry / Therapy
-    if cpt.startswith("908") or cpt.startswith("909") or "therapy" in desc or "psychiatr" in desc:
-        return copay.specialist
+    elif cpt.startswith("908") or cpt.startswith("909") or "therapy" in desc or "psychiatr" in desc:
+        val = copay.specialist
 
     # Preventive care visits (typically $0 copay under ACA, but use schedule)
-    if cpt.startswith("9938") or cpt.startswith("9939"):
-        return copay.primary_care
+    elif cpt.startswith("9938") or cpt.startswith("9939"):
+        val = copay.primary_care
 
     # Office visits — determine PCP vs Specialist
-    if cpt.startswith("992"):
+    elif cpt.startswith("992"):
         # 99201-99215 are standard office visits
         # Specialist keywords in description
         specialist_keywords = [
@@ -75,12 +76,13 @@ def _determine_copay(policy: PolicyProfile, claim: ClaimCase) -> float:
             "oncol", "pulmon", "endocrin", "rheumat", "urolog", "surgeon",
         ]
         if any(kw in desc for kw in specialist_keywords):
-            return copay.specialist
-        return copay.primary_care
+            val = copay.specialist
+        else:
+            val = copay.primary_care
 
     # Surgical and hospital-based procedures typically don't have copays
     # (they go through deductible + coinsurance waterfall)
-    return 0.0
+    return float(val or 0.0)
 
 
 
@@ -255,16 +257,16 @@ def calculate_cost(
 
     # ── Select cost-sharing parameters based on network ───────────
     if use_in_network_rates:
-        deductible_total = policy.in_network_deductible_individual
-        oop_max_total = policy.in_network_oop_max_individual
-        coinsurance_rate = policy.in_network_coinsurance
+        deductible_total = float(policy.in_network_deductible_individual or 0.0)
+        oop_max_total = float(policy.in_network_oop_max_individual or 0.0)
+        coinsurance_rate = float(policy.in_network_coinsurance or 0.0)
     else:
-        deductible_total = policy.out_of_network_deductible_individual or 0
-        oop_max_total = policy.out_of_network_oop_max_individual or policy.in_network_oop_max_individual
-        coinsurance_rate = policy.out_of_network_coinsurance or policy.in_network_coinsurance
+        deductible_total = float(policy.out_of_network_deductible_individual or policy.in_network_deductible_individual or 0.0)
+        oop_max_total = float(policy.out_of_network_oop_max_individual or policy.in_network_oop_max_individual or 0.0)
+        coinsurance_rate = float(policy.out_of_network_coinsurance or policy.in_network_coinsurance or 0.0)
 
     # ── Step 4: Deductible Accumulation ───────────────────────────
-    deductible_remaining = max(deductible_total - policy.deductible_met, 0)
+    deductible_remaining = max(deductible_total - float(policy.deductible_met or 0.0), 0.0)
     applied_to_deductible = min(effective_allowed, deductible_remaining)
     post_deductible_amount = effective_allowed - applied_to_deductible
 
@@ -328,7 +330,7 @@ def calculate_cost(
         patient_total = standard_patient_total
 
     # ── Step 7: OOP Max Cap ───────────────────────────────────────
-    oop_remaining = max(oop_max_total - policy.oop_met, 0)
+    oop_remaining = max(oop_max_total - float(policy.oop_met or 0.0), 0.0)
     hit_oop_max = False
 
     if patient_total > oop_remaining:

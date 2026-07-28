@@ -1,0 +1,41 @@
+{
+  "id": "NSA-009",
+  "category": "nsa_balance_billing",
+  "title": "NSA Violation: OON Anesthesia Balance Billing at INN Hospital - Scenario 9",
+  "claim_description": "I had a laparoscopic cholecystectomy at St. Jude Medical Center, which is in my insurance network. The surgeon was also in-network. However, the anesthesiologist (Apex Anesthesia Group) was out-of-network. I never chose them \u2014 they were assigned in the operating room. My EOB shows Apex Anesthesia billed $2,800 for CPT 00790 (Anesthesia for intraperitoneal procedures). The plan paid $0 and I am being told I owe the full $2,800 (Denial Reason: PR-242, Services not provided by network/primary care providers). The EOB lists total patient responsibility as $3,200 \u2014 $400 for the surgery and $2,800 for anesthesia.",
+  "policy_profile": {
+    "plan_name": "CrabCare Prime PPO",
+    "carrier_name": "CrabCare",
+    "plan_type": "PPO",
+    "legal_classification": "FULLY_INSURED",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2,
+    "out_of_network_deductible_individual": 3000,
+    "out_of_network_oop_max_individual": 10000,
+    "out_of_network_coinsurance": 0.5
+  },
+  "benchmark_policy_excerpt": "SECTION 8: FEDERAL NO SURPRISES ACT PROTECTIONS\nUnder the Federal No Surprises Act, if you receive emergency services or are treated by an out-of-network ancillary provider (such as an anesthesiologist, pathologist, or radiologist) at an In-Network facility, you cannot be balance billed. Your patient responsibility will be calculated based on the In-Network cost-sharing amounts.",
+  "allowed_amount": 2000,
+  "claim_overrides": {
+    "network_status": "OUT_OF_NETWORK",
+    "facility_network_status": "IN_NETWORK",
+    "facility_name": "St. Jude Medical Center",
+    "provider_name": "Apex Anesthesia Group",
+    "ancillary_service_type": "anesthesia",
+    "is_denied": true,
+    "denial_reason": "OUT_OF_NETWORK_DENIAL",
+    "denial_carc_code": "PR-242"
+  },
+  "expected": {
+    "appeal_recommendation": "STRONG_APPEAL",
+    "contradiction_detected": true,
+    "contradiction_strength": "STRONG",
+    "route_decision": "denied",
+    "legal_patient_responsibility_for_line_2": 400.0,
+    "nsa_violation_detected": true,
+    "illegal_balance_billed_amount": 2000.0
+  },
+  "ground_truth_rationale": "Apex Anesthesia Group is an OON ancillary provider at an INN facility. Under 45 CFR \u00a7 149.410(b) of the No Surprises Act, balance billing is prohibited. Patient responsibility is capped at 20% of allowed amount ($400)."
+}

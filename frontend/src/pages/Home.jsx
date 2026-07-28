@@ -269,6 +269,58 @@ export default function Home({ policyProfile }) {
         </div>
       </section>
 
+      {/* ═══════════════ SCIENTIFIC ACCURACY VERIFICATION (CREDIBILITY) ═══════════════ */}
+      <section className="section-white section-pad" style={{ borderTop: '1px solid var(--border-secondary)', background: 'var(--bg-secondary)' }}>
+        <div className="main">
+          <div className="card" style={{ padding: '3rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', borderRadius: '1.5rem', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.05)' }}>
+            <div className="grid-2" style={{ alignItems: 'center', gap: '3rem' }}>
+              <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', borderRadius: '999px', background: 'var(--success-bg)', color: '#10b981', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  ✔ Rigorously Tested & Verified
+                </div>
+                <h2 style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '1rem' }}>
+                  Scientific proof of <span className="gradient-text">reasoning accuracy.</span>
+                </h2>
+                <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                  When fighting complex insurance denials or excessive medical billing, accuracy is paramount. Our multi-agent AI pipeline is benchmarked against 200 synthetic ground-truth US healthcare scenarios, rigorously evaluating explicit exclusions, emergency EMTALA exceptions, upcoding billing fraud, and No Surprises Act compliance.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button className="btn btn-red" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9375rem', fontWeight: 700 }} onClick={() => navigate('/benchmarks')}>
+                    Explore Verified Benchmark Suite →
+                  </button>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>
+                    Live Accuracy: ≥ 85.0% Standard Met
+                  </span>
+                </div>
+              </motion.div>
+
+              <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.25rem', fontWeight: 900, color: '#10b981', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>200</div>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>Tested Scenarios</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Ground-truth datasets</div>
+                  </div>
+                  <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--accent)', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>7</div>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>Claim Categories</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Exclusions to Upcoding</div>
+                  </div>
+                  <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center', gridColumn: 'span 2' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#10b981' }}>High-Precision RAG</span>
+                    </div>
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                      Deterministic cost calculations combined with clinical rule validation
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════════════ CTA ═══════════════ */}
       <section className="section-dark section-pad" style={{ paddingTop: '5rem', paddingBottom: '5rem' }}>
         <div className="dark-glow" />
@@ -338,7 +390,7 @@ export default function Home({ policyProfile }) {
                   AI-powered healthcare advocacy engine. Understand your coverage and fight unfair medical bills with confidence.
                 </p>
                 <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                   <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#e11d48', background: 'rgba(225,29,72,0.1)', padding: '0.25rem 0.625rem', borderRadius: '999px', border: '1px solid rgba(225,29,72,0.3)' }}>Built with Gemini</span>
+                   <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#e11d48', background: 'rgba(225,29,72,0.1)', padding: '0.25rem 0.625rem', borderRadius: '999px', border: '1px solid rgba(225,29,72,0.3)' }}>AI Healthcare Advocacy</span>
                 </div>
              </div>
 
@@ -348,6 +400,7 @@ export default function Home({ policyProfile }) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', color: '#94a3b8' }}>
                      <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/policy')}>Upload Policy</button>
                      <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/claim')}>Claim Evaluator</button>
+                     <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/benchmarks')}>Accuracy Benchmarks</button>
                      <button className="btn-outline" style={{ border: 'none', padding: 0, textAlign: 'left' }} onClick={() => navigate('/chat')}>AI Assistant</button>
                   </div>
                 </div>

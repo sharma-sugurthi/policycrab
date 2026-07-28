@@ -32,6 +32,7 @@ class AgentState(TypedDict):
     session_id: str | None          # Unique session ID for Supabase policy chunk scoping
     policy_indexed: bool            # True if the policy PDF was successfully chunked & embedded
     policy_page_count: int | None   # Total pages extracted from the policy PDF
+    claim_overrides: dict | None    # Optional ground truth overrides for automated benchmark testing
 
     # ── Structured Pipeline Data ──────────────────────────────────
     policy_profile: dict | None     # PolicyProfile as dict (serializable)

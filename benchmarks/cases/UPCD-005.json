@@ -1,0 +1,36 @@
+{
+  "id": "UPCD-005",
+  "category": "upcoding_billing_error",
+  "title": "Upcoding and Unbundling Billing Fraud - Scenario 5",
+  "claim_description": "I visited the hospital emergency room for a mild wrist sprain after slipping on steps. A doctor looked at it for 5 minutes, wrapped it in an elastic bandage without any X-rays or diagnostic lab work, and discharged me. My hospital billed $5,400 for CPT 99285 (Level 5 Emergency Department Trauma Visit) plus an extra $350 itemized charge for the routine bandage supply. My insurer adjusted and denied payment citing NCCI Unbundling edit CO-97 and improper Level 5 coding.",
+  "policy_profile": {
+    "plan_name": "Standard PPO",
+    "carrier_name": "BenchmarkHealth",
+    "plan_type": "PPO",
+    "legal_classification": "FULLY_INSURED",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2,
+    "out_of_network_deductible_individual": 2000,
+    "out_of_network_oop_max_individual": 10000,
+    "out_of_network_coinsurance": 0.4
+  },
+  "benchmark_policy_excerpt": "Section 14 \u2014 Billing Standards & NCCI Bundling: Routine medical supplies (including dressings and elastic bandages) are incidental to evaluation and management services and cannot be billed separately under NCCI guidelines. Furthermore, facility charges must accurately reflect clinical acuity; Level 5 emergency codes (99285) are excluded for minor encounters lacking intensive diagnostic interventions.",
+  "allowed_amount": 450,
+  "claim_overrides": {
+    "is_emergency": false,
+    "is_denied": true,
+    "denial_reason": "UNBUNDLING",
+    "denial_carc_code": "CO-97",
+    "cpt_code": "99285",
+    "cpt_description": "Emergency department visit level 5"
+  },
+  "expected": {
+    "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+    "contradiction_detected": false,
+    "contradiction_strength": "NONE",
+    "route_decision": "denied"
+  },
+  "ground_truth_rationale": "Hospital attempted illegal upcoding (Level 5 trauma code 99285 for minor sprain) and unbundling of routine medical supplies. The insurer's denial under CARC CO-97 is legally and contractually accurate; the patient must demand a corrected claim from the provider billing department."
+}

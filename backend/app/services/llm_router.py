@@ -99,19 +99,21 @@ _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
         {"provider": "cerebras", "model": "gemma-4-31b"},
     ],
     TaskType.LEGAL_WRITING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
-        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 1
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 2
+        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary (High capacity free tier)
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1 (30 RPM free tier)
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 2
+        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 3
     ],
     TaskType.REASONING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},                               # Primary
-        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 1
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 2 (Lightning fast inference)
+        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary (High capacity, fast reasoning)
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1 (30 RPM free tier)
+        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 2
+        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 3 (Lightning fast inference)
     ],
     TaskType.EXPLANATION: [
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Primary (Fast)
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 1 (Fastest inference in world)
-        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Fallback 2
+        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1 (Fast)
+        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 2
     ],
     TaskType.CHAT: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},

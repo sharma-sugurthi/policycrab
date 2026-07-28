@@ -8,6 +8,7 @@ import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import BillAuditor from './pages/BillAuditor'
 import ProfilePage from './pages/ProfilePage'
+import BenchmarkDashboard from './pages/BenchmarkDashboard'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown } from './components/Icons'
 
@@ -493,6 +494,7 @@ function AppContent() {
             <ChatAssistant policyProfile={policyProfile} costBreakdown={costBreakdown} />
           </ProtectedRoute>
         } />
+        <Route path="/benchmarks" element={<BenchmarkDashboard />} />
       </Routes>
     </>
   )
