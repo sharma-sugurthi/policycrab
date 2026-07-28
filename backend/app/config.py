@@ -36,6 +36,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "https://policycrab.tech",
         "https://www.policycrab.tech",
+        "https://api.policycrab.tech",
     ]
 
     # ── Email (Resend) ────────────────────────────────────────────
