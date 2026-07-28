@@ -11,13 +11,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     async function checkAdmin(token) {
       if (!token) {
-        setIsAdmin(false)
+        if (mounted) setIsAdmin(false)
         return
       }
       try {
         const res = await apiFetch('/admin/check')
+        if (!mounted) return
         if (res.ok) {
           const data = await readApiResponse(res)
           setIsAdmin(Boolean(data?.is_admin))
@@ -26,25 +29,47 @@ export function AuthProvider({ children }) {
         }
       } catch (e) {
         console.error('Admin role verification check failed or backend offline:', e.message || e)
-        setIsAdmin(false)
+        if (mounted) setIsAdmin(false)
       }
     }
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      await checkAdmin(session?.access_token)
-      setLoading(false)
+    async function initializeAuth() {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (error) console.warn('Supabase session fetch warning:', error)
+        
+        const currentSession = data?.session || null
+        if (!mounted) return
+        
+        setSession(currentSession)
+        setUser(currentSession?.user ?? null)
+        await checkAdmin(currentSession?.access_token)
+      } catch (err) {
+        console.error('Fatal auth initialization error:', err)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    initializeAuth()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      try {
+        if (!mounted) return
+        setSession(newSession || null)
+        setUser(newSession?.user ?? null)
+        await checkAdmin(newSession?.access_token)
+      } catch (err) {
+        console.error('Auth state change error:', err)
+      } finally {
+        if (mounted) setLoading(false)
+      }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      await checkAdmin(session?.access_token)
-      setLoading(false)
-    })
-
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      authListener?.subscription?.unsubscribe()
+    }
   }, [])
 
   const signUp = (email, password, fullName) => supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } })
