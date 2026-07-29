@@ -16,13 +16,14 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([])
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('overview') // 'overview' | 'users'
-  const [fetching, setFetching] = useState(true)
+  const [fetching, setFetching] = useState(false)
   const [error, setError] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const usersPerPage = 15
 
   useEffect(() => {
-    if (authLoading || !user) return
+    // Don't fetch until auth is resolved AND user is confirmed admin
+    if (authLoading || !user || !isAdmin) return
 
     async function loadAdminData() {
       setFetching(true)
@@ -34,8 +35,9 @@ export default function AdminDashboard() {
           apiFetch('/admin/users')
         ])
 
+        // Backend returned 403 — user is not admin on server side
         if (statsRes.status === 403 || actRes.status === 403 || usersRes.status === 403) {
-          setError('403')
+          setError('access_denied')
           setFetching(false)
           return
         }
@@ -49,10 +51,11 @@ export default function AdminDashboard() {
           setActivity(actData?.activity_timeline || [])
           setUsers(usersData?.users || [])
         } else {
-          setError('Failed to load admin telemetry. Verify server connection and admin privileges.')
+          setError('server_error')
         }
       } catch (err) {
-        setError(`Error fetching analytics: ${err.message}`)
+        console.error('Admin dashboard fetch error:', err)
+        setError('server_error')
       } finally {
         setFetching(false)
       }
@@ -61,6 +64,7 @@ export default function AdminDashboard() {
     loadAdminData()
   }, [authLoading, user, isAdmin])
 
+  // ── Loading state while auth is resolving ──
   if (authLoading) {
     return (
       <section className="section" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -69,8 +73,8 @@ export default function AdminDashboard() {
     )
   }
 
-  // 403 Forbidden Screen for non-admins
-  if (error === '403' || (!isAdmin && !fetching && !stats)) {
+  // ── 403 Forbidden: strict gate — if not admin, immediately block ──
+  if (!isAdmin || error === 'access_denied') {
     return (
       <section className="section" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderRadius: '1.5rem', padding: '3rem', maxWidth: '480px', boxShadow: 'var(--shadow-lg)' }}>
@@ -84,6 +88,26 @@ export default function AdminDashboard() {
           <NavLink to="/" className="btn btn-red" style={{ display: 'inline-flex', padding: '0.75rem 2rem', fontWeight: 700 }}>
             Return to Homepage
           </NavLink>
+        </div>
+      </section>
+    )
+  }
+
+  // ── Server error state (backend offline / unreachable) ──
+  if (error === 'server_error') {
+    return (
+      <section className="section" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-primary)', borderRadius: '1.5rem', padding: '3rem', maxWidth: '480px', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', border: '1px solid #fde68a' }}>
+            <IconAlertTriangle size={32} />
+          </div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Backend Unreachable</h1>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '2rem' }}>
+            Could not connect to the analytics backend. The server may be warming up or temporarily offline. Please try again in a moment.
+          </p>
+          <button onClick={() => window.location.reload()} className="btn btn-red" style={{ display: 'inline-flex', padding: '0.75rem 2rem', fontWeight: 700 }}>
+            Retry
+          </button>
         </div>
       </section>
     )
