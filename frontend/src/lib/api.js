@@ -28,6 +28,7 @@ export async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, {
+      cache: 'no-store', // CRITICAL: Prevent browser/Cloudflare from caching authenticated responses
       ...options,
       headers,
     })

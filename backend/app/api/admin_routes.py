@@ -4,7 +4,7 @@ Admin Analytics & Platform Usage Console — role-gated endpoints for platform t
 
 import logging
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 
 from app.config import settings
 from app.api.auth import get_current_user
@@ -28,16 +28,18 @@ def require_admin(user: dict = Depends(get_current_user)) -> dict:
 
 
 @router.get("/check")
-async def check_admin_status(user: dict = Depends(get_current_user)):
+async def check_admin_status(response: Response, user: dict = Depends(get_current_user)):
     """Check if the current logged-in user has admin rights."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     user_email = user.get("email", "").strip().lower()
     is_admin = bool(user_email and user_email in settings.parsed_admin_emails)
     return {"is_admin": is_admin, "email": user_email}
 
 
 @router.get("/stats")
-async def get_admin_stats(user: dict = Depends(require_admin)):
+async def get_admin_stats(response: Response, user: dict = Depends(require_admin)):
     """Get high-level platform aggregation statistics."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     client = get_supabase_client()
     try:
         # Get count of total users from Auth
@@ -73,8 +75,9 @@ async def get_admin_stats(user: dict = Depends(require_admin)):
 
 
 @router.get("/activity")
-async def get_admin_activity(days: int = 30, user: dict = Depends(require_admin)):
+async def get_admin_activity(response: Response, days: int = 30, user: dict = Depends(require_admin)):
     """Get daily platform usage breakdown over the specified time window."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     client = get_supabase_client()
     now = datetime.now(timezone.utc)
     start_date = now - timedelta(days=days)
@@ -119,8 +122,9 @@ async def get_admin_activity(days: int = 30, user: dict = Depends(require_admin)
 
 
 @router.get("/users")
-async def get_admin_users(user: dict = Depends(require_admin)):
+async def get_admin_users(response: Response, user: dict = Depends(require_admin)):
     """Get a detailed list of platform users and their feature usage counts."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     client = get_supabase_client()
     try:
         users_list = client.auth.admin.list_users()
