@@ -13,6 +13,16 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true
 
+    // SAFETY NET: If auth initialization takes longer than 5 seconds,
+    // forcibly unblock the UI. This prevents blank-screen hangs in production
+    // caused by Supabase client issues, network failures, or cold starts.
+    const safetyTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth initialization safety timeout reached (5s). Unblocking UI.')
+        setLoading(false)
+      }
+    }, 5000)
+
     async function checkAdmin(token) {
       if (!token) {
         if (mounted) setIsAdmin(false)
@@ -76,6 +86,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mounted = false
+      clearTimeout(safetyTimeout)
       authListener?.subscription?.unsubscribe()
     }
   }, [])

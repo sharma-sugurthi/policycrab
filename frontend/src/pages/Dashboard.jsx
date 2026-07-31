@@ -950,23 +950,45 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
 
 
   useEffect(() => {
+    // Safety timeout: if API calls hang, stop showing the loading spinner after 10s
+    let safetyTimer = null
+
     async function fetchData() {
+      safetyTimer = setTimeout(() => {
+        setLoading(false)
+      }, 10000)
+
       try {
         const [polRes, claimRes] = await Promise.all([
           apiFetch('/history/policies'),
           apiFetch('/history/claims')
         ])
 
-        if (polRes.ok) setPolicies(await polRes.json())
-        if (claimRes.ok) setClaims(await claimRes.json())
+        if (polRes.ok) {
+          const polData = await readApiResponse(polRes)
+          setPolicies(Array.isArray(polData) ? polData : [])
+        }
+        if (claimRes.ok) {
+          const claimData = await readApiResponse(claimRes)
+          setClaims(Array.isArray(claimData) ? claimData : [])
+        }
       } catch (err) {
         console.error('Failed to load history', err)
       } finally {
+        clearTimeout(safetyTimer)
         setLoading(false)
       }
     }
 
-    if (session) fetchData()
+    if (session) {
+      fetchData()
+    } else {
+      setLoading(false)
+    }
+
+    return () => {
+      if (safetyTimer) clearTimeout(safetyTimer)
+    }
   }, [session])
 
   const hasPolicy = Boolean(policyProfile) || policies.length > 0
@@ -1043,7 +1065,22 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
   ]
 
   if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}><span className="spinner" /></div>
+    return (
+      <div className="legacy-theme">
+        <section className="section-white section-pad">
+          <div className="main">
+            <div style={{ marginBottom: '2rem' }}>
+              <div style={{ height: '2.5rem', width: '16rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', marginBottom: '1rem' }} />
+              <div style={{ height: '1rem', width: '28rem', maxWidth: '100%', borderRadius: '0.5rem', background: 'var(--bg-tertiary)' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0', gap: '0.75rem', flexDirection: 'column', alignItems: 'center' }}>
+              <span className="spinner" style={{ width: '32px', height: '32px', borderWidth: '3px', borderColor: 'var(--border-primary)', borderTopColor: 'var(--accent)' }} />
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>Loading your dashboard…</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    )
   }
 
   return (

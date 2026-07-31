@@ -10,6 +10,7 @@ import BillAuditor from './pages/BillAuditor'
 import ProfilePage from './pages/ProfilePage'
 import BenchmarkDashboard from './pages/BenchmarkDashboard'
 import AdminDashboard from './pages/AdminDashboard'
+import CarrierHub from './pages/CarrierHub'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
 
@@ -307,10 +308,11 @@ function AppContent() {
   const navItems = [
     ['/', 'Home'],
     ['/dashboard', 'Dashboard'],
-    ['/policy', 'Policy Upload'],
-    ['/claim', 'Claim Evaluator'],
-    ['/audit', 'Bill Auditor'],
-    ['/chat', 'AI Assistant'],
+    ['/policy', 'Upload'],
+    ['/claim', 'Evaluate'],
+    ['/routing', 'Appeal'],
+    ['/audit', 'Audit'],
+    ['/chat', 'Chat'],
   ]
 
   const handleSignOut = async () => {
@@ -491,6 +493,11 @@ function AppContent() {
         <Route path="/audit" element={
           <ProtectedRoute>
             <BillAuditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/routing" element={
+          <ProtectedRoute>
+            <CarrierHub />
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
