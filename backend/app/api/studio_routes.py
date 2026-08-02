@@ -55,35 +55,21 @@ def build_dossier(
     Does not use an LLM.
     """
     try:
-        # Extract fields from the generic payload
+        # compile_dossier takes a single flat evidence dict.
+        # Inject the current draft letter into appeal_output so the dossier picks it up.
         letter_text = payload.get("letter_text", "")
-        if not letter_text:
+        appeal_output = payload.get("appeal_output") or {}
+        if not letter_text and not appeal_output.get("appeal_letter"):
             raise HTTPException(status_code=400, detail="Missing letter_text in payload")
+        if letter_text:
+            appeal_output["appeal_letter"] = letter_text
+            payload["appeal_output"] = appeal_output
 
-        claim_case = payload.get("claim_case")
-        policy_profile = payload.get("policy_profile")
-        cost_breakdown = payload.get("cost_breakdown")
-        appeal_output = payload.get("appeal_output")
-        eob_highlights = payload.get("eob_highlights")
-
-        # Map to proper models where appropriate if studio_engine doesn't just take dicts
-        # Looking at studio_engine.py, it takes models for claim_case and policy_profile
-        from app.models.claim_case import ClaimCase
-        from app.models.policy import PolicyProfile
-        
-        claim_case_obj = ClaimCase(**claim_case) if claim_case else None
-        policy_profile_obj = PolicyProfile(**policy_profile) if policy_profile else None
-
-        dossier = compile_dossier(
-            letter_text=letter_text,
-            claim_case=claim_case_obj,
-            policy_profile=policy_profile_obj,
-            cost_breakdown=cost_breakdown,
-            appeal_output=appeal_output,
-            eob_highlights=eob_highlights
-        )
+        dossier = compile_dossier(payload)
         return dossier
 
+    except HTTPException:
+        raise
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
