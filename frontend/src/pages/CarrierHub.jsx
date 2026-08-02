@@ -222,16 +222,17 @@ export default function CarrierHub() {
   const finalAddress = customAddress || carrierInfo?.appeal_mailing_address
 
   return (
-    <section style={{ paddingTop: '5rem', paddingBottom: '4rem' }}>
-    <div className="main">
-      <header style={{ marginBottom: '3rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
-          Carrier Routing Hub
-        </h1>
-        <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)' }}>
-          Find submission addresses, track statutory deadlines, and enforce your rights.
-        </p>
-      </header>
+    <div className="legacy-theme">
+      <section className="section-white section-pad">
+        <div className="main">
+          <header style={{ marginBottom: '3rem' }}>
+            <h1 className="section-title">
+              Carrier <span className="gradient-text">Routing Hub</span>
+            </h1>
+            <p className="section-subtitle">
+              Find submission addresses, track statutory deadlines, and enforce your rights.
+            </p>
+          </header>
 
       {error && (
         <div style={{ marginBottom: '2rem', padding: '1rem', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -492,6 +493,7 @@ export default function CarrierHub() {
         </section>
       </div>
     </div>
-    </section>
+      </section>
+    </div>
   )
 }

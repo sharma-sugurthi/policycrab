@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -995,6 +995,13 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
   const hasClaim = claims.length > 0
   const activePolicy = policyProfile || policies[0]?.policy_profile
 
+  // Optimization: Only render the 15 most recent claims to prevent lag from large benchmark suites
+  const recentClaims = useMemo(() => {
+    return [...claims]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 15)
+  }, [claims])
+
   const handleUsePolicyForClaim = (profile) => {
     if (profile) {
       const selected = policies.find(p => p.policy_profile === profile)
@@ -1282,7 +1289,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                       </button>
                     </div>
                   ) : (
-                    claims.map(c => {
+                    recentClaims.map(c => {
                       let urgencyClass = '', urgencyLabel = '', daysLeft = null
                       if (c.appeal_output?.appeal_deadline) {
                         const dl = new Date(c.appeal_output.appeal_deadline)
@@ -1329,6 +1336,11 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                         </div>
                       )
                     })
+                  )}
+                  {claims.length > 15 && (
+                    <div style={{ textAlign: 'center', padding: '1rem', color: '#71717a', fontSize: '0.8125rem' }}>
+                      Showing 15 most recent of {claims.length} total claims. Use CSV/PDF export to view all.
+                    </div>
                   )}
                 </div>
               </motion.div>
