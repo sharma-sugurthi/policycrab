@@ -1,9 +1,14 @@
+import os
 import pytest
 from app.agents.graph import get_claim_evaluation_graph
 from app.services.studio_engine import compile_dossier
 
 @pytest.mark.asyncio
 async def test_synthetic_end_to_end():
+    # Only run E2E test if a real API key is available
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if not api_key or len(api_key) < 15 or api_key == "dummy":
+        pytest.skip("Skipping synthetic E2E test due to missing real GEMINI_API_KEY")
     # 1. Synthetic Policy Profile
     policy_profile = {
         "plan_name": "Synthetic ACA Silver",
