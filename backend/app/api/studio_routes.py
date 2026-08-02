@@ -6,7 +6,7 @@ to the frontend.
 
 from fastapi import APIRouter, Depends, HTTPException, Body
 from app.api.auth import get_current_user
-from app.models.user import User
+
 from app.models.studio import RevisionRequest, RevisionResponse, DossierPackage
 from app.services.studio_engine import apply_revision, compile_dossier
 from app.services.llm_router import LLMRateLimitError
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/studio", tags=["studio"])
 @router.post("/revise", response_model=RevisionResponse)
 async def revise_letter(
     request: RevisionRequest = Body(...),
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ) -> RevisionResponse:
     """
     Apply a one-click AI revision (e.g., assertive, simplify) to the current draft.
@@ -48,7 +48,7 @@ async def revise_letter(
 @router.post("/dossier", response_model=DossierPackage)
 def build_dossier(
     payload: dict = Body(...),
-    current_user: User = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ) -> DossierPackage:
     """
     Deterministically compile evidence into a structured dossier package for PDF generation.
