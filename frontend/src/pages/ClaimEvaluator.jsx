@@ -5,7 +5,7 @@ import AILogViewer from '../components/AILogViewer'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
 import { CPT_CODES } from '../data/cpt_codes'
-import { IconSearch, IconFileText, IconUpload, IconCheckCircle, IconX, IconChevronDown, IconChevronUp, IconAlertTriangle, IconActivity, IconBriefcase, IconZap, IconMapPin, IconStethoscope, IconShield, IconCpu, IconServer, IconScale, IconEdit, IconDownload, IconCopy, IconMap } from '../components/Icons'
+import { IconSearch, IconFileText, IconUpload, IconCheckCircle, IconX, IconChevronDown, IconChevronUp, IconAlertTriangle, IconActivity, IconBriefcase, IconZap, IconMapPin, IconStethoscope, IconShield, IconCpu, IconServer, IconScale, IconEdit, IconDownload, IconCopy, IconMap, IconWand, IconArrowRight } from '../components/Icons'
 
 // ── CPT Lookup widget ─────────────────────────────────────────────
 function CptLookup({ onSelect, disabled }) {
@@ -1130,7 +1130,21 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                         {letterActionStatus && <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600, marginRight: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><IconCheckCircle size={12} /> {letterActionStatus}</span>}
                         <button type="button" className="btn btn-outline" style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem' }} onClick={handleCopyAppealLetter}><IconCopy size={16} /> Copy</button>
                         <button type="button" className="btn btn-outline" style={{ padding: '0.5rem 0.75rem', fontSize: '0.8125rem' }} onClick={handleDownloadAppealLetter}><IconDownload size={16} /> .txt</button>
-                        <button type="button" className="btn btn-red" style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }} onClick={handleDownloadPDF}><IconDownload size={16} /> PDF</button>
+                        <button 
+                          type="button" 
+                          className="btn btn-red" 
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }} 
+                          onClick={() => navigate('/studio', { state: { 
+                            letter: result.appeal_output.appeal_letter,
+                            policyProfile,
+                            claimCase: result.claim_case,
+                            appealOutput: result.appeal_output,
+                            eobHighlights: null, // Would come from ingestion phase in a full flow
+                            costBreakdown: result.cost_breakdown
+                          } })}
+                        >
+                          <IconWand size={16} /> Open in Appeal Studio <IconArrowRight size={16} />
+                        </button>
                       </div>
                     </div>
                     <div className="appeal-letter" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', padding: '2rem', borderRadius: '1rem', fontFamily: "'Merriweather', 'Times New Roman', serif", fontSize: '0.9375rem', lineHeight: 1.8, color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>

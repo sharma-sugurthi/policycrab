@@ -21,6 +21,7 @@ from app.api.benchmark_routes import router as benchmark_router
 from app.api.admin_routes import router as admin_router
 from app.api.carrier_routes import router as carrier_router
 from app.api.deadline_routes import router as deadline_router
+from app.api.studio_routes import router as studio_router
 from app.security.rate_limit import rate_limit
 from app.api.auth import get_current_user
 
@@ -43,6 +44,7 @@ api_router.include_router(benchmark_router)
 api_router.include_router(admin_router)
 api_router.include_router(carrier_router)
 api_router.include_router(deadline_router)
+api_router.include_router(studio_router)
 
 
 @api_router.get("/health", tags=["System"])

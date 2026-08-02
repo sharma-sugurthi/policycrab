@@ -491,6 +491,93 @@ body *, body *::before, body *::after {
   border-color: var(--border-hover);
 }
 
+/* ── Appeal Studio ────────────────────────────────────────── */
+.studio-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.studio-toolbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+  align-items: center;
+}
+
+.studio-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.studio-action-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.studio-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.studio-editor-panel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-2xl);
+  padding: 3rem 4rem;
+  box-shadow: var(--shadow-lg);
+  font-family: 'Merriweather', 'Times New Roman', serif;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  color: var(--text-primary);
+  min-height: 600px;
+}
+
+.studio-letter-content {
+  white-space: pre-wrap;
+}
+
+.studio-letter-content p {
+  margin-bottom: 1.5rem;
+}
+
+.studio-revision-alert {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.studio-dossier-panel {
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-primary);
+  border-radius: var(--radius-2xl);
+  padding: 2.5rem;
+  text-align: center;
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);

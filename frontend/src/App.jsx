@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage'
 import BenchmarkDashboard from './pages/BenchmarkDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import CarrierHub from './pages/CarrierHub'
+import AppealStudio from './pages/AppealStudio'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
 
@@ -503,6 +504,11 @@ function AppContent() {
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/studio" element={
+          <ProtectedRoute>
+            <AppealStudio />
           </ProtectedRoute>
         } />
         <Route path="/chat" element={
