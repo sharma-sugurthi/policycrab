@@ -1,6 +1,9 @@
 import asyncio
 from app.services.llm_router import _create_llm
 
+import pytest
+
+@pytest.mark.asyncio
 async def test_all_models():
     providers = [
         ("gemini",      "gemini-2.5-flash",              "PRIMARY — Extraction/Chat/Tools"),
