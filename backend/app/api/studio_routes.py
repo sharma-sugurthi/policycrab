@@ -5,7 +5,7 @@ to the frontend.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Body
-from app.api.dependencies import get_current_user
+from app.api.auth import get_current_user
 from app.models.user import User
 from app.models.studio import RevisionRequest, RevisionResponse, DossierPackage
 from app.services.studio_engine import apply_revision, compile_dossier
