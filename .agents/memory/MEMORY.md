@@ -1,3 +1,0 @@
-- [Policy RAG provisioning](imported-project-audit.md) — policy vector storage is outside the primary migration set and must be provisioned explicitly.
-- [Deployment quirks](policycrab-deployment-quirks.md) — asyncpg statement_cache, PostgREST reload notify, service_role GRANTs, BENCHMARK_TOKEN UUID.
-- [Operating notes](policycrab-operating-notes.md) — workflows, secrets, smoke-drive flow, where state lives.

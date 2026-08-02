@@ -39,3 +39,9 @@ Thumbs.db
 # ── Misc ───────────────────────────────────────────────────
 *.log
 *.pdf
+
+# ── Project Specific ───────────────────────────────────────
+.replit
+.agents/
+.vite/
+screenshots/
