@@ -1,6 +1,8 @@
+import pytest
 from app.agents.graph import get_claim_evaluation_graph
 from app.services.studio_engine import compile_dossier
 
+@pytest.mark.asyncio
 async def test_synthetic_end_to_end():
     # 1. Synthetic Policy Profile
     policy_profile = {
@@ -8,6 +10,7 @@ async def test_synthetic_end_to_end():
         "carrier_name": "Synthetic Health",
         "plan_type": "PPO",
         "state": "CA",
+        "legal_classification": "INDIVIDUAL_ACA",
         "in_network_deductible_individual": 1000,
         "in_network_oop_max_individual": 5000,
         "in_network_coinsurance_percent": 20,
@@ -35,26 +38,23 @@ async def test_synthetic_end_to_end():
     assert "appeal_output" in final_state
     appeal = final_state["appeal_output"]
     assert appeal is not None
-    assert "draft_letter" in appeal
+    assert "appeal_letter" in appeal
 
     print("\n[E2E TEST] Pipeline generated appeal letter successfully.")
     
     # 4. Generate Dossier
     print("\n[E2E TEST] Compiling Evidence Dossier...")
     evidence = {
-        "claim_id": "SYNTH-12345",
-        "patient_name": "John Doe",
-        "carrier_name": policy_profile["carrier_name"],
-        "date_of_service": "2026-01-01",
-        "billed_amount": "$3000",
-        "letter_text": appeal["draft_letter"]
+        "policy_profile": policy_profile,
+        "appeal_output": appeal,
+        "letter_text": appeal["appeal_letter"]
     }
     
     dossier = compile_dossier(evidence)
     
     assert dossier is not None
     assert dossier.cover is not None
-    assert dossier.cover.claim_id == "SYNTH-12345"
+    assert dossier.cover.get("carrier_name") == "Synthetic Health"
     assert len(dossier.sections) > 0
     
     print("\n[E2E TEST] Synthetic E2E Test Passed Successfully!")
