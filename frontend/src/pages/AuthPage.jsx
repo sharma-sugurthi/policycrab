@@ -54,7 +54,7 @@ export default function AuthPage() {
   return (
     <div style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', background: 'var(--bg-primary)' }}>
       {/* ── Left Side: Brand & Testimonial ── */}
-      <div style={{ flex: 1, display: 'none', flexDirection: 'column', padding: '4rem', background: '#0a0b0e', position: 'relative', overflow: 'hidden' }} className="auth-left-panel">
+      <div style={{ flex: 1, display: 'none', flexDirection: 'column', padding: '4rem', background: '#0a0b0e', position: 'relative', overflow: 'hidden' }} className="auth-left-panel" id="auth-left-panel">
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(circle at top left, rgba(225,29,72,0.15) 0%, rgba(10,11,14,0) 60%)' }} />
         
         <div style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -90,14 +90,14 @@ export default function AuthPage() {
       </div>
 
       {/* ── Right Side: Auth Form ── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', position: 'relative' }} className="auth-right-panel">
         <div className="hero-grid" style={{ opacity: 0.3 }} />
         
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5 }}
-          className="card" 
+          className="card auth-form-card" 
           style={{ width: '100%', maxWidth: '440px', padding: '3rem 2.5rem', position: 'relative', zIndex: 10, borderTop: '4px solid var(--accent)' }}
         >
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>

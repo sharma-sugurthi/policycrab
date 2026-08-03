@@ -49,10 +49,10 @@ export default function Home({ policyProfile }) {
 
             <motion.div variants={fadeUp} transition={{ duration: 0.55, delay: 0.18 }} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <button className="btn btn-red" onClick={() => navigate('/policy')}>
-                Upload Your Policy →
+                Upload Policy
               </button>
               <button className="btn btn-outline" onClick={() => navigate('/chat')}>
-                Talk to AI Assistant
+                AI Assistant
               </button>
             </motion.div>
 
@@ -259,7 +259,7 @@ export default function Home({ policyProfile }) {
                     <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.625 }}>
                       Upload your plan summary to see your coverage details displayed here.
                     </p>
-                    <button className="btn btn-red" onClick={() => navigate('/policy')}>Upload Policy →</button>
+                    <button className="btn btn-red" onClick={() => navigate('/policy')}>Upload Policy</button>
                   </div>
                 )}
               </div>
@@ -273,7 +273,7 @@ export default function Home({ policyProfile }) {
       <section className="section-white section-pad" style={{ borderTop: '1px solid var(--border-secondary)', background: 'var(--bg-secondary)' }}>
         <div className="main">
           <div className="card" style={{ padding: '3rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', borderRadius: '1.5rem', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.05)' }}>
-            <div className="grid-2" style={{ alignItems: 'center', gap: '3rem' }}>
+            <div className="grid-2" style={{ alignItems: 'stretch', gap: '3rem' }}>
               <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.375rem 0.75rem', borderRadius: '999px', background: 'var(--success-bg)', color: '#10b981', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                   ✔ Rigorously Tested & Verified
@@ -286,7 +286,7 @@ export default function Home({ policyProfile }) {
                 </p>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button className="btn btn-red" style={{ padding: '0.75rem 1.5rem', fontSize: '0.9375rem', fontWeight: 700 }} onClick={() => navigate('/benchmarks')}>
-                    Explore Verified Benchmark Suite →
+                    Explore Benchmarks
                   </button>
                   <span style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', fontWeight: 600 }}>
                     Live Accuracy: ≥ 85.0% Standard Met
@@ -353,7 +353,7 @@ export default function Home({ policyProfile }) {
             style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}
           >
             <button className="btn btn-red" style={{ padding: '1rem 2.5rem', fontSize: '1rem' }} onClick={() => navigate('/claim')}>
-              Evaluate a Claim →
+              Evaluate Claim
             </button>
             <button
               className="btn btn-outline"

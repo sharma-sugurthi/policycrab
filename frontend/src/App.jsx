@@ -93,16 +93,16 @@ function DisclaimerBanner() {
   return (
     <div style={{ background: 'var(--warning-bg)', borderBottom: '1px solid var(--warning-border)', padding: '0.625rem 1rem' }} role="alert" aria-live="polite">
       <div className="main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <IconAlertTriangle size={18} style={{ color: 'var(--warning)' }} />
-          <p style={{ fontSize: '0.8125rem', color: 'var(--warning)', fontWeight: 500, lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
+          <IconAlertTriangle size={18} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+          <p style={{ fontSize: '0.8125rem', color: 'var(--warning)', fontWeight: 500, lineHeight: 1.4, margin: 0 }}>
             <strong style={{ fontWeight: 700 }}>Not legal or medical advice.</strong> PolicyCrab is an informational tool only.
             Always verify calculations with your insurer and consult a licensed professional.
           </p>
         </div>
         <button
           onClick={dismiss}
-          style={{ background: 'transparent', border: 'none', color: 'var(--warning)', cursor: 'pointer', padding: '0.25rem', opacity: 0.7 }}
+          style={{ background: 'transparent', border: 'none', color: 'var(--warning)', cursor: 'pointer', padding: '0.25rem', opacity: 0.7, flexShrink: 0 }}
           aria-label="Dismiss disclaimer"
           title="Dismiss"
         >
@@ -162,26 +162,26 @@ function OnboardingTutorial() {
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(9,9,11,0.82)', backdropFilter: 'blur(12px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '1.5rem',
+      padding: '1rem',
     }} role="dialog" aria-modal="true" aria-label="Welcome to PolicyCrab">
       <div style={{
         background: 'var(--bg-primary)', borderRadius: '1.5rem', width: '100%', maxWidth: '440px',
-        padding: '2.5rem 2.5rem 2rem', boxShadow: 'var(--shadow-card)',
+        padding: '2rem 1.5rem 1.5rem', boxShadow: 'var(--shadow-card)',
         position: 'relative', textAlign: 'center', border: '1px solid var(--border-primary)'
       }}>
         {/* Skip */}
         <button onClick={finish} aria-label="Skip tutorial" style={{
-          position: 'absolute', top: '1.25rem', right: '1.25rem',
+          position: 'absolute', top: '1rem', right: '1rem',
           background: 'none', border: 'none', color: 'var(--text-tertiary)',
           fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600,
         }}>Skip tour</button>
 
         {/* Icon */}
         <div style={{
-          width: '72px', height: '72px', borderRadius: '50%',
+          width: '64px', height: '64px', borderRadius: '50%',
           background: `${current.color}15`, display: 'flex',
           alignItems: 'center', justifyContent: 'center',
-          color: current.color, margin: '0 auto 1.25rem',
+          color: current.color, margin: '0 auto 1rem',
           border: `2px solid ${current.color}30`,
         }}>
           {current.icon}
@@ -194,14 +194,14 @@ function OnboardingTutorial() {
         </p>
 
         {/* Title */}
-        <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-primary)',
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)',
           marginBottom: '0.75rem', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
           {current.title}
         </h2>
 
         {/* Description */}
-        <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.65,
-          marginBottom: '2rem' }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6,
+          marginBottom: '1.5rem' }}>
           {current.desc}
         </p>
 
@@ -338,9 +338,32 @@ function AppContent() {
             <span>PolicyCrab</span>
           </NavLink>
 
-          {/* Loaded policy pill */}
+          <div className="navbar-mobile-actions">
+            <button
+              type="button"
+              className="theme-toggle"
+              onClick={toggleTheme}
+              aria-label={themeLabel}
+              title={themeLabel}
+            >
+              <ThemeIcon size={16} />
+            </button>
+
+            <button
+              type="button"
+              className={`mobile-menu-button${mobileMenuOpen ? ' active' : ''}`}
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
+              onClick={() => setMobileMenuOpen(open => !open)}
+            >
+              {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
+            </button>
+          </div>
+
+          {/* Loaded policy pill - hide on mobile */}
           {policyProfile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.375rem 0.25rem 0.75rem', background: 'var(--accent-subtle)', borderRadius: '999px', border: '1px solid var(--accent-border)' }}>
+            <div className="policy-pill" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0.375rem 0.25rem 0.75rem', background: 'var(--accent-subtle)', borderRadius: '999px', border: '1px solid var(--accent-border)' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', animation: 'pulseRed 2s infinite' }} />
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {policyProfile.plan_name || 'Policy Loaded'}
@@ -431,28 +454,33 @@ function AppContent() {
               </NavLink>
             )}
             
-            <button
-              type="button"
-              className={`mobile-menu-button${mobileMenuOpen ? ' active' : ''}`}
-              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-navigation"
-              onClick={() => setMobileMenuOpen(open => !open)}
-            >
-              {mobileMenuOpen ? <IconX size={20} /> : <IconMenu size={20} />}
-            </button>
           </div>
         </div>
 
         <div id="mobile-navigation" className={`mobile-nav${mobileMenuOpen ? ' open' : ''}`}>
           <nav className="mobile-nav-links" aria-label="Mobile navigation">
             {navItems.map(([to, label]) => (
-              <NavLink key={to} to={to} className={to === '/' ? (location.pathname === '/' ? 'active' : '') : ({ isActive }) => isActive ? 'active' : ''}>
+              <NavLink key={to} to={to} onClick={() => setMobileMenuOpen(false)} className={to === '/' ? (location.pathname === '/' ? 'active' : '') : ({ isActive }) => isActive ? 'active' : ''}>
                 {label}
               </NavLink>
             ))}
           </nav>
           <div className="mobile-nav-account">
+            {/* Mobile policy pill */}
+            {policyProfile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: 'var(--accent-subtle)', borderRadius: '0.5rem', border: '1px solid var(--accent-border)', marginBottom: '0.5rem' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', animation: 'pulseRed 2s infinite' }} />
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--accent)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {policyProfile.plan_name || 'Policy Loaded'}
+                </span>
+                <button
+                  onClick={() => { clearPolicy(); setMobileMenuOpen(false); }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', padding: '0.25rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="Clear loaded policy"
+                  title="Clear policy"
+                ><IconX size={12} /></button>
+              </div>
+            )}
             {user ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{user.user_metadata?.full_name || user.email}</span>
@@ -463,7 +491,7 @@ function AppContent() {
                 <button onClick={handleSignOut} className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
               </div>
             ) : (
-              <NavLink to="/auth" className="btn btn-red" style={{ display: 'flex', justifyContent: 'center' }}>
+              <NavLink to="/auth" className="btn btn-red" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setMobileMenuOpen(false)}>
                 Sign In
               </NavLink>
             )}
