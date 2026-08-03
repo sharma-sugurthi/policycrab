@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { Fragment, useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { jsPDF } from 'jspdf'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
@@ -31,6 +31,21 @@ export default function BenchmarkDashboard() {
 
   const eventSourceRef = useRef(null)
 
+  const normalizeCasesResponse = (payload) => {
+    if (!payload) return []
+    if (Array.isArray(payload.cases)) return payload.cases
+    if (Array.isArray(payload.data?.cases)) return payload.data.cases
+    if (Array.isArray(payload.results)) return payload.results
+    return []
+  }
+
+  const normalizeResultsResponse = (payload) => {
+    if (!payload) return null
+    if (payload.summary || Array.isArray(payload.results)) return payload
+    if (payload.data && (payload.data.summary || Array.isArray(payload.data.results))) return payload.data
+    return null
+  }
+
   // ── Initial Load ────────────────────────────────────────────────────
   useEffect(() => {
     fetchData()
@@ -50,18 +65,11 @@ export default function BenchmarkDashboard() {
       
       const resultsData = await readApiResponse(resResults)
       const casesData = await readApiResponse(resCases)
+      const normalizedCases = normalizeCasesResponse(casesData)
+      const normalizedResults = normalizeResultsResponse(resultsData)
       
-      if (casesData.success && casesData.cases) {
-        setCases(casesData.cases)
-      }
-      
-      if (resultsData.success && resultsData.data) {
-        setResults(resultsData.data)
-      } else {
-        // If no precomputed results exist yet, build initial mock structure from cases
-        const total = casesData.cases?.length || 200
-        setResults(null)
-      }
+      setCases(normalizedCases)
+      setResults(normalizedResults)
     } catch (err) {
       setError('Could not load benchmark data from backend: ' + err.message)
     } finally {
@@ -84,7 +92,7 @@ export default function BenchmarkDashboard() {
         body: JSON.stringify({ mode, concurrency: 2 })
       })
       const data = await readApiResponse(res)
-      if (data.success && data.task_id) {
+      if (data?.task_id) {
         setTaskId(data.task_id)
         connectSSE(data.task_id, mode)
       } else {
@@ -99,7 +107,7 @@ export default function BenchmarkDashboard() {
 
   const connectSSE = (id, mode) => {
     if (eventSourceRef.current) eventSourceRef.current.close()
-    const es = new EventSource(`/api/stream/task/${id}`)
+    const es = new EventSource(`/api/tasks/${id}/stream`)
     eventSourceRef.current = es
 
     es.addEventListener('progress', (e) => {
@@ -158,12 +166,12 @@ export default function BenchmarkDashboard() {
         try {
           const res = await apiFetch(`/tasks/${id}`)
           const taskData = await readApiResponse(res)
-          if (taskData.success && taskData.task.status === 'done') {
-            setResults(taskData.task.result)
+          if (taskData?.state === 'SUCCESS' || taskData?.status === 'done') {
+            setResults(taskData.result || taskData.task?.result || null)
             setRunning(false)
             es.close()
-          } else if (taskData.success && taskData.task.status === 'failed') {
-            setError(taskData.task.error || 'Task failed')
+          } else if (taskData?.state === 'FAILURE' || taskData?.status === 'failed') {
+            setError(taskData.error || taskData.task?.error || 'Task failed')
             setRunning(false)
             es.close()
           }
@@ -273,7 +281,7 @@ export default function BenchmarkDashboard() {
   const evaluatedList = results?.results || []
   
   // Filter cases for the explorer table
-  const displayCases = evaluatedList.filter(item => {
+  const displayCases = useMemo(() => evaluatedList.filter(item => {
     if (selectedCategory !== 'all' && item.category !== selectedCategory) return false
     if (selectedStatus !== 'all' && item.status !== selectedStatus) return false
     if (searchQuery.trim()) {
@@ -284,7 +292,7 @@ export default function BenchmarkDashboard() {
       return matchId || matchTitle || matchReason
     }
     return true
-  })
+  }), [evaluatedList, selectedCategory, selectedStatus, searchQuery])
 
   const categoriesList = [
     { id: 'all', name: 'All Categories' },
@@ -527,8 +535,8 @@ export default function BenchmarkDashboard() {
                       const actRec = item.actual?.appeal_recommendation || item.actual?.error || '—'
                       
                       return (
-                        <AnimatePresence key={item.case_id} mode="sync">
-                          <tr 
+                        <Fragment key={item.case_id}>
+                          <tr
                             style={{ borderBottom: '1px solid var(--border-secondary)', cursor: 'pointer', background: isExpanded ? 'var(--bg-secondary)' : 'transparent', transition: 'background 0.15s' }}
                             onClick={() => setExpandedCaseId(isExpanded ? null : item.case_id)}
                             onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'var(--bg-secondary)' }}
@@ -601,7 +609,7 @@ export default function BenchmarkDashboard() {
                               </td>
                             </tr>
                           )}
-                        </AnimatePresence>
+                        </Fragment>
                       )
                     })}
                   </tbody>

@@ -222,30 +222,32 @@ export default function CarrierHub() {
   const finalAddress = customAddress || carrierInfo?.appeal_mailing_address
 
   return (
-    <div className="legacy-theme">
-      <section className="section-white section-pad">
-        <div className="main">
-          <header style={{ marginBottom: '3rem' }}>
-            <h1 className="section-title">
-              Carrier <span className="gradient-text">Routing Hub</span>
-            </h1>
-            <p className="section-subtitle">
-              Find submission addresses, track statutory deadlines, and enforce your rights.
-            </p>
-          </header>
+    <section className="section-white section-pad">
+      <div className="main">
+        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '2rem' }}>
+          <motion.p variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }} transition={{ duration: 0.45 }} className="section-label">
+            <span className="line" /> Routing Workspace
+          </motion.p>
+          <motion.h1 variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }} transition={{ duration: 0.55 }} className="section-title">
+            Carrier <span className="gradient-text">Routing Hub</span>
+          </motion.h1>
+          <motion.p variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }} transition={{ duration: 0.45 }} className="section-subtitle">
+            Find submission addresses, track statutory deadlines, and enforce your rights.
+          </motion.p>
+        </motion.div>
 
-      {error && (
-        <div style={{ marginBottom: '2rem', padding: '1rem', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <IconAlertTriangle size={18} /> {error}
-        </div>
-      )}
+        {error && (
+          <div style={{ marginBottom: '2rem', padding: '1rem', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <IconAlertTriangle size={18} /> {error}
+          </div>
+        )}
 
-      <div className="grid-2" style={{ gap: '2rem', alignItems: 'start' }}>
+        <div className="grid-2" style={{ gap: '2rem', alignItems: 'start' }}>
         
         {/* ── Section 1: Carrier Lookup & Routing ── */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="card" style={{ padding: '2rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="card" style={{ padding: '2rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
               <IconSearch size={20} /> Smart Carrier Lookup
             </h3>
             
@@ -270,10 +272,10 @@ export default function CarrierHub() {
                 </h4>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-primary)' }}>
+                  <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-secondary)' }}>
                     <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Default Mailing Address</label>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.5rem' }}>
-                      <pre style={{ margin: 0, fontFamily: 'inherit', fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+                      <pre style={{ margin: 0, fontFamily: 'inherit', fontSize: '0.875rem', color: 'var(--text-primary)', lineHeight: 1.6 }}>
                         {carrierInfo.appeal_mailing_address}
                       </pre>
                       <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem' }} onClick={() => navigator.clipboard.writeText(carrierInfo.appeal_mailing_address)}>
@@ -283,18 +285,18 @@ export default function CarrierHub() {
                   </div>
 
                   <div className="grid-2" style={{ gap: '1rem' }}>
-                    <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-primary)' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-secondary)' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}><IconPhone size={14} style={{display:'inline', verticalAlign:'middle'}}/> Fax</span>
-                      <strong style={{ fontSize: '0.875rem' }}>{carrierInfo.appeal_fax_number || 'Not available'}</strong>
+                      <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{carrierInfo.appeal_fax_number || 'Not available'}</strong>
                     </div>
-                    <div style={{ background: 'var(--bg-primary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-primary)' }}>
+                    <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-secondary)' }}>
                       <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}><IconGlobe size={14} style={{display:'inline', verticalAlign:'middle'}}/> Portal</span>
                       <a href={carrierInfo.appeal_portal_url} target="_blank" rel="noreferrer" style={{ fontSize: '0.875rem', color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Open Portal ↗</a>
                     </div>
                   </div>
 
                   {carrierInfo.special_notes && (
-                    <div style={{ background: 'var(--info-bg)', border: '1px solid var(--info-border)', padding: '1rem', borderRadius: '0.75rem', fontSize: '0.875rem', color: 'var(--info)' }}>
+                    <div style={{ background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', padding: '1rem', borderRadius: '0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)', lineHeight: 1.6 }}>
                       <strong>Note: </strong>{carrierInfo.special_notes}
                     </div>
                   )}
@@ -310,8 +312,8 @@ export default function CarrierHub() {
           </div>
 
           {routingPackage && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card" style={{ padding: '2rem', border: '2px solid var(--accent)', boxShadow: '0 8px 32px var(--accent-subtle)' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent)' }}>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card" style={{ padding: '2rem', border: '1px solid var(--accent-border)', boxShadow: 'var(--shadow-card)', background: 'var(--bg-card)' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
                 <IconSend size={20} /> Submission Routing
               </h3>
               
@@ -352,8 +354,8 @@ export default function CarrierHub() {
               </div>
               
               <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-secondary)' }}>
-                <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.75rem' }}>State Context ({routingPackage.state_context.state_name})</h4>
-                <ul style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1.25rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>State Context ({routingPackage.state_context.state_name})</h4>
+                <ul style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingLeft: '1.25rem', lineHeight: 1.6 }}>
                   <li><strong>External Review Org:</strong> {routingPackage.state_context.external_review_org}</li>
                   <li><strong>Deadline:</strong> {routingPackage.state_context.external_review_deadline_days} days</li>
                   {routingPackage.state_context.erisa_preempted && (
@@ -368,7 +370,7 @@ export default function CarrierHub() {
         {/* ── Section 2: Deadline Tracker ── */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
               <IconClock size={24} /> Deadline Tracker
             </h2>
             <button className="btn btn-red" style={{ padding: '0.625rem 1.25rem', fontSize: '0.875rem' }} onClick={() => setShowDeadlineForm(true)}>
@@ -379,9 +381,9 @@ export default function CarrierHub() {
           <AnimatePresence>
             {showDeadlineForm && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
-                <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', marginBottom: '1.5rem' }}>
+                <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 800 }}>New Deadline</h3>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)' }}>New Deadline</h3>
                     <button className="btn btn-outline" style={{ padding: '0.25rem', border: 'none' }} onClick={() => setShowDeadlineForm(false)}>
                       <IconX size={20} />
                     </button>
@@ -421,7 +423,7 @@ export default function CarrierHub() {
           {loadingDeadlines ? (
             <div style={{ textAlign: 'center', padding: '2rem' }}><div className="spinner" /></div>
           ) : deadlines.length === 0 ? (
-            <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+            <div className="card" style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)', background: 'var(--bg-card)' }}>
               <IconClock size={48} style={{ opacity: 0.5, marginBottom: '1rem' }} />
               <p>No active deadlines.</p>
             </div>
@@ -430,10 +432,10 @@ export default function CarrierHub() {
               {deadlines.map(d => {
                 const isBreached = checkBreach(d)
                 return (
-                  <div key={d.id} className="card" style={{ padding: '1.25rem', borderLeft: isBreached ? '4px solid var(--danger)' : d.status === 'filed' ? '4px solid var(--warning)' : d.status === 'response_received' ? '4px solid var(--success)' : '4px solid var(--accent)' }}>
+                  <div key={d.id} className="card" style={{ padding: '1.25rem', borderLeft: isBreached ? '4px solid var(--danger)' : d.status === 'filed' ? '4px solid var(--warning)' : d.status === 'response_received' ? '4px solid var(--success)' : '4px solid var(--accent)', background: 'var(--bg-card)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
-                        <h4 style={{ fontWeight: 800, fontSize: '1.125rem' }}>{d.carrier_name}</h4>
+                        <h4 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-primary)' }}>{d.carrier_name}</h4>
                         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{d.appeal_level} • {d.claim_summary}</p>
                       </div>
                       <span className={`badge badge-${isBreached ? 'danger' : d.status === 'filed' ? 'warning' : d.status === 'response_received' ? 'success' : 'info'}`}>
@@ -492,8 +494,7 @@ export default function CarrierHub() {
           )}
         </section>
       </div>
-    </div>
-      </section>
-    </div>
+      </div>
+    </section>
   )
 }

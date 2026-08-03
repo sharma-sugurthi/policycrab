@@ -66,7 +66,7 @@ const FIELD_DEFS = [
 import '../legacy.css'
 
 // ── Document Vault Component ────────────────────────────────
-function DocumentVault({ policyProfile, onGoToClaim }) {
+function DocumentVault({ onGoToClaim }) {
   const { session } = useAuth()
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -94,9 +94,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
     }
   }, [session])
 
-  useEffect(() => {
-    fetchDocuments()
-  }, [fetchDocuments])
+  useEffect(() => { fetchDocuments() }, [fetchDocuments])
 
   const deleteDocument = async (id, e) => {
     e.stopPropagation()
@@ -234,9 +232,9 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
         onDrop={onDrop}
         onClick={() => !uploading && inputRef.current?.click()}
         style={{
-          border: `2px dashed ${dragging ? '#dc2626' : '#d4d4d8'}`,
+            border: `2px dashed ${dragging ? 'var(--accent)' : 'var(--border-primary)'}`,
           borderRadius: '1.25rem',
-          background: dragging ? '#fef2f2' : '#fafafa',
+            background: dragging ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
           padding: '3rem 2rem',
           textAlign: 'center',
           cursor: uploading ? 'default' : 'pointer',
@@ -268,13 +266,13 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 52, height: 52, borderRadius: '1rem',
-              background: '#fef2f2', display: 'flex', alignItems: 'center',
+                background: 'var(--accent-subtle)', display: 'flex', alignItems: 'center',
               justifyContent: 'center', fontSize: '1.5rem', margin: '0 auto 0.5rem',
             }}>📄</div>
-            <p style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#09090b' }}>
+              <p style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Drop your document here
             </p>
-            <p style={{ fontSize: '0.8125rem', color: '#71717a' }}>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
               EOB, medical bill, or insurance policy · PDF or image · Max 10 MB
             </p>
             <button className="btn btn-red" style={{ marginTop: '0.75rem', padding: '0.5rem 1.5rem', fontSize: '0.8125rem' }}>
@@ -287,8 +285,8 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
       {/* ── Error ── */}
       {error && (
         <div style={{
-          background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.75rem',
-          padding: '0.875rem 1rem', color: '#dc2626', fontSize: '0.875rem', fontWeight: 600,
+            background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: '0.75rem',
+            padding: '0.875rem 1rem', color: 'var(--danger)', fontSize: '0.875rem', fontWeight: 600,
         }}>
           ⚠ {error}
         </div>
@@ -300,11 +298,11 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          style={{ border: '1px solid #e4e4e7', borderRadius: '1.25rem', overflow: 'hidden' }}
+            style={{ border: '1px solid var(--border-secondary)', borderRadius: '1.25rem', overflow: 'hidden', background: 'var(--bg-card)' }}
         >
           {/* Header */}
           <div style={{
-            background: '#fafafa', borderBottom: '1px solid #f4f4f5',
+              background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-secondary)',
             padding: '1rem 1.25rem',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap',
           }}>
@@ -358,8 +356,8 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
                 return (
                   <div key={key} style={{
                     display: 'flex', flexDirection: 'column', gap: '3px',
-                    background: '#fafafa', borderRadius: '0.75rem',
-                    padding: '0.625rem 0.75rem', border: '1px solid #f4f4f5',
+                      background: 'var(--bg-secondary)', borderRadius: '0.75rem',
+                      padding: '0.625rem 0.75rem', border: '1px solid var(--border-secondary)',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                       <span style={{ fontSize: '0.65rem', fontWeight: 600, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -378,7 +376,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
             {result.extracted?.denial_reason_text && (
               <div style={{
                 marginTop: '0.75rem', padding: '0.875rem 1rem',
-                background: '#fef2f2', borderRadius: '0.75rem', border: '1px solid #fecaca',
+                  background: 'var(--danger-bg)', borderRadius: '0.75rem', border: '1px solid var(--danger-border)',
               }}>
                 <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
                   Denial Reason (verbatim)
@@ -397,15 +395,15 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#3f3f46' }}>Cloud Vault Documents</h3>
+                <h3 style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>Cloud Vault Documents</h3>
               <span style={{
-                padding: '2px 8px', borderRadius: '9999px', background: '#ecfdf5', color: '#059669',
-                border: '1px solid #a7f3d0', fontSize: '0.65rem', fontWeight: 700
+                  padding: '2px 8px', borderRadius: '9999px', background: 'var(--success-bg)', color: 'var(--success)',
+                  border: '1px solid var(--success-border)', fontSize: '0.65rem', fontWeight: 700
               }}>
                 ☁ Cloud Synced
               </span>
             </div>
-            {loadingDocs && <span style={{ fontSize: '0.75rem', color: '#71717a' }}>Refreshing...</span>}
+              {loadingDocs && <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Refreshing...</span>}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {savedDocuments.map((h) => (
@@ -415,8 +413,8 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '0.75rem 1rem', borderRadius: '0.75rem',
-                  background: result?.id === h.id ? '#fef2f2' : '#fafafa',
-                  border: result?.id === h.id ? '1px solid #fecaca' : '1px solid #f4f4f5',
+                    background: result?.id === h.id ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
+                    border: result?.id === h.id ? '1px solid var(--accent-border)' : '1px solid var(--border-secondary)',
                   gap: '0.75rem', flexWrap: 'wrap', cursor: 'pointer', transition: 'all 0.15s ease'
                 }}
               >
@@ -433,13 +431,13 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
                   {h.document_type && <DocTypeBadge type={h.document_type} />}
                   {h.is_denied && <span className="badge badge-danger" style={{ fontSize: '0.65rem' }}>Denied</span>}
                   {h.billed_amount && (
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#3f3f46', marginRight: '0.25rem' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', marginRight: '0.25rem' }}>
                       ${Number(h.billed_amount).toLocaleString()}
                     </span>
                   )}
                   <button
                     className="btn btn-ghost"
-                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#ef4444' }}
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: 'var(--danger)' }}
                     onClick={(e) => deleteDocument(h.id, e)}
                     title="Delete document from cloud vault"
                   >
@@ -453,7 +451,7 @@ function DocumentVault({ policyProfile, onGoToClaim }) {
       )}
 
       {savedDocuments.length === 0 && !loadingDocs && !result && (
-        <p style={{ fontSize: '0.8125rem', color: '#a1a1aa', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
           No documents in your cloud vault yet. Upload an EOB or medical bill above.
         </p>
       )}
@@ -622,7 +620,7 @@ const COMPARE_ROWS = [
 ]
 
 function fmt(value, type) {
-  if (value == null) return <span style={{ color: '#d1d5db' }}>N/A</span>
+  if (value == null) return <span style={{ color: 'var(--text-tertiary)' }}>N/A</span>
   if (type === 'dollar') return `$${Number(value).toLocaleString()}`
   if (type === 'pct') return `${Math.round(value * 100)}%`
   return String(value)
@@ -640,24 +638,24 @@ function PolicyCompareTable({ profiles, onClose }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#09090b' }}>Plan Comparison</h2>
-          <p style={{ fontSize: '0.8125rem', color: '#71717a', marginTop: '0.25rem' }}>
-            <span style={{ display: 'inline-block', width: '10px', height: '10px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '2px', marginRight: '6px' }} />
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)' }}>Plan Comparison</h2>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+            <span style={{ display: 'inline-block', width: '10px', height: '10px', background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: '2px', marginRight: '6px' }} />
             Best value in each row highlighted green.
           </p>
         </div>
         <button className="btn btn-ghost" style={{ fontSize: '0.75rem' }} onClick={onClose}>✕ Close</button>
       </div>
 
-      <div style={{ overflowX: 'auto', borderRadius: '1rem', border: '1px solid #e4e4e7', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+      <div style={{ overflowX: 'auto', borderRadius: '1rem', border: '1px solid var(--border-secondary)', boxShadow: 'var(--shadow-sm)', background: 'var(--bg-card)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: `${280 + profiles.length * 160}px` }}>
           <thead>
-            <tr style={{ background: '#fafafa' }}>
-              <th style={{ padding: '0.875rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid #e4e4e7', width: '200px' }}>Field</th>
+            <tr style={{ background: 'var(--bg-secondary)' }}>
+              <th style={{ padding: '0.875rem 1rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border-secondary)', width: '200px' }}>Field</th>
               {profiles.map((p, i) => (
-                <th key={i} style={{ padding: '0.875rem 1rem', textAlign: 'center', borderBottom: '1px solid #e4e4e7', minWidth: '160px' }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#09090b' }}>{p.plan_name || `Plan ${i + 1}`}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#71717a', marginTop: '2px' }}>{p.carrier_name}</div>
+                <th key={i} style={{ padding: '0.875rem 1rem', textAlign: 'center', borderBottom: '1px solid var(--border-secondary)', minWidth: '160px' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--text-primary)' }}>{p.plan_name || `Plan ${i + 1}`}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{p.carrier_name}</div>
                 </th>
               ))}
             </tr>
@@ -674,22 +672,22 @@ function PolicyCompareTable({ profiles, onClose }) {
               }
 
               return (
-                <tr key={ri} style={{ borderBottom: '1px solid #f4f4f5', transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#fafafa'}
+                <tr key={ri} style={{ borderBottom: '1px solid var(--border-secondary)', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
                   onMouseLeave={e => e.currentTarget.style.background = ''}
                 >
-                  <td style={{ padding: '0.625rem 1rem', fontSize: '0.8125rem', fontWeight: 600, color: '#3f3f46' }}>{row.label}</td>
+                  <td style={{ padding: '0.625rem 1rem', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{row.label}</td>
                   {values.map((val, vi) => {
                     const isBest = bestIdx === vi
                     return (
                       <td key={vi} style={{
                         padding: '0.625rem 1rem', textAlign: 'center',
                         fontSize: '0.875rem', fontWeight: isBest ? 700 : 400,
-                        color: isBest ? '#15803d' : '#09090b',
-                        background: isBest ? '#dcfce7' : undefined,
+                        color: isBest ? 'var(--success)' : 'var(--text-primary)',
+                        background: isBest ? 'var(--success-bg)' : undefined,
                       }}>
                         {fmt(val, row.type)}
-                        {isBest && <span style={{ fontSize: '0.65rem', display: 'block', color: '#16a34a', marginTop: '1px' }}>Best</span>}
+                        {isBest && <span style={{ fontSize: '0.65rem', display: 'block', color: 'var(--success)', marginTop: '1px' }}>Best</span>}
                       </td>
                     )
                   })}
@@ -736,12 +734,12 @@ function BillAuditor() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div style={{ padding: '3rem 2rem', textAlign: 'center', background: '#fafafa', borderRadius: '1.25rem', border: '1px solid #e4e4e7' }}>
-        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '2rem' }}>
+      <div style={{ padding: '3rem 2rem', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '1.25rem', border: '1px solid var(--border-secondary)' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--danger-bg)', color: 'var(--danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', fontSize: '2rem' }}>
           🧾
         </div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', marginBottom: '0.75rem' }}>Bill Auditor has moved!</h3>
-        <p style={{ fontSize: '0.9375rem', color: '#71717a', maxWidth: '400px', margin: '0 auto 2rem' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Bill Auditor has moved!</h3>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 2rem' }}>
           We've upgraded the Bill Auditor into a full-page experience. It now supports multi-line bill uploads, comprehensive error scanning, and automatic dispute letter generation.
         </p>
         <button className="btn btn-red" onClick={() => navigate('/audit')}>
@@ -752,10 +750,10 @@ function BillAuditor() {
       {savedAudits.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#09090b' }}>Past Audit Reports</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Past Audit Reports</h3>
             <span style={{
-              padding: '2px 8px', borderRadius: '9999px', background: '#ecfdf5', color: '#059669',
-              border: '1px solid #a7f3d0', fontSize: '0.65rem', fontWeight: 700
+              padding: '2px 8px', borderRadius: '9999px', background: 'var(--success-bg)', color: 'var(--success)',
+              border: '1px solid var(--success-border)', fontSize: '0.65rem', fontWeight: 700
             }}>
               ☁ Cloud Synced
             </span>
@@ -768,26 +766,26 @@ function BillAuditor() {
                     <span className={`badge ${a.overall_risk === 'high' ? 'badge-danger' : a.overall_risk === 'medium' ? 'badge-warning' : 'badge-success'}`} style={{ marginRight: '0.5rem', textTransform: 'uppercase' }}>
                       {a.overall_risk} Risk
                     </span>
-                    <span style={{ fontSize: '0.75rem', color: '#71717a', fontWeight: 600 }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
                       {a.source === 'upload' ? '📁 Uploaded Bill' : '✍ Manual Audit'} · {new Date(a.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', color: '#ef4444' }} onClick={() => deleteAudit(a.id)} title="Delete audit record">🗑</button>
+                  <button className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', color: 'var(--danger)' }} onClick={() => deleteAudit(a.id)} title="Delete audit record">🗑</button>
                 </div>
                 <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.5rem', fontSize: '0.875rem' }}>
                   <div>
-                    <span style={{ color: '#71717a', fontSize: '0.75rem' }}>Total Billed: </span>
-                    <strong style={{ color: '#09090b' }}>${Number(a.total_billed || 0).toLocaleString()}</strong>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Total Billed: </span>
+                    <strong style={{ color: 'var(--text-primary)' }}>${Number(a.total_billed || 0).toLocaleString()}</strong>
                   </div>
                   {a.potential_savings > 0 && (
                     <div>
-                      <span style={{ color: '#059669', fontSize: '0.75rem' }}>Potential Savings: </span>
-                      <strong style={{ color: '#059669' }}>${Number(a.potential_savings).toLocaleString()}</strong>
+                      <span style={{ color: 'var(--success)', fontSize: '0.75rem' }}>Potential Savings: </span>
+                      <strong style={{ color: 'var(--success)' }}>${Number(a.potential_savings).toLocaleString()}</strong>
                     </div>
                   )}
                 </div>
                 <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button className="btn btn-ghost" style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }} onClick={() => navigate('/audit', { state: { loadAudit: a } })}>
+                  <button className="btn btn-ghost" style={{ fontSize: '0.75rem', color: 'var(--accent)', fontWeight: 700 }} onClick={() => navigate('/audit', { state: { loadAudit: a } })}>
                     Open Report →
                   </button>
                 </div>
@@ -860,24 +858,24 @@ function CostEstimator({ policy }) {
 
   if (!policy) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', background: '#fafafa', borderRadius: '1rem', border: '1px dashed #d4d4d8' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#09090b', marginBottom: '0.5rem' }}>No Policy Loaded</h3>
-        <p style={{ color: '#71717a', fontSize: '0.875rem' }}>You need to load a policy from the Overview tab to use the Cost Estimator.</p>
+      <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px dashed var(--border-primary)' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>No Policy Loaded</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>You need to load a policy from the Overview tab to use the Cost Estimator.</p>
       </div>
     )
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div style={{ background: '#fafafa', borderRadius: '1rem', padding: '1.5rem', border: '1px solid #f4f4f5' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#09090b', marginBottom: '1rem' }}>Enter Procedure Details</h3>
+      <div style={{ background: 'var(--bg-secondary)', borderRadius: '1rem', padding: '1.5rem', border: '1px solid var(--border-secondary)' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>Enter Procedure Details</h3>
         <div className="grid-2">
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#71717a', marginBottom: '0.25rem' }}>CPT Code (Optional)</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>CPT Code (Optional)</label>
             <input className="input" value={cpt} onChange={e => setCpt(e.target.value)} placeholder="e.g. 99213" />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#71717a', marginBottom: '0.25rem' }}>Estimated Provider Charge</label>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Estimated Provider Charge</label>
             <input className="input" value={providerCharge} onChange={e => setProviderCharge(e.target.value)} placeholder="$" type="number" />
           </div>
         </div>
@@ -894,39 +892,39 @@ function CostEstimator({ policy }) {
       {result && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           {/* In Network */}
-          <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '1rem', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#065f46', marginBottom: '0.5rem' }}>In-Network</h3>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px dashed #a7f3d0', paddingBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.875rem', color: '#047857' }}>Estimated Patient Cost</span>
-              <span style={{ fontSize: '1.125rem', fontWeight: 800, color: '#065f46' }}>${result.inNetwork.patientResp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+          <div style={{ background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: '1rem', padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--success)', marginBottom: '0.5rem' }}>In-Network</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px dashed var(--success-border)', paddingBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--success)' }}>Estimated Patient Cost</span>
+              <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--success)' }}>${result.inNetwork.patientResp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.75rem', color: '#059669' }}>Plan Pays</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#047857' }}>${result.inNetwork.planPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--success)' }}>Plan Pays</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--success)' }}>${result.inNetwork.planPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
           </div>
 
           {/* Out of Network */}
-          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '1rem', padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#92400e', marginBottom: '0.5rem' }}>Out-of-Network</h3>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px dashed #fde68a', paddingBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.875rem', color: '#b45309' }}>Estimated Patient Cost</span>
-              <span style={{ fontSize: '1.125rem', fontWeight: 800, color: '#92400e' }}>${result.outOfNetwork.patientResp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+          <div style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning-border)', borderRadius: '1rem', padding: '1.5rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--warning)', marginBottom: '0.5rem' }}>Out-of-Network</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', borderBottom: '1px dashed var(--warning-border)', paddingBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--warning)' }}>Estimated Patient Cost</span>
+              <span style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--warning)' }}>${result.outOfNetwork.patientResp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#d97706' }}>Plan Pays</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#b45309' }}>${result.outOfNetwork.planPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--warning)' }}>Plan Pays</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--warning)' }}>${result.outOfNetwork.planPaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
             {result.outOfNetwork.balanceBillingRisk > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '0.75rem', color: '#dc2626' }}>Balance Billing Risk</span>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#b91c1c' }}>+${result.outOfNetwork.balanceBillingRisk.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>Balance Billing Risk</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--danger)' }}>+${result.outOfNetwork.balanceBillingRisk.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
             )}
           </div>
           
-          <div style={{ gridColumn: '1 / -1', background: '#fafafa', padding: '1rem', borderRadius: '0.75rem', border: '1px solid #e4e4e7' }}>
-             <p style={{ fontSize: '0.75rem', color: '#71717a', fontStyle: 'italic' }}>
+          <div style={{ gridColumn: '1 / -1', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-secondary)' }}>
+             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                * Note: This is an estimate based on your policy's basic deductible and coinsurance structures, assuming your deductible has not yet been met for the year. Actual costs will vary based on contracted rates, negotiated UCR amounts, and previously accumulated out-of-pocket spending.
              </p>
           </div>
@@ -1071,30 +1069,18 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
     },
   ]
 
-  if (loading) {
-    return (
-      <div className="legacy-theme">
-        <section className="section-white section-pad">
-          <div className="main">
-            <div style={{ marginBottom: '2rem' }}>
-              <div style={{ height: '2.5rem', width: '16rem', borderRadius: '0.75rem', background: 'var(--bg-tertiary)', marginBottom: '1rem' }} />
-              <div style={{ height: '1rem', width: '28rem', maxWidth: '100%', borderRadius: '0.5rem', background: 'var(--bg-tertiary)' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0', gap: '0.75rem', flexDirection: 'column', alignItems: 'center' }}>
-              <span className="spinner" style={{ width: '32px', height: '32px', borderWidth: '3px', borderColor: 'var(--border-primary)', borderTopColor: 'var(--accent)' }} />
-              <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>Loading your dashboard…</span>
-            </div>
-          </div>
-        </section>
-      </div>
-    )
-  }
-
   return (
-    <div className="legacy-theme">
-    <section className="section-white section-pad">
+    <section className="section-white section-pad" aria-busy={loading} data-loading={loading ? 'true' : 'false'}>
       <div className="main">
-        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '2rem' }}>
+        <motion.div
+          initial="hidden"
+          animate="show"
+          variants={{ show: { transition: { staggerChildren: 0.08 } } }}
+          style={{ marginBottom: '2rem' }}
+        >
+          <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-label">
+            <span className="line" /> Workspace Overview
+          </motion.p>
           <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
             My <span className="gradient-text">Dashboard</span>
           </motion.h1>
@@ -1106,7 +1092,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
         {/* ── Tab Strip ─────────────────────────────────────────── */}
         <div style={{
           display: 'flex', gap: '0.375rem',
-          borderBottom: '1px solid #e4e4e7',
+          borderBottom: '1px solid var(--border-secondary)',
           marginBottom: '2rem',
           overflowX: 'auto',
         }}>
@@ -1119,8 +1105,8 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                 display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                 padding: '0.75rem 1.25rem',
                 background: 'none', border: 'none',
-                borderBottom: `2px solid ${activeTab === tab.id ? '#dc2626' : 'transparent'}`,
-                color: activeTab === tab.id ? '#dc2626' : '#71717a',
+                borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent)' : 'transparent'}`,
+                color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-tertiary)',
                 fontWeight: activeTab === tab.id ? 700 : 500,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
@@ -1133,7 +1119,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
               {tab.badge && (
                 <span style={{
                   padding: '1px 6px', borderRadius: '9999px',
-                  background: '#fef2f2', color: '#dc2626',
+                  background: 'var(--accent-subtle)', color: 'var(--accent)',
                   fontSize: '0.6rem', fontWeight: 800, letterSpacing: '0.04em',
                 }}>
                   {tab.badge}
@@ -1180,7 +1166,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                   <h2>Saved Policies</h2>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                     {compareIds.size >= 2 && (
-                      <span style={{ fontSize: '0.7rem', color: '#71717a' }}>{compareIds.size} selected</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>{compareIds.size} selected</span>
                     )}
                     <button
                       className="btn btn-ghost"
@@ -1419,7 +1405,6 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
 
       </div>
     </section>
-    </div>
   )
 }
 

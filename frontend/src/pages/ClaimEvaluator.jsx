@@ -505,7 +505,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
           className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <div className="feature-icon emerald" style={{ background: '#dcfce7', color: '#059669', border: '1px solid #bbf7d0' }}><IconStethoscope size={20} /></div>
+              <div className="feature-icon emerald" style={{ background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid var(--success-border)' }}><IconStethoscope size={20} /></div>
               <div>
                 <h2 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>Provider & Facility Network Check</h2>
                 <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', maxWidth: '44rem' }}>

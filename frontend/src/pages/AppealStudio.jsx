@@ -259,19 +259,27 @@ export default function AppealStudio() {
   ]
 
   return (
-    <div className="main" style={{ padding: '2rem 0', minHeight: '100vh' }}>
-      
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-        <button onClick={() => navigate(-1)} className="btn btn-ghost" style={{ padding: 0 }}>
-          ← Back to Evaluator
-        </button>
-        <span style={{ color: 'var(--text-tertiary)' }}>/</span>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-          Appeal Studio
-        </h1>
-      </div>
+    <section className="section-white section-pad">
+      <div className="main">
+        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '2rem' }}>
+          <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-label">
+            <span className="line" /> Appeal Workspace
+          </motion.p>
+          <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
+            Appeal <span className="gradient-text">Studio</span>
+          </motion.h1>
+          <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-subtitle">
+            Revise your appeal draft, assemble evidence, and export a submission packet with consistent formatting.
+          </motion.p>
+        </motion.div>
 
-      <div className="studio-layout">
+        <div style={{ marginBottom: '1.75rem' }}>
+          <button onClick={() => navigate(-1)} className="btn btn-ghost" style={{ padding: 0, fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
+            ← Back to Evaluator
+          </button>
+        </div>
+
+        <div className="studio-layout">
         
         {/* Zone A: AI Co-Pilot Toolbar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -385,7 +393,8 @@ export default function AppealStudio() {
           </div>
         </div>
 
+        </div>
       </div>
-    </div>
-  )
+      </section>
+    )
 }

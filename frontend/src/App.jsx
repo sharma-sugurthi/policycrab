@@ -1,19 +1,20 @@
 import { Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom'
-import { useEffect, useState, useRef } from 'react'
+import { lazy, Suspense, useEffect, useState, useRef } from 'react'
 import Home from './pages/Home'
 import ClaimEvaluator from './pages/ClaimEvaluator'
 import ChatAssistant from './pages/ChatAssistant'
 import PolicyUpload from './pages/PolicyUpload'
 import AuthPage from './pages/AuthPage'
-import Dashboard from './pages/Dashboard'
 import BillAuditor from './pages/BillAuditor'
 import ProfilePage from './pages/ProfilePage'
-import BenchmarkDashboard from './pages/BenchmarkDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import CarrierHub from './pages/CarrierHub'
 import AppealStudio from './pages/AppealStudio'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
+
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const BenchmarkDashboard = lazy(() => import('./pages/BenchmarkDashboard'))
 
 // ── Browser storage keys ─────────────────────────────────────
 const SS_POLICY_KEY = 'policycrab_policy_profile'
@@ -471,58 +472,60 @@ function AppContent() {
       </header>
 
       {/* ── Main ──────────────────────────────────── */}
-      <Routes>
-        <Route path="/" element={<Home policyProfile={policyProfile} costBreakdown={costBreakdown} />} />
-        <Route path="/auth" element={<AuthPage />} />
-        
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard policyProfile={policyProfile} onPolicySelected={setPolicyProfile} />
-          </ProtectedRoute>
-        } />
-        <Route path="/policy" element={
-          <ProtectedRoute>
-            <PolicyUpload onPolicyParsed={setPolicyProfile} />
-          </ProtectedRoute>
-        } />
-        <Route path="/claim" element={
-          <ProtectedRoute>
-            <ClaimEvaluator policyProfile={policyProfile} policySession={policySession} onResult={setCostBreakdown} />
-          </ProtectedRoute>
-        } />
-        <Route path="/audit" element={
-          <ProtectedRoute>
-            <BillAuditor />
-          </ProtectedRoute>
-        } />
-        <Route path="/routing" element={
-          <ProtectedRoute>
-            <CarrierHub />
-          </ProtectedRoute>
-        } />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        } />
-        <Route path="/studio" element={
-          <ProtectedRoute>
-            <AppealStudio />
-          </ProtectedRoute>
-        } />
-        <Route path="/chat" element={
-          <ProtectedRoute>
-            <ChatAssistant policyProfile={policyProfile} costBreakdown={costBreakdown} />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/benchmarks" element={<BenchmarkDashboard />} />
-      </Routes>
+      <Suspense fallback={<div style={{ minHeight: '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>Loading page…</div>}>
+        <Routes>
+          <Route path="/" element={<Home policyProfile={policyProfile} costBreakdown={costBreakdown} />} />
+          <Route path="/auth" element={<AuthPage />} />
+          
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard policyProfile={policyProfile} onPolicySelected={setPolicyProfile} />
+            </ProtectedRoute>
+          } />
+          <Route path="/policy" element={
+            <ProtectedRoute>
+              <PolicyUpload onPolicyParsed={setPolicyProfile} />
+            </ProtectedRoute>
+          } />
+          <Route path="/claim" element={
+            <ProtectedRoute>
+              <ClaimEvaluator policyProfile={policyProfile} policySession={policySession} onResult={setCostBreakdown} />
+            </ProtectedRoute>
+          } />
+          <Route path="/audit" element={
+            <ProtectedRoute>
+              <BillAuditor />
+            </ProtectedRoute>
+          } />
+          <Route path="/routing" element={
+            <ProtectedRoute>
+              <CarrierHub />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } />
+          <Route path="/studio" element={
+            <ProtectedRoute>
+              <AppealStudio />
+            </ProtectedRoute>
+          } />
+          <Route path="/chat" element={
+            <ProtectedRoute>
+              <ChatAssistant policyProfile={policyProfile} costBreakdown={costBreakdown} />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/benchmarks" element={<BenchmarkDashboard />} />
+        </Routes>
+      </Suspense>
     </>
   )
 }
