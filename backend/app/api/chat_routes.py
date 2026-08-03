@@ -10,7 +10,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from app.agents.graph import get_chat_graph
 from app.api.auth import get_current_user, get_current_websocket_user
 from app.security.rate_limit import RateLimitRule, check_rate_limit, rate_limit, websocket_identity
-from app.services.user_data import clear_user_chat, get_user_chat, upsert_user_chat
+from app.services.user_data import clear_user_chat, get_user_chat, upsert_user_chat, list_user_chats, delete_user_chat
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
@@ -174,22 +174,32 @@ async def chat_websocket(websocket: WebSocket):
             pass
 
 
+@router.get("/api/chat/sessions", tags=["Chat"])
+async def get_all_chat_sessions(user: dict = Depends(get_current_user)):
+    return list_user_chats(user["id"])
+
+
 @router.get("/api/chat/session", tags=["Chat"])
-async def get_chat_session(user: dict = Depends(get_current_user)):
-    chat = get_user_chat(user["id"])
+async def get_chat_session(chat_id: str | None = None, user: dict = Depends(get_current_user)):
+    if not chat_id:
+        return {"messages": [], "policy_profile": None, "cost_breakdown": None}
+    
+    chat = get_user_chat(user["id"], chat_id)
     if not chat:
         return {"messages": [], "policy_profile": None, "cost_breakdown": None}
     return {
+        "id": chat.get("id"),
+        "title": chat.get("title"),
         "messages": chat.get("messages") or [],
         "policy_profile": chat.get("policy_profile_json"),
         "cost_breakdown": chat.get("cost_breakdown_json"),
     }
 
 
-@router.delete("/api/chat/session", tags=["Chat"])
-async def delete_chat_session(user: dict = Depends(get_current_user)):
-    clear_user_chat(user["id"])
-    return {"success": True}
+@router.delete("/api/chat/session/{chat_id}", tags=["Chat"])
+async def delete_chat_session(chat_id: str, user: dict = Depends(get_current_user)):
+    success = delete_user_chat(user["id"], chat_id)
+    return {"success": success}
 
 
 @router.post("/api/chat/message", tags=["Chat"])
@@ -199,11 +209,16 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user), _:
 
     Body: {"message": "...", "history": [...], "policy_profile": {...}}
     """
+    chat_id = request.get("chat_id")
     user_message = request.get("message", "")
     if not user_message.strip():
         return {"response": "Please type a question.", "error": None}
 
-    chat = get_user_chat(user["id"])
+    if chat_id:
+        chat = get_user_chat(user["id"], chat_id)
+    else:
+        chat = None
+
     stored_messages = chat.get("messages", []) if chat else []
     messages = _stored_messages_to_langchain(stored_messages)
     messages.append(HumanMessage(content=user_message))
@@ -233,9 +248,23 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user), _:
         ai_messages = [m for m in result.get("messages", []) if hasattr(m, 'type') and m.type == "ai"]
         response_text = _extract_text_content(ai_messages[-1].content) if ai_messages else "I couldn't generate a response."
         stored_after = _langchain_messages_to_stored(result.get("messages", []))
-        upsert_user_chat(user["id"], stored_after, policy_profile=policy_profile, cost_breakdown=cost_breakdown)
+        
+        title = None
+        if not chat_id and len(stored_after) <= 2:
+            title = user_message[:30] + ("..." if len(user_message) > 30 else "")
 
-        return {"response": response_text, "error": None, "messages": stored_after}
+        new_chat = upsert_user_chat(
+            user["id"], 
+            stored_after, 
+            policy_profile=policy_profile, 
+            cost_breakdown=cost_breakdown,
+            chat_id=chat_id,
+            title=title
+        )
+        
+        res_chat_id = new_chat["id"] if new_chat else chat_id
+
+        return {"response": response_text, "error": None, "messages": stored_after, "chat_id": res_chat_id}
 
     except Exception as e:
         logger.error(f"Chat HTTP error: {e}", exc_info=True)

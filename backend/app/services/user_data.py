@@ -135,16 +135,29 @@ def list_user_claims(user_id: str) -> list[dict]:
     return result.data or []
 
 
-def get_user_chat(user_id: str) -> dict | None:
+def get_user_chat(user_id: str, chat_id: str) -> dict | None:
     client = get_supabase_client()
     result = (
         client.table("user_chats")
-        .select("id, messages, policy_profile_json, cost_breakdown_json, created_at, updated_at")
+        .select("id, title, messages, policy_profile_json, cost_breakdown_json, created_at, updated_at")
         .eq("user_id", user_id)
+        .eq("id", chat_id)
         .limit(1)
         .execute()
     )
     return result.data[0] if result.data else None
+
+
+def list_user_chats(user_id: str) -> list[dict]:
+    client = get_supabase_client()
+    result = (
+        client.table("user_chats")
+        .select("id, title, updated_at, created_at")
+        .eq("user_id", user_id)
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    return result.data or []
 
 
 def upsert_user_chat(
@@ -152,17 +165,41 @@ def upsert_user_chat(
     messages: list[dict],
     policy_profile: dict | None = None,
     cost_breakdown: dict | None = None,
+    chat_id: str | None = None,
+    title: str | None = None,
 ) -> dict | None:
     client = get_supabase_client()
+    
+    if not chat_id:
+        chat_id = str(uuid4())
+        
     payload = {
+        "id": chat_id,
         "user_id": user_id,
         "messages": messages,
         "policy_profile_json": policy_profile,
         "cost_breakdown_json": cost_breakdown,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    result = client.table("user_chats").upsert(payload, on_conflict="user_id").execute()
+    
+    if title:
+        payload["title"] = title
+
+    # Upsert based on the 'id' column now, rather than 'user_id'
+    result = client.table("user_chats").upsert(payload, on_conflict="id").execute()
     return result.data[0] if result.data else None
+
+
+def delete_user_chat(user_id: str, chat_id: str) -> bool:
+    client = get_supabase_client()
+    result = (
+        client.table("user_chats")
+        .delete()
+        .eq("id", chat_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return bool(result.data)
 
 
 def clear_user_chat(user_id: str) -> None:

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch, readApiResponse } from '../lib/api'
-import { IconCpu, IconActivity, IconSearch, IconBriefcase, IconAlertTriangle, IconZap } from '../components/Icons'
+import { IconCpu, IconActivity, IconSearch, IconBriefcase, IconZap, IconPlus, IconTrash, IconMessageCircle } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
@@ -23,44 +23,77 @@ function renderMessageContent(content) {
   })
 }
 
-
 export default function ChatAssistant({ policyProfile, costBreakdown }) {
-  const [messages, setMessages] = useState([
-    { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
-  ])
+  const defaultGreeting = { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
+
+  const [messages, setMessages] = useState([defaultGreeting])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [chatSessions, setChatSessions] = useState([])
+  const [activeChatId, setActiveChatId] = useState(null)
   const messagesEndRef = useRef(null)
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadChatSession() {
-      try {
-        const res = await apiFetch('/chat/session')
-        if (!res.ok) return
+  // Fetch list of all chat sessions
+  const fetchSessions = async () => {
+    try {
+      const res = await apiFetch('/chat/sessions')
+      if (res.ok) {
         const data = await readApiResponse(res)
-        if (!cancelled && data.messages?.length > 0) setMessages(data.messages)
-      } catch (err) {
-        console.error('Failed to load chat session', err)
+        setChatSessions(data || [])
+        // Auto-select most recent if none selected
+        if (!activeChatId && data?.length > 0) {
+          loadSession(data[0].id)
+        }
       }
+    } catch (err) {
+      console.error('Failed to load chat sessions', err)
     }
+  }
 
-    loadChatSession()
-    return () => { cancelled = true }
+  useEffect(() => {
+    fetchSessions()
   }, [])
 
-  const handleClearChat = async () => {
+  // Load a specific session
+  const loadSession = async (chatId) => {
+    if (chatId === activeChatId) return
+    setActiveChatId(chatId)
+    setLoading(true)
     try {
-      await apiFetch('/chat/session', { method: 'DELETE' })
+      const res = await apiFetch(`/chat/session?chat_id=${chatId}`)
+      if (res.ok) {
+        const data = await readApiResponse(res)
+        if (data.messages?.length > 0) {
+          setMessages(data.messages)
+        } else {
+          setMessages([defaultGreeting])
+        }
+      }
     } catch (err) {
-      console.error('Failed to clear chat session', err)
+      console.error('Failed to load session', err)
+    } finally {
+      setLoading(false)
     }
-    setMessages([
-      { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
-    ])
+  }
+
+  const handleNewChat = () => {
+    setActiveChatId(null)
+    setMessages([defaultGreeting])
+  }
+
+  const handleDeleteSession = async (e, chatId) => {
+    e.stopPropagation()
+    try {
+      await apiFetch(`/chat/session/${chatId}`, { method: 'DELETE' })
+      if (activeChatId === chatId) {
+        handleNewChat()
+      }
+      fetchSessions()
+    } catch (err) {
+      console.error('Failed to delete session', err)
+    }
   }
 
   const handleSend = async (e) => {
@@ -72,9 +105,12 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
     setLoading(true)
 
     try {
+      const payload = { message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }
+      if (activeChatId) payload.chat_id = activeChatId
+
       const res = await apiFetch('/chat/message', {
         method: 'POST',
-        body: JSON.stringify({ message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }),
+        body: JSON.stringify(payload),
       })
       const data = await readApiResponse(res)
       if (!data || typeof data === 'string') {
@@ -84,6 +120,11 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       }
       if (data.messages?.length) setMessages(data.messages)
       else setMessages(prev => [...prev, { role: 'ai', content: data.error ? `Error: ${data.error}` : data.response }])
+
+      if (data.chat_id && data.chat_id !== activeChatId) {
+        setActiveChatId(data.chat_id)
+        fetchSessions()
+      }
     } catch (err) {
       setMessages(prev => [...prev, { role: 'ai', content: 'Connection error — please check your internet and try again.' }])
     } finally { setLoading(false) }
@@ -108,14 +149,47 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
             <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
               AI <span className="gradient-text">Assistant</span>
             </motion.h1>
-            <button type="button" className="btn btn-outline" style={{ fontSize: '0.8125rem', padding: '0.5rem 1rem' }} onClick={handleClearChat}>Clear Chat</button>
           </div>
         </motion.div>
 
-        <div className="grid-2" style={{ gap: '1.5rem', alignItems: 'start' }}>
-          {/* ── Left Panel ─────────────────── */}
+        <div className="grid-2" style={{ gap: '1.5rem', alignItems: 'start', gridTemplateColumns: '1fr 2fr' }}>
+          {/* ── Left Panel (Sidebar) ─────────────────── */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
             style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+            {/* Chat History List */}
+            <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <button className="btn btn-red" onClick={handleNewChat} style={{ width: '100%', justifyContent: 'center' }}>
+                <IconPlus size={16} /> New Chat
+              </button>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                {chatSessions.length === 0 ? (
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '1rem 0' }}>No previous chats.</p>
+                ) : (
+                  chatSessions.map(session => (
+                    <div key={session.id} 
+                         onClick={() => loadSession(session.id)}
+                         style={{ 
+                           display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                           padding: '0.75rem', borderRadius: '8px', cursor: 'pointer',
+                           background: activeChatId === session.id ? 'var(--bg-secondary)' : 'transparent',
+                           border: `1px solid ${activeChatId === session.id ? 'var(--border-primary)' : 'transparent'}`
+                         }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
+                        <IconMessageCircle size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {session.title || 'New Chat'}
+                        </span>
+                      </div>
+                      <button onClick={(e) => handleDeleteSession(e, session.id)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '0.25rem' }}>
+                        <IconTrash size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
             {/* Context */}
             <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)' }}>
@@ -159,7 +233,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
 
           {/* ── Chat Panel ─────────────────── */}
           <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.55, delay: 0.15 }}>
-            <div className="chat-panel" style={{ height: 'calc(100vh - 280px)' }}>
+            <div className="chat-panel" style={{ height: 'calc(100vh - 220px)' }}>
               <div className="chat-messages">
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`chat-bubble ${msg.role}`}>
