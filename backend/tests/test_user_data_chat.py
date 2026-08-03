@@ -59,7 +59,7 @@ def test_get_user_chat_reads_persisted_supabase_row(monkeypatch):
     )
     monkeypatch.setattr(user_data, "get_supabase_client", lambda: _Client(table))
 
-    chat = user_data.get_user_chat("user-1")
+    chat = user_data.get_user_chat("user-1", "chat-1")
 
     assert chat["id"] == "chat-1"
     assert ("eq", ("user_id", "user-1"), {}) in table.calls
@@ -82,7 +82,7 @@ def test_upsert_user_chat_writes_persisted_supabase_row(monkeypatch):
     payload = upsert_calls[0][1][0]
     assert payload["user_id"] == "user-1"
     assert payload["messages"] == [{"role": "user", "content": "hi"}]
-    assert upsert_calls[0][2] == {"on_conflict": "user_id"}
+    assert upsert_calls[0][2] == {"on_conflict": "id"}
 
 
 def test_chat_persistence_errors_are_not_silently_ephemeral(monkeypatch):
@@ -90,4 +90,4 @@ def test_chat_persistence_errors_are_not_silently_ephemeral(monkeypatch):
     monkeypatch.setattr(user_data, "get_supabase_client", lambda: _Client(table))
 
     with pytest.raises(RuntimeError, match="database unavailable"):
-        user_data.get_user_chat("user-1")
+        user_data.get_user_chat("user-1", "chat-1")
