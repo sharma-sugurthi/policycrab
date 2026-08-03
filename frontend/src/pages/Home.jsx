@@ -295,7 +295,7 @@ export default function Home({ policyProfile }) {
               </motion.div>
 
               <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="benchmark-proof-grid">
                   <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center' }}>
                     <div style={{ fontSize: '2.25rem', fontWeight: 900, color: '#10b981', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>200</div>
                     <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>Tested Scenarios</div>
@@ -306,7 +306,7 @@ export default function Home({ policyProfile }) {
                     <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>Claim Categories</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Exclusions to Upcoding</div>
                   </div>
-                  <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center', gridColumn: 'span 2' }}>
+                  <div className="benchmark-proof-wide" style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center', gridColumn: 'span 2' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                       <span style={{ fontSize: '1.75rem', fontWeight: 900, color: '#10b981' }}>High-Precision RAG</span>
                     </div>

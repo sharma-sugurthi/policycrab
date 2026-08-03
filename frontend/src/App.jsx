@@ -362,7 +362,7 @@ function AppContent() {
             ))}
           </nav>
 
-          <div className="navbar-status" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className="navbar-status" style={{ alignItems: 'center', gap: '0.75rem' }}>
             <button
               type="button"
               className="theme-toggle"
