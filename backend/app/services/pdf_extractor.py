@@ -185,7 +185,9 @@ def extract_eob_safely(
         raise ValueError(f"Gemini returned unparseable output. JSON error: {e}")
 
     from app.agents.eob_extractor import postprocess_eob_result
+    from app.services.math_validator import validate_eob_math
     result = postprocess_eob_result(result, clean_text)
+    result = validate_eob_math(result)
 
     logger.info(
         f"Extraction complete — "

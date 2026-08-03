@@ -20,20 +20,21 @@ The US healthcare billing system is notoriously opaque, with up to **80% of medi
 PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medical math is accurate (preventing LLM hallucination) while leveraging AI for complex reasoning and writing.
 
 - **Frontend:** React, Vite, Framer Motion, Vanilla CSS (Premium, custom-branded UI).
-- **Backend:** FastAPI (Python), SQLAlchemy, asyncpg.
+- **Backend:** FastAPI (Python), SQLAlchemy, asyncpg. Includes an async task queue via **FastAPI BackgroundTasks + Upstash Redis** for resilient background processing.
 - **AI Agents & RAG:** LangGraph, LangChain. Uses a curated, localized knowledge base covering federal regulations (ERISA, ACA, NSA, Medicare, HIPAA).
 - **LLM Routing:** Intelligent Multi-LLM setup. Groq (Llama 3) for fast, cheap data extraction; Google Gemini 2.5 Pro for complex reasoning and drafting.
-- **Document Processing:** PyMuPDF, Pytesseract (OCR for scanned images).
+- **Document Processing:** PyMuPDF (digital text) and **Gemini Multimodal API** (native OCR/vision for complex tables and scanned PDFs).
 - **Database & Auth:** Supabase (PostgreSQL pgvector for embeddings, Auth JWTs for user sessions).
 
 ## ✨ Key Features
 
-1. **AI Policy Ingestion (RAG):** Extracts complex SBC/EOB terms into a normalized deterministic schema. Includes OCR fallback for scanned images.
+1. **AI Policy Ingestion (RAG):** Extracts complex SBC/EOB terms into a normalized deterministic schema. Includes Gemini Multimodal for pixel-perfect table extraction on scanned images.
 2. **Deterministic Adjudication Engine:** Accurately calculates patient responsibilities (deductibles, coinsurance, OOP maximums, NSA protections) with exact math, bypassing LLM limitations on numerical reasoning.
 3. **Automated ERISA Appeals (Interactive Studio):** If a claim is denied, the engine triggers an autonomous agent to draft a formal, legally grounded appeal letter using federal guidelines. Users can review, tweak, and generate a final PDF dossier.
-4. **Interactive AI Advocate:** A contextual chat assistant that references the user's specific policy and claim to answer regulatory questions.
-5. **Secure Dashboard & History:** Powered by Supabase, users can save and revisit past policies, track claim evaluations, and monitor statutory deadlines.
-6. **Bill Auditor:** Analyzes itemized medical bills line-by-line for upcoding or unbundling errors.
+4. **Human-in-the-Loop Data Editor:** Post-extraction verification step. If the AI hallucinates medical billing math, a built-in `math_validator` flags the errors, prompting users to correct the data before generating an appeal.
+5. **Interactive AI Advocate:** A contextual chat assistant with multi-thread persistent history that references the user's specific policy and claim to answer regulatory questions.
+6. **Secure Dashboard & History:** Powered by Supabase, users can save and revisit past policies, track claim evaluations, and monitor statutory deadlines.
+7. **HIPAA-Compliant Auto-Purge:** Uses Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions and medical audits after 30 days to enforce minimal data liability.
 
 ## 📂 Repository Structure
 

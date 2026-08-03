@@ -224,7 +224,9 @@ def extract_eob_fields(eob_text: str, llm: Any) -> dict:
             raw = re.sub(r"^```(?:json)?\n?", "", raw)
             raw = re.sub(r"\n?```$", "", raw)
 
+        from app.services.math_validator import validate_eob_math
         result = postprocess_eob_result(json.loads(raw), eob_text)
+        result = validate_eob_math(result)
         logger.info(
             f"EOB Extractor (fallback): Successfully extracted fields. "
             f"Denied={result.get('is_denied')}, "

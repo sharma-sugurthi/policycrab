@@ -646,25 +646,52 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                 )}
                 {eobResult && (
                   <div style={{ padding: '1.25rem' }}>
+                    {eobResult.validation_errors?.length > 0 && (
+                      <div style={{ background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: '0.75rem', padding: '0.875rem 1rem', fontSize: '0.875rem', color: 'var(--danger)', marginBottom: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                          <IconAlertTriangle size={16} /> Math Validation Errors
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                          {eobResult.validation_errors.map((err, i) => <li key={i}>{err}</li>)}
+                        </ul>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', fontWeight: 600 }}>Please correct the numbers below before continuing.</div>
+                      </div>
+                    )}
                     <div className="eob-fields-grid">
                       {[
-                        ['Date of Service', eobResult.date_of_service, eobResult.confidence?.date_of_service],
-                        ['Provider', eobResult.provider_name, 'high'],
-                        ['Facility', eobResult.facility_name, 'high'],
-                        ['CPT Code', eobResult.cpt_code, eobResult.confidence?.cpt_code],
-                        ['ICD-10', eobResult.icd_10_code, 'high'],
-                        ['Billed Amount', eobResult.billed_amount != null ? `$${Number(eobResult.billed_amount).toLocaleString()}` : null, eobResult.confidence?.billed_amount],
-                        ['Allowed Amount', eobResult.allowed_amount != null ? `$${Number(eobResult.allowed_amount).toLocaleString()}` : null, eobResult.confidence?.allowed_amount],
-                        ['Patient Responsibility', eobResult.patient_responsibility != null ? `$${Number(eobResult.patient_responsibility).toLocaleString()}` : null, 'high'],
-                        ['CARC Code', eobResult.denial_carc_code, eobResult.confidence?.denial_carc_code],
-                        ['Denial Date', eobResult.denial_date, 'high'],
-                      ].filter(([, val]) => val != null).map(([label, val, conf]) => (
+                        { label: 'Date of Service', key: 'date_of_service', type: 'date', val: eobResult.date_of_service, conf: eobResult.confidence?.date_of_service },
+                        { label: 'Provider', key: 'provider_name', type: 'text', val: eobResult.provider_name, conf: 'high' },
+                        { label: 'Facility', key: 'facility_name', type: 'text', val: eobResult.facility_name, conf: 'high' },
+                        { label: 'CPT Code', key: 'cpt_code', type: 'text', val: eobResult.cpt_code, conf: eobResult.confidence?.cpt_code },
+                        { label: 'ICD-10', key: 'icd_10_code', type: 'text', val: eobResult.icd_10_code, conf: 'high' },
+                        { label: 'Billed Amount ($)', key: 'billed_amount', type: 'number', val: eobResult.billed_amount, conf: eobResult.confidence?.billed_amount },
+                        { label: 'Allowed Amount ($)', key: 'allowed_amount', type: 'number', val: eobResult.allowed_amount, conf: eobResult.confidence?.allowed_amount },
+                        { label: 'Patient Resp ($)', key: 'patient_responsibility', type: 'number', val: eobResult.patient_responsibility, conf: 'high' },
+                        { label: 'CARC Code', key: 'denial_carc_code', type: 'text', val: eobResult.denial_carc_code, conf: eobResult.confidence?.denial_carc_code },
+                        { label: 'Denial Date', key: 'denial_date', type: 'date', val: eobResult.denial_date, conf: 'high' },
+                      ].map(({ label, key, type, val, conf }) => (
                         <div key={label} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', borderRadius: '0.75rem', padding: '0.625rem 0.875rem' }}>
-                          <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.125rem', display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.25rem', display: 'flex', justifyContent: 'space-between' }}>
                             {label}
                             {conf === 'low' && <span style={{ color: 'var(--warning)', fontSize: '0.625rem', display: 'flex', alignItems: 'center', gap: '0.125rem' }}><IconAlertTriangle size={10} /> verify</span>}
                           </div>
-                          <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>{val}</div>
+                          <input
+                            className="input"
+                            type={type}
+                            step={type === 'number' ? '0.01' : undefined}
+                            value={val == null ? '' : val}
+                            onChange={e => {
+                               let v = e.target.value;
+                               if (type === 'number') v = v === '' ? null : Number(v);
+                               setEobResult(prev => {
+                                 // Clear validation errors when user starts editing so they can attempt to fix it
+                                 const updated = { ...prev, [key]: v };
+                                 if (updated.validation_errors) updated.validation_errors = [];
+                                 return updated;
+                               });
+                            }}
+                            style={{ padding: '0.375rem 0.5rem', fontSize: '0.875rem', minHeight: 'auto', background: 'var(--bg-card)' }}
+                          />
                         </div>
                       ))}
                     </div>
