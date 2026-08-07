@@ -1352,10 +1352,10 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
             transition={{ duration: 0.35 }}
           >
             <div style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', marginBottom: '0.375rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
                 Document Vault
               </h2>
-              <p style={{ fontSize: '0.875rem', color: '#71717a', lineHeight: 1.6, maxWidth: '48rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '48rem' }}>
                 Upload any healthcare document — EOB, medical bill, or insurance policy. The AI reads it and extracts key fields automatically.
                 Use <strong>Fill Claim Form</strong> to pre-populate the Claim Evaluator without typing anything.
               </p>
@@ -1372,10 +1372,10 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
             transition={{ duration: 0.35 }}
           >
             <div style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', marginBottom: '0.375rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
                 Bill Auditor
               </h2>
-              <p style={{ fontSize: '0.875rem', color: '#71717a', lineHeight: 1.6, maxWidth: '48rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '48rem' }}>
                 Scan a medical bill for upcoding, unbundled procedures, or excessive charges using our predictive auditing engine.
                 Select an uploaded document from your vault or enter the codes manually.
               </p>
@@ -1392,10 +1392,10 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
             transition={{ duration: 0.35 }}
           >
             <div style={{ marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#09090b', marginBottom: '0.375rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.375rem' }}>
                 Proactive Cost Estimator
               </h2>
-              <p style={{ fontSize: '0.875rem', color: '#71717a', lineHeight: 1.6, maxWidth: '48rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '48rem' }}>
                 Calculate potential out-of-pocket costs before you receive care. Enter a procedure cost to see your estimated patient responsibility based on your loaded policy's deductible and coinsurance.
               </p>
             </div>

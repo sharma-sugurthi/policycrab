@@ -10,6 +10,181 @@ import {
 } from '../components/Icons'
 import { apiFetch, readApiResponse, formatApiError } from '../lib/api'
 
+// ── Smart Send Panel ──────────────────────────────────────────────────────────
+function SmartSendPanel({ policyProfile, claimCase, currentLetter }) {
+  const [suggestion, setSuggestion] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [sendingDirect, setSendingDirect] = useState(false)
+  const [sentDirect, setSentDirect] = useState(false)
+
+  const carrierName = policyProfile?.carrier_name
+  const state = policyProfile?.state
+  const claimId = claimCase?.claim_id || 'DRAFT'
+
+  useEffect(() => {
+    if (!carrierName || !state) return
+    const fetchSuggestion = async () => {
+      setLoading(true)
+      try {
+        const res = await apiFetch('/api/email/smart-suggest', {
+          method: 'POST',
+          body: JSON.stringify({ carrier_name: carrierName, state, appeal_level: 1 })
+        })
+        const data = await readApiResponse(res)
+        if (res.ok) setSuggestion(data)
+      } catch {/* silent */} finally {
+        setLoading(false)
+      }
+    }
+    fetchSuggestion()
+  }, [carrierName, state])
+
+  const handleOpenMailto = async () => {
+    if (!suggestion?.suggestions?.length) return
+    const topEmail = suggestion.suggestions[0].email
+    try {
+      const res = await apiFetch('/api/email/build-mailto', {
+        method: 'POST',
+        body: JSON.stringify({
+          to_email: topEmail,
+          carrier_name: carrierName,
+          patient_name: 'Patient',
+          claim_id: claimId,
+          appeal_text: currentLetter,
+          appeal_level: 1,
+        })
+      })
+      const data = await readApiResponse(res)
+      if (res.ok) window.location.href = data.mailto_uri
+    } catch {/* silent */}
+  }
+
+  const handleDirectSend = async () => {
+    setSendingDirect(true)
+    try {
+      const res = await apiFetch('/api/email/send-appeal', {
+        method: 'POST',
+        body: JSON.stringify({ claim_id: claimId, appeal_text: currentLetter })
+      })
+      if (res.ok) setSentDirect(true)
+    } catch {/* silent */} finally {
+      setSendingDirect(false)
+    }
+  }
+
+  const handleCopyEmail = (email) => {
+    navigator.clipboard.writeText(email)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const confidenceColors = { HIGH: '#10b981', MEDIUM: '#f59e0b', LOW: '#ef4444' }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+      style={{
+        marginTop: '2rem',
+        background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(168,85,247,0.05))',
+        border: '1px solid rgba(59,130,246,0.25)',
+        borderRadius: '16px',
+        padding: '1.75rem',
+      }}
+    >
+      <h2 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        📬 Send Your Appeal
+      </h2>
+
+      {loading && (
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem' }}>🔍 Finding carrier appeals address…</p>
+      )}
+
+      {!loading && suggestion && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+          {/* Suggested emails */}
+          {suggestion.suggestions.map((s, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem',
+              background: 'var(--bg-card, #fff)', borderRadius: '10px', padding: '0.875rem 1rem',
+              border: '1px solid var(--border-primary)',
+            }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginBottom: '2px' }}>{s.label}</div>
+                <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-primary)' }}>{s.email}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{
+                  padding: '2px 10px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
+                  background: (confidenceColors[s.confidence] || '#3b82f6') + '20',
+                  color: confidenceColors[s.confidence] || '#3b82f6',
+                  border: `1px solid ${(confidenceColors[s.confidence] || '#3b82f6')}40`,
+                }}>{s.confidence}</span>
+                <button onClick={() => handleCopyEmail(s.email)} className="btn btn-ghost"
+                  style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', border: '1px solid var(--border-primary)' }}>
+                  {copied ? '✓ Copied!' : '📋 Copy'}
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Fax / Portal info */}
+          {(suggestion.fax_number || suggestion.submission_portal_url) && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {suggestion.fax_number && (
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>
+                  📠 Fax: <strong style={{ color: 'var(--text-primary)' }}>{suggestion.fax_number}</strong>
+                </span>
+              )}
+              {suggestion.submission_portal_url && (
+                <a href={suggestion.submission_portal_url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: '0.8125rem', color: 'var(--accent)', fontWeight: 600 }}>
+                  🌐 Carrier Portal →
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Send CTAs */}
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+            <button
+              onClick={handleOpenMailto}
+              className="btn btn-red"
+              style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}
+            >
+              📧 Open in Gmail / Mail App
+            </button>
+            <button
+              onClick={handleDirectSend}
+              disabled={sendingDirect || sentDirect}
+              className="btn btn-outline"
+              style={{ padding: '0.75rem 1.5rem', fontSize: '0.9rem' }}
+            >
+              {sentDirect ? '✅ Sent via PolicyCrab!' : sendingDirect ? '⏳ Sending…' : '✉️ Send via PolicyCrab'}
+            </button>
+          </div>
+
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
+            💡 <strong>Tip:</strong> Emails from your personal Gmail/Outlook clear insurer spam filters more reliably than bulk senders.
+          </p>
+        </div>
+      )}
+
+      {!loading && !suggestion && (
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>
+          Carrier email not found in directory. Use the "Send via PolicyCrab" button to send to your own inbox.
+          <button onClick={handleDirectSend} disabled={sendingDirect || sentDirect} className="btn btn-outline"
+            style={{ marginLeft: '1rem', padding: '0.5rem 1rem', fontSize: '0.8125rem' }}>
+            {sentDirect ? '✅ Sent!' : sendingDirect ? '⏳…' : '✉️ Send to My Inbox'}
+          </button>
+        </p>
+      )}
+    </motion.div>
+  )
+}
+
+
 export default function AppealStudio() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -392,6 +567,9 @@ export default function AppealStudio() {
             </button>
           </div>
         </div>
+
+        {/* Zone D: Smart Email Routing */}
+        <SmartSendPanel policyProfile={policyProfile} claimCase={claimCase} currentLetter={currentLetter} />
 
         </div>
       </div>

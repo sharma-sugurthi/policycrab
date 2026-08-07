@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage'
 import AdminDashboard from './pages/AdminDashboard'
 import CarrierHub from './pages/CarrierHub'
 import AppealStudio from './pages/AppealStudio'
+import ResourcesHub from './pages/ResourcesHub'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
 
@@ -313,7 +314,6 @@ function AppContent() {
     ['/policy', 'Upload'],
     ['/claim', 'Evaluate'],
     ['/routing', 'Appeal'],
-    ['/audit', 'Audit'],
     ['/chat', 'Chat'],
   ]
 
@@ -552,6 +552,8 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/benchmarks" element={<BenchmarkDashboard />} />
+          <Route path="/resources" element={<ResourcesHub />} />
+          <Route path="/resources/:slug" element={<ResourcesHub />} />
         </Routes>
       </Suspense>
     </>

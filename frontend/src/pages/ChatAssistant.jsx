@@ -33,7 +33,11 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
   const [activeChatId, setActiveChatId] = useState(null)
   const messagesEndRef = useRef(null)
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+  const hasMounted = useRef(false)
+  useEffect(() => {
+    if (!hasMounted.current) { hasMounted.current = true; return }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Fetch list of all chat sessions
   const fetchSessions = async () => {

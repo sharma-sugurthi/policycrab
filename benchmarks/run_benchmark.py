@@ -16,20 +16,27 @@ logger = logging.getLogger(__name__)
 CASES_DIR = Path("cases")
 RESULTS_FILE = Path("results.json")
 
+sys.path.append(str(Path(__file__).parent.parent / "backend"))
+from app.agents.graph import get_claim_evaluation_graph
+
+# Pre-load graph to avoid re-instantiation
+graph = get_claim_evaluation_graph()
 
 async def run_case(client: httpx.AsyncClient, url: str, token: str, case: dict) -> dict:
-    headers = {"Authorization": f"Bearer {token}"} if token else {}
-    payload = {
-        "claim_description": case["claim_description"],
-        "policy_profile": case.get("policy_profile"),
-        "allowed_amount": case.get("allowed_amount"),
-        "benchmark_policy_excerpt": case.get("benchmark_policy_excerpt"),
-    }
-    
     try:
-        response = await client.post(url, json=payload, headers=headers, timeout=60.0)
-        response.raise_for_status()
-        data = response.json()
+        initial_state = {
+            "messages": [],
+            "raw_policy_text": case.get("benchmark_policy_excerpt", "Standard Policy"),
+            "raw_claim_text": case["claim_description"],
+            "policy_profile": case.get("policy_profile"),
+            "session_id": None,
+            "policy_indexed": False,
+            "current_phase": "intake",
+            "errors": []
+        }
+        
+        final_state = await graph.ainvoke(initial_state)
+        
     except Exception as e:
         logger.error(f"Error evaluating case {case['id']}: {e}")
         return {
@@ -38,16 +45,16 @@ async def run_case(client: httpx.AsyncClient, url: str, token: str, case: dict) 
             "expected": case["expected"],
             "actual": {"error": str(e)},
             "status": "fail",
-            "reason": f"API Error: {str(e)}"
+            "reason": f"Engine Error: {str(e)}"
         }
 
     # Extract actual results
     actual = {}
-    if data.get("appeal_output"):
-        actual["appeal_recommendation"] = data["appeal_output"].get("appeal_recommendation")
-        actual["contradiction_detected"] = data["appeal_output"].get("contradiction_detected")
-        actual["contradiction_strength"] = data["appeal_output"].get("contradiction_strength")
-    actual["route_decision"] = data.get("route_decision")
+    if final_state.get("appeal_output"):
+        actual["appeal_recommendation"] = final_state["appeal_output"].get("appeal_recommendation")
+        actual["contradiction_detected"] = final_state["appeal_output"].get("contradiction_detected")
+        actual["contradiction_strength"] = final_state["appeal_output"].get("contradiction_strength")
+    actual["route_decision"] = final_state.get("route_decision")
 
     expected = case["expected"]
     
@@ -96,16 +103,14 @@ async def main(url: str, token: str, concurrency: int = 5):
         with open(cf, "r") as f:
             cases.append(json.load(f))
             
-    results = []
-    
-    # Use semaphore to limit concurrent requests
+    # Restore concurrency limit to take advantage of unlocked quotas
     sem = asyncio.Semaphore(concurrency)
     
     async def bound_run_case(client, c):
         async with sem:
             return await run_case(client, url, token, c)
             
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=120.0) as client:
         # Run with a nice progress bar
         tasks = [bound_run_case(client, c) for c in cases]
         results = await tqdm.gather(*tasks, desc="Evaluating Claims")

@@ -1,0 +1,1698 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolicyCrab Enterprise Benchmark Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg: #09090b;
+            --surface: #18181b;
+            --surface-hover: #27272a;
+            --text: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #27272a;
+        }
+        
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 60px 20px;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.05), transparent 25%);
+            background-attachment: fixed;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            font-weight: 300;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 60px;
+        }
+        
+        .stat-card {
+            background-color: var(--surface);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(255,255,255,0.1);
+        }
+        
+        .stat-value {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+        
+        .accuracy-val { color: var(--accent); text-shadow: 0 0 20px var(--accent-glow); }
+        .passed-val { color: var(--success); }
+        .failed-val { color: var(--danger); }
+        
+        .stat-label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+        
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        
+        .table-container {
+            background-color: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 18px 24px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: rgba(255,255,255,0.03);
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        tr:last-child td { border-bottom: none; }
+        
+        tr:hover td { background-color: rgba(255,255,255,0.02); }
+        
+        .badge {
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            letter-spacing: 0.025em;
+        }
+        
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-info { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-neutral { background: rgba(255,255,255,0.1); color: var(--text); border: 1px solid rgba(255,255,255,0.2); }
+        
+        .reason-text {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        
+        .error-type {
+            font-weight: 600;
+            color: var(--danger);
+            margin-bottom: 4px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Enterprise Validation Benchmark</h1>
+            <div class="subtitle">PolicyCrab Synthetic Reasoning Evaluation Suite</div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value accuracy-val">93.0%</div>
+                <div class="stat-label">Model Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value passed-val">186</div>
+                <div class="stat-label">Passed Cases</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value failed-val">14</div>
+                <div class="stat-label">Failed Cases</div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span style="color: var(--danger);">●</span> Failed Cases Analysis
+        </div>
+        <div class="table-container">
+            <table><thead><tr><th>Case ID & Category</th><th>Expected Result</th><th>Model Output</th><th>Failure Analysis</th></tr></thead><tbody>
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">NSA-010</div>
+                    <span class="badge badge-neutral">nsa_balance_billing</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">INFR-027</div>
+                    <span class="badge badge-neutral">hard_exclusion</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">EMRG-018</div>
+                    <span class="badge badge-neutral">emergency_care</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">COSM-027</div>
+                    <span class="badge badge-neutral">explicit_exclusion</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">EMRG-028</div>
+                    <span class="badge badge-neutral">emergency_care</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">FORM-018</div>
+                    <span class="badge badge-neutral">formulary_exception</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">INFR-012</div>
+                    <span class="badge badge-neutral">hard_exclusion</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">FORM-004</div>
+                    <span class="badge badge-neutral">formulary_exception</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">UPCD-024</div>
+                    <span class="badge badge-neutral">upcoding_billing_error</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">FORM-029</div>
+                    <span class="badge badge-neutral">formulary_exception</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">EMRG-008</div>
+                    <span class="badge badge-neutral">emergency_care</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">INFR-025</div>
+                    <span class="badge badge-neutral">hard_exclusion</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">INFR-003</div>
+                    <span class="badge badge-neutral">hard_exclusion</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="font-weight: 600; color: var(--text); margin-bottom: 6px;">INFR-004</div>
+                    <span class="badge badge-neutral">hard_exclusion</span>
+                </td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-danger">N/A</span></td>
+                <td>
+                    <div class="error-type"><span class="badge badge-danger">Routing Error</span></div>
+                    <div class="reason-text">Route mismatch: expected None, got None</div>
+                </td>
+            </tr>
+            </tbody></table>
+        </div>
+
+        <div class="section-title" style="margin-top: 60px;">
+            <span style="color: var(--success);">●</span> Successfully Validated Cases
+        </div>
+        <div class="table-container">
+            <table><thead><tr><th>Case ID</th><th>Category</th><th>Validated Output</th><th>Status</th></tr></thead><tbody>
+            <tr>
+                <td style="font-weight: 500;">FORM-021</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-004</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-021</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-004</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-015</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-009</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-029</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-027</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-008</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-024</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-019</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-010</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-030</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-005</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-020</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-028</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-009</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-017</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-020</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-030</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-014</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-007</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-013</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-012</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-019</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-016</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-016</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-016</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-022</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-025</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-027</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-013</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-026</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-004</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-029</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-012</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-026</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-018</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-017</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-020</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-028</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-002</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-014</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-023</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-030</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-004</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-010</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-021</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-003</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-002</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-003</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-003</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-007</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-019</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-022</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-009</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-010</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-024</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-030</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-013</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-009</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-002</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-013</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-008</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-019</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-011</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-012</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-020</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-011</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-023</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-006</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-007</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-025</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-002</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-009</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-012</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-006</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-017</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-015</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-026</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-011</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-020</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-004</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-001</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-021</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-005</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-002</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-014</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-011</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-009</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-006</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-012</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-006</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-018</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-014</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-012</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-001</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-028</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-018</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-007</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-011</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-017</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-019</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-009</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-029</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-005</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-017</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-006</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-018</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-013</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-005</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-024</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-027</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-023</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-015</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-026</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-014</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-016</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-025</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-014</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-002</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-014</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-005</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-001</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-017</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-015</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-010</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-010</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-016</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-011</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-025</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-013</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-026</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-030</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-010</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-023</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-001</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-005</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-025</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-022</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-019</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-006</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-016</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-001</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-008</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-007</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-019</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-015</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-022</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-002</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-020</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-029</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-021</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-005</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-008</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-025</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-013</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-017</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-001</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-007</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-022</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-018</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-022</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-023</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-003</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-007</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-016</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-024</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-006</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-024</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-008</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-024</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-003</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-023</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">EMRG-021</td>
+                <td><span class="badge badge-neutral">emergency_care</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-022</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">INFR-015</td>
+                <td><span class="badge badge-neutral">hard_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">LMIT-011</td>
+                <td><span class="badge badge-neutral">annual_limit</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-008</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-015</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-001</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-021</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">FORM-003</td>
+                <td><span class="badge badge-neutral">formulary_exception</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">COSM-028</td>
+                <td><span class="badge badge-neutral">explicit_exclusion</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">NSA-020</td>
+                <td><span class="badge badge-neutral">nsa_balance_billing</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            
+            <tr>
+                <td style="font-weight: 500;">UPCD-023</td>
+                <td><span class="badge badge-neutral">upcoding_billing_error</span></td>
+                <td><span class="badge badge-success">N/A</span></td>
+                <td><span class="badge badge-success">✓ Passed</span></td>
+            </tr>
+            </tbody></table>
+        </div>
+    </div>
+</body>
+</html>

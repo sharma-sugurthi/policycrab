@@ -12,7 +12,7 @@ import inspect
 import logging
 import time
 from enum import Enum
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 from langchain_core.language_models import BaseChatModel
 from app.config import settings
 
@@ -89,36 +89,24 @@ TASK_STEP_LOGS: dict[TaskType, list[str]] = {
 
 _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
     TaskType.EXTRACTION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 2 (Ultra-fast Cerebras)
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.TOOL_CALLING: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
-        {"provider": "cerebras", "model": "gemma-4-31b"},
     ],
     TaskType.LEGAL_WRITING: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary (High capacity free tier)
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1 (30 RPM free tier)
-        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 2
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 3
+        {"provider": "gemini", "model": "gemini-2.5-pro"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.REASONING: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary (High capacity, fast reasoning)
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1 (30 RPM free tier)
-        {"provider": "openrouter", "model": "google/gemma-4-31b-it:free"},               # Fallback 2
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 3 (Lightning fast inference)
+        {"provider": "gemini", "model": "gemini-2.5-pro"},
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.EXPLANATION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},                             # Primary
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},                        # Fallback 1 (Fast)
-        {"provider": "cerebras", "model": "gemma-4-31b"},                                # Fallback 2
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.CHAT: [
         {"provider": "gemini", "model": "gemini-2.5-flash"},
-        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
-        {"provider": "cerebras", "model": "gemma-4-31b"},
     ],
 }
 
@@ -126,10 +114,9 @@ _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
 def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChatModel | None:
     """Create a LangChain chat model for the given provider."""
     try:
-        if provider == "gemini" and settings.gemini_api_key:
-            return ChatGoogleGenerativeAI(
-                model=model,
-                google_api_key=settings.gemini_api_key,
+        if provider == "gemini":
+            return ChatVertexAI(
+                model_name=model,
                 temperature=temperature,
                 convert_system_message_to_human=False,
                 max_retries=0,
@@ -355,89 +342,31 @@ def get_llm_with_retry(
 
 
 def get_embedding_client():
-    """Get the Gemini embedding client (google-genai SDK, not LangChain)."""
-    from google import genai
-    return genai.Client(api_key=settings.gemini_api_key)
+    from langchain_google_vertexai import VertexAIEmbeddings
+    # Use Vertex AI's embedding model
+    return VertexAIEmbeddings(model_name="text-embedding-004")
 
 
 async def generate_embedding(text: str) -> list[float]:
-    """Generate a 768-dim embedding using Gemini Embedding — optimized for queries."""
+    """Generate a 768-dim embedding using Vertex AI Embedding — optimized for queries."""
     client = get_embedding_client()
-
-    def _sync_embed():
-        result = client.models.embed_content(
-            model=settings.embedding_model,
-            contents=text,
-            config={
-                "task_type": "RETRIEVAL_QUERY",  # Optimized for query (not document)
-                "output_dimensionality": settings.embedding_dimensions,
-            },
-        )
-        return result.embeddings[0].values
-
-    # Run the synchronous SDK call in a thread so the async event loop isn't blocked.
-    return await asyncio.to_thread(_sync_embed)
+    return await asyncio.to_thread(client.embed_query, text)
 
 
 async def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
-    """
-    Generate embeddings for multiple query strings in a SINGLE API call.
-
-    Instead of N separate generate_embedding() calls (N round-trips to Gemini),
-    this sends all texts in one batch request and returns N embeddings.
-
-    Used by:
-      - policy_analyzer.py: batch-embed all targeted_queries at once
-      - _warm_query_cache(): pre-embed all fixed DENIAL_QUERIES at startup
-
-    Args:
-        texts: List of query strings to embed.
-
-    Returns:
-        List of 768-dim embedding vectors, one per input text, in the same order.
-    """
     if not texts:
         return []
-
     client = get_embedding_client()
-
-    def _sync_batch_embed():
-        result = client.models.embed_content(
-            model=settings.embedding_model,
-            contents=texts,
-            config={
-                "task_type": "RETRIEVAL_QUERY",
-                "output_dimensionality": settings.embedding_dimensions,
-            },
-        )
-        return [emb.values for emb in result.embeddings]
-
-    return await asyncio.to_thread(_sync_batch_embed)
+    return await asyncio.to_thread(client.embed_documents, texts)
 
 
 async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> list[dict]:
-    """
-    Embed a list of page-aware text chunks using Gemini Embedding.
-
-    Each input chunk must have 'chunk_text', 'page_number', and 'chunk_index'.
-    Returns the same list with 'embedding' added to each chunk.
-
-    Uses RETRIEVAL_DOCUMENT task_type (not QUERY) to optimize for storage.
-    Processes in batches of 50 with inter-batch delays to respect rate limits.
-    Includes exponential backoff on 429 RESOURCE_EXHAUSTED errors.
-
-    Args:
-        chunks: List of chunk dicts with chunk_text, page_number, chunk_index.
-        max_pages: Soft cap — chunks beyond this page number are skipped to prevent
-                   runaway billing on extremely long documents. Default is 200 pages.
-    """
     client = get_embedding_client()
     embedded_chunks = []
     batch_size = 50
-    BATCH_DELAY_S = 0.5   # 500ms between batches — stay under 100 req/min free tier
+    BATCH_DELAY_S = 0.5
     MAX_RETRIES = 3
 
-    # Soft page cap — skip chunks from pages beyond max_pages
     filtered = [c for c in chunks if c.get("page_number", 0) <= max_pages]
     if len(filtered) < len(chunks):
         skipped = len(chunks) - len(filtered)
@@ -455,29 +384,16 @@ async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> lis
         success = False
         for attempt in range(MAX_RETRIES):
             try:
-                # Run the synchronous SDK call in a thread pool so the event loop
-                # isn't blocked during multi-batch document ingestion.
-                def _batch_embed(t=texts):
-                    return client.models.embed_content(
-                        model=settings.embedding_model,
-                        contents=t,
-                        config={
-                            "task_type": "RETRIEVAL_DOCUMENT",  # Optimized for document storage
-                            "output_dimensionality": settings.embedding_dimensions,
-                        },
-                    )
-
-                result = await asyncio.to_thread(_batch_embed)
-                for chunk, emb in zip(batch, result.embeddings):
-                    embedded_chunks.append({**chunk, "embedding": emb.values})
+                embeddings = await asyncio.to_thread(client.embed_documents, texts)
+                for chunk, emb in zip(batch, embeddings):
+                    embedded_chunks.append({**chunk, "embedding": emb})
                 success = True
                 logger.debug(f"Batch {batch_num}/{total_batches} embedded ({len(batch)} chunks)")
                 break
-
             except Exception as e:
                 err_str = str(e)
                 if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                    wait = (2 ** attempt) * 5  # 5s, 10s, 20s
+                    wait = (2 ** attempt) * 5
                     logger.warning(
                         f"Embedding batch {batch_num} rate-limited (attempt {attempt + 1}/{MAX_RETRIES}). "
                         f"Waiting {wait}s before retry..."
@@ -492,7 +408,6 @@ async def embed_document_chunks(chunks: list[dict], max_pages: int = 200) -> lis
             for chunk in batch:
                 embedded_chunks.append({**chunk, "embedding": None})
 
-        # Inter-batch delay to stay within Gemini free-tier rate limits
         if i + batch_size < len(filtered):
             await asyncio.sleep(BATCH_DELAY_S)
 

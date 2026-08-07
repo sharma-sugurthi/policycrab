@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PolicyCrab — Benchmark Validation Report</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050507;--bg2:#0c0d11;--bg3:#111318;--border:#1e2030;
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --accent:#e11d48;--accent2:#f43f5e;--green:#10b981;--red:#ef4444;--gray:#475569;
+  --shadow:0 4px 24px rgba(0,0,0,.5);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+
+/* ── Header ── */
+.header{
+  background:linear-gradient(135deg,#0a0010 0%,#050507 50%,#0a000a 100%);
+  border-bottom:1px solid var(--border);
+  padding:3rem 2rem 2rem;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.header-glow{
+  position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:500px;
+  background:radial-gradient(circle,rgba(225,29,72,.18) 0%,transparent 70%);
+  pointer-events:none;
+}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:1rem}
+.logo-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.375rem 1rem;background:rgba(225,29,72,.12);
+  border:1px solid rgba(225,29,72,.3);border-radius:9999px;
+  color:#fca5a5;font-size:.75rem;font-weight:600;
+}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:#e11d48;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(225,29,72,.5)}50%{box-shadow:0 0 0 5px rgba(225,29,72,0)}}
+h1{font-size:clamp(1.75rem,4vw,3rem);font-weight:900;letter-spacing:-.04em;margin-bottom:.5rem}
+.gradient{
+  background:linear-gradient(135deg,#e11d48,#f43f5e,#fb923c);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.subtitle{font-size:1rem;color:var(--text2);max-width:560px;margin:0 auto 2rem}
+
+/* ── Summary Cards ── */
+.summary{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:1.25rem;max-width:1100px;margin:0 auto 3rem;padding:0 2rem;
+}
+.s-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:1.25rem;padding:1.5rem;text-align:center;
+  transition:transform .2s ease,border-color .2s ease;
+}
+.s-card:hover{transform:translateY(-3px);border-color:#334155}
+.s-val{font-size:2.5rem;font-weight:900;letter-spacing:-.03em;margin-bottom:.25rem}
+.s-label{font-size:.8125rem;color:var(--text2);font-weight:500}
+.s-val.green{color:var(--green)}
+.s-val.red{color:var(--red)}
+.s-val.accent{
+  background:linear-gradient(135deg,#e11d48,#fb923c);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+/* ── Meta row ── */
+.meta-row{
+  display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;
+  max-width:900px;margin:0 auto 3rem;padding:0 2rem;
+  font-size:.8125rem;color:var(--text3);
+}
+.meta-chip{
+  display:flex;align-items:center;gap:.375rem;
+  padding:.375rem .875rem;background:var(--bg2);
+  border:1px solid var(--border);border-radius:9999px;
+  font-family:'JetBrains Mono',monospace;font-size:.75rem;
+}
+
+/* ── Category cards ── */
+.cats{max-width:1100px;margin:0 auto;padding:0 2rem 4rem;display:flex;flex-direction:column;gap:1.5rem}
+
+.cat-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:1.25rem;overflow:hidden;
+  transition:border-color .2s ease;
+}
+.cat-card.all-pass{border-color:#052e16}
+.cat-card.has-fail{border-color:#2d0a14}
+.cat-card:hover{border-color:#334155}
+
+.cat-header{
+  display:flex;align-items:center;gap:1rem;
+  padding:1.25rem 1.5rem;cursor:pointer;
+  background:var(--bg3);
+  border-bottom:1px solid var(--border);
+  user-select:none;
+}
+.cat-icon{font-size:1.75rem;flex-shrink:0}
+.cat-info{flex:1;min-width:0}
+.cat-name{font-size:1rem;font-weight:700;color:var(--text)}
+.cat-desc{font-size:.8125rem;color:var(--text2);margin-top:.125rem}
+.cat-ring{position:relative;width:52px;height:52px;flex-shrink:0}
+.cat-ring svg{transform:rotate(-90deg)}
+.ring-pct{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:.625rem;font-weight:800;font-family:'JetBrains Mono',monospace;
+}
+.cat-pills{display:flex;gap:.5rem;flex-wrap:wrap;padding:.875rem 1.5rem;border-bottom:1px solid var(--border)}
+.pill{
+  display:inline-flex;align-items:center;gap:.25rem;
+  padding:.2rem .625rem;border-radius:9999px;
+  font-size:.6875rem;font-weight:700;font-family:'JetBrains Mono',monospace;
+}
+.pill.green{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.25)}
+.pill.red{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25)}
+.pill.gray{background:rgba(71,85,105,.15);color:#94a3b8;border:1px solid rgba(71,85,105,.25)}
+
+/* ── Test rows ── */
+.test-list{padding:.75rem 1.5rem;display:flex;flex-direction:column;gap:.375rem}
+.test-row{
+  display:flex;flex-direction:column;gap:.25rem;
+  padding:.75rem;border-radius:.75rem;
+  transition:background .15s ease;
+}
+.test-row:hover{background:rgba(255,255,255,.02)}
+.test-row.passed .test-name{color:var(--text)}
+.test-row.failed .test-name{color:#fca5a5}
+.test-row.skipped .test-name{color:var(--text3)}
+.test-meta{display:flex;align-items:center;gap:.625rem;margin-top:.25rem}
+.test-name{font-size:.875rem;font-weight:500;line-height:1.4}
+.test-dur{font-size:.6875rem;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.badge{
+  display:inline-flex;align-items:center;padding:.15rem .5rem;
+  border-radius:.375rem;font-size:.625rem;font-weight:800;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.04em;
+}
+.badge.pass{background:rgba(16,185,129,.12);color:#10b981}
+.badge.fail{background:rgba(239,68,68,.12);color:#ef4444}
+.badge.skip{background:rgba(71,85,105,.15);color:#94a3b8}
+.err-msg{
+  font-size:.75rem;color:#fca5a5;font-family:'JetBrains Mono',monospace;
+  background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);
+  border-radius:.5rem;padding:.5rem .75rem;margin-top:.375rem;
+  white-space:pre-wrap;word-break:break-word;
+}
+
+/* ── Footer ── */
+.footer{
+  text-align:center;padding:2rem;color:var(--text3);
+  font-size:.75rem;border-top:1px solid var(--border);
+}
+
+@media(max-width:600px){
+  .summary{grid-template-columns:1fr 1fr}
+  .cat-header{flex-wrap:wrap}
+  .cat-ring{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-glow"></div>
+  <div class="logo-row">
+    <div class="logo-badge"><span class="logo-dot"></span> Validation Report</div>
+  </div>
+  <h1>PolicyCrab<br/><span class="gradient">Benchmark Suite</span></h1>
+  <p class="subtitle">
+    Full automated validation of the deterministic adjudication engine,
+    multi-agent orchestration, regulatory RAG pipeline, and security controls.
+  </p>
+</div>
+
+<div class="summary">
+  <div class="s-card">
+    <div class="s-val accent">95</div>
+    <div class="s-label">Total Test Cases</div>
+  </div>
+  <div class="s-card">
+    <div class="s-val green">95</div>
+    <div class="s-label">Passed</div>
+  </div>
+  <div class="s-card">
+    <div class="s-val green">0</div>
+    <div class="s-label">Failed</div>
+  </div>
+  <div class="s-card">
+    <div class="s-val" style="color:#94a3b8">0</div>
+    <div class="s-label">Skipped</div>
+  </div>
+  <div class="s-card">
+    <div class="s-val accent">100.0%</div>
+    <div class="s-label">Pass Rate</div>
+  </div>
+  <div class="s-card">
+    <div class="s-val" style="font-size:1.75rem;color:#94a3b8">70.7s</div>
+    <div class="s-label">Total Duration</div>
+  </div>
+</div>
+
+<div class="meta-row">
+  <div class="meta-chip">📅 August 06, 2026 11:41 UTC</div>
+  <div class="meta-chip">🐍 Python 3.12</div>
+  <div class="meta-chip">🖥 Linux</div>
+  <div class="meta-chip">🔢 17 test categories</div>
+  <div class="meta-chip">⚡ pytest + pytest-asyncio</div>
+</div>
+
+<div class="cats">
+
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🧾</div>
+                <div class="cat-info">
+                    <div class="cat-name">EOB Extractor</div>
+                    <div class="cat-desc">Explanation of Benefits parsing accuracy</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">14 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorValidData — Valid Eob Returns Correct Structure</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">4.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorValidData — Valid Eob No Error Key</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.8ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorValidData — Valid Eob Cpt And Icd Codes Extracted</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.9ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorNSAFields — Nsa Scenario B Fields Extracted</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.9ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorNSAFields — Nsa Denial Flags Are Set</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.9ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorNSAFields — Null Facility Network Status Preserved</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.9ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorCARCCodes — Carc Co4 Extracted From Denial</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.1ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorCARCCodes — Null Carc Preserved When Not Denied</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorMarkdownStripping — Markdown Json Fence Stripped</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.9ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorMarkdownStripping — Plain Markdown Fence Stripped</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.1ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorErrorHandling — Garbled Response Returns Error Dict</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.8ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorErrorHandling — Empty Response Returns Error Dict</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.6ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBExtractorErrorHandling — Partial Json Returns Error Dict</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EOBPostProcessing — Labeled Fields Are Recovered And Patient Name Removed</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.9ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">💰</div>
+                <div class="cat-info">
+                    <div class="cat-name">Cost Calculator</div>
+                    <div class="cat-desc">Deterministic deductible/coinsurance/OOP waterfall math</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">13 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">PriorAuthDenial — Prior Auth Required Not Obtained</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PriorAuthDenial — Prior Auth Waived For Emergency</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.6ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">NetworkDenial — Hmo Oon Non Emergency Denied</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">NetworkDenial — Hmo Oon Emergency Approved</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">ReferralDenial — Hmo No Referral Denied</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">ReferralDenial — Ppo No Referral Approved</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">StandardCostCalculation — Full Deductible Not Met</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">StandardCostCalculation — Deductible Partially Met</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">StandardCostCalculation — Deductible Fully Met</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">OOPMaxCap — Oop Max Reached During Claim</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">OOPMaxCap — Oop Already Maxed</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">NSAOverride — Nsa Forces In Network Rates</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">ACACeilingWarning — Warns If Oop Exceeds Aca Ceiling</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">📅</div>
+                <div class="cat-info">
+                    <div class="cat-name">Deadline Calculator</div>
+                    <div class="cat-desc">Appeal deadline computation by plan type</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">12 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">DeadlineCalculation — Erisa 180 Days</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">DeadlineCalculation — Medicare 60 Days</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">DeadlineCalculation — Nsa 30 Business Days</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">DeadlineCalculation — State Review 120 Days</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">UrgencyClassification — Expired Deadline</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">UrgencyClassification — Critical Urgency</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">UrgencyClassification — Urgent</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">UrgencyClassification — Moderate</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">UrgencyClassification — Standard</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.8ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EdgeCases — Denial Today</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.6ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EdgeCases — State Doi 365 Days</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">EdgeCases — Result Contains Framework Info</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.8ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🏛️</div>
+                <div class="cat-info">
+                    <div class="cat-name">Regulatory Router</div>
+                    <div class="cat-desc">ERISA / ACA / NSA / Medicare framework routing</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">12 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">NSAPriority — Nsa Overrides Erisa</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">NSAPriority — Nsa Overrides State</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.2ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">NSAPriority — Nsa Overrides Medicare</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.0ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PlanClassificationRouting — Self Funded Erisa</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PlanClassificationRouting — Fully Insured</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PlanClassificationRouting — Individual Aca</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PlanClassificationRouting — Medicare Advantage</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PlanClassificationRouting — Medicare Original</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PlanClassificationRouting — Medicaid Managed</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">FrameworkDetails — Erisa Details Have Deadline</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">FrameworkDetails — Medicare Details Have 5 Levels</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">FrameworkDetails — Nsa Details Mention Qpa</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.3ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">📄</div>
+                <div class="cat-info">
+                    <div class="cat-name">Policy Ingestion</div>
+                    <div class="cat-desc">SBC/EOB extraction and schema normalization</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">11 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionNullHandling — Null Deductible Is Preserved Not Rejected</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">15.1ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionNullHandling — Null Fields Generate Extraction Warnings</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">9.0ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionNullHandling — Confidence Is Medium Or Low For Null Fields</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">6.0ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionNullHandling — Missing State And List Fields Are Normalized</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">8.9ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionValidData — Full Valid Response Produces Policy Profile</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">5.1ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionValidData — High Confidence For Complete Response</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">5.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionSanityChecks — Out Of Range Deductible Generates Warning</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">3.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionSanityChecks — Out Of Range Deductible Confidence Is Not High</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">2.0ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionErrorHandling — Invalid Json From Llm Adds Error</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionErrorHandling — Empty Policy Text Returns Error</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">PolicyIngestionErrorHandling — Session Id Derived When Missing</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.7ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🔒</div>
+                <div class="cat-info">
+                    <div class="cat-name">Security Controls</div>
+                    <div class="cat-desc">PHI scrubbing and access-control enforcement</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">11 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Check Rate Limit Blocks After Configured Budget</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Rate Limit Scopes Are Independent</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Request Identity Prefers Bearer Token Without Storing It</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Request Identity Uses Forwarded Ip Without Token</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Websocket Token From Query Param</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Websocket Token From Bearer Protocol</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Websocket Identity Does Not Expose User Id</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Benchmark Token Disabled By Default</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Benchmark Token Requires Explicit Non Production Gate</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Document Scrubber Redacts Structured Identifiers</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">31.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Document Scrubber Fails Closed When Presidio Crashes</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.6ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">⚖️</div>
+                <div class="cat-info">
+                    <div class="cat-name">Grievance Agent</div>
+                    <div class="cat-desc">AI appeal letter routing and drafting</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">5 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">GrievanceAgentRouting — Routes To Provider Correction</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.6ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">GrievanceAgentRouting — Routes To Payer Appeal By Default</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">GrievanceAgentMissingData — Missing Policy Profile Returns Error</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.7ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">GrievanceAgentMissingData — Missing Claim Case Returns Error</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">GrievanceAgentLLMResilience — Fallback Parsing For Raw Text Appeal</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">4.3ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">👤</div>
+                <div class="cat-info">
+                    <div class="cat-name">User Data Layer</div>
+                    <div class="cat-desc">Supabase policy/claim persistence</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">5 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Create User Policy Supplies Explicit Id</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.2ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Create User Claim Supplies Explicit Id</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">3.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Get User Chat Reads Persisted Supabase Row</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">2.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Upsert User Chat Writes Persisted Supabase Row</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.6ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Chat Persistence Errors Are Not Silently Ephemeral</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.7ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🤖</div>
+                <div class="cat-info">
+                    <div class="cat-name">Claim Agent Graph</div>
+                    <div class="cat-desc">LangGraph orchestration and state transitions</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">2 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Cost Node Uses Billed Amount Estimate When Allowed Amount Missing</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.3ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Cost Node Uses User Supplied Eob Allowed Amount</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.1ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🏥</div>
+                <div class="cat-info">
+                    <div class="cat-name">CPT/ICD Lookup</div>
+                    <div class="cat-desc">Medical code validation</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">2 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Generic Mri Does Not Default To Brain Mri</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">12.5ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Specific Knee Mri Returns Lower Extremity Joint Code</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">1.3ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🔀</div>
+                <div class="cat-info">
+                    <div class="cat-name">Triage Engine</div>
+                    <div class="cat-desc">Claim routing: provider error vs payer denial</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">2 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Triage Deterministic Nsa</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">5.4ms</span>
+                </div>
+                
+            </div>
+            <div class="test-row passed">
+                <div class="test-name">Triage Deterministic Provider Error</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">2.4ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🛡️</div>
+                <div class="cat-info">
+                    <div class="cat-name">API Security</div>
+                    <div class="cat-desc">Authentication and authorization guards</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">1 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Knowledge Search Requires Authenticated User</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">0.6ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">📥</div>
+                <div class="cat-info">
+                    <div class="cat-name">Claim Intake</div>
+                    <div class="cat-desc">Claim form parsing and field normalization</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">1 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Claim Intake Parses Wrapped Json Response</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">2.6ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🩺</div>
+                <div class="cat-info">
+                    <div class="cat-name">LLM Health Check</div>
+                    <div class="cat-desc">Multi-provider model availability</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">1 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">All Models</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">11.13s</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">⚡</div>
+                <div class="cat-info">
+                    <div class="cat-name">LLM Router</div>
+                    <div class="cat-desc">Fast vs high-compute model routing</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">1 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Get Llm With Retry Falls Back To Next Provider</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">3.1ms</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🔍</div>
+                <div class="cat-info">
+                    <div class="cat-name">Policy Analyzer</div>
+                    <div class="cat-desc">Cross-document contradiction detection</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">1 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Policy Analyzer No Contradiction</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">2.34s</span>
+                </div>
+                
+            </div></div>
+        </div>
+        <div class="cat-card all-pass">
+            <div class="cat-header">
+                <div class="cat-icon">🔄</div>
+                <div class="cat-info">
+                    <div class="cat-name">E2E Pipeline</div>
+                    <div class="cat-desc">Full claim → appeal pipeline (live AI)</div>
+                </div>
+                <div class="cat-ring" style="--pct:100;--color:#10b981">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1e293b" stroke-width="3"/>
+                        <circle cx="18" cy="18" r="15.9" fill="none"
+                            stroke="#10b981" stroke-width="3"
+                            stroke-dasharray="100 0"
+                            stroke-dashoffset="25"
+                            stroke-linecap="round"/>
+                    </svg>
+                    <span class="ring-pct" style="color:#10b981">100%</span>
+                </div>
+            </div>
+            <div class="cat-pills">
+                <span class="pill green">1 passed</span>
+                
+                
+            </div>
+            <div class="test-list">
+            <div class="test-row passed">
+                <div class="test-name">Synthetic End To End</div>
+                <div class="test-meta">
+                    <span class="badge pass">✓ PASS</span>
+                    <span class="test-dur">53.59s</span>
+                </div>
+                
+            </div></div>
+        </div>
+</div>
+
+<div class="footer">
+  PolicyCrab Benchmark Validation Report &nbsp;·&nbsp; 
+  Generated 2026-08-06 11:42 &nbsp;·&nbsp;
+  For acquisition due diligence purposes only.
+</div>
+
+</body>
+</html>
