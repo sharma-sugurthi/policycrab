@@ -24,14 +24,22 @@ class FakeLLM:
 @pytest.mark.asyncio
 async def test_get_llm_with_retry_falls_back_to_next_provider(monkeypatch):
     candidates = [
-        ("gemini", "gemini-2.5-flash", True),
-        ("groq", "llama-3.3-70b-versatile", False),
+        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "groq", "model": "llama-3.3-70b-versatile"},
     ]
+    
+    # Override the registry just for this test so we know it has fallbacks
+    monkeypatch.setitem(
+        __import__("app.services.llm_router", fromlist=["_MODEL_REGISTRY"])._MODEL_REGISTRY,
+        TaskType.EXTRACTION,
+        candidates
+    )
 
     def fake_create_llm(provider, model, temperature=0.0):
-        for p, m, should_fail in candidates:
-            if provider == p and model == m:
-                return FakeLLM(provider, model, should_fail=should_fail)
+        if provider == "gemini":
+            return FakeLLM(provider, model, should_fail=True)
+        if provider == "groq":
+            return FakeLLM(provider, model, should_fail=False)
         return None
 
     monkeypatch.setattr("app.services.llm_router._create_llm", fake_create_llm)

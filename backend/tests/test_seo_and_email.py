@@ -64,6 +64,9 @@ def test_public_capabilities_route():
 # Note: /api/email/* routes are authenticated, so testing them requires auth headers
 # But we can test the unauthenticated rejection
 def test_smart_suggest_requires_auth():
+    # Clear any global overrides (e.g. from test_chunking.py) to ensure auth is actually checked
+    app.dependency_overrides.clear()
+    
     response = client.post("/api/email/smart-suggest", json={
         "carrier_name": "Aetna",
         "state": "TX"
