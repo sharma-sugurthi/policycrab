@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { apiFetch, readApiResponse } from '../lib/api'
+import { readApiResponse } from '../lib/api'
 
 const AuthContext = createContext({})
 
@@ -29,7 +29,10 @@ export function AuthProvider({ children }) {
         return
       }
       try {
-        const res = await apiFetch('/admin/check')
+        const res = await fetch('/api/admin/check', {
+          cache: 'no-store',
+          headers: { Authorization: 'Bearer ' + token },
+        })
         if (!mounted) return
         if (res.ok) {
           const data = await readApiResponse(res)
@@ -57,8 +60,10 @@ export function AuthProvider({ children }) {
         // UNBLOCK THE UI IMMEDIATELY! Do not wait for Heroku API cold starts.
         if (mounted) setLoading(false)
         
-        // Run slow role verification in the background
-        await checkAdmin(currentSession?.access_token)
+        // Run role verification after auth initialization settles.
+        setTimeout(() => {
+          if (mounted) checkAdmin(currentSession?.access_token)
+        }, 0)
       } catch (err) {
         console.error('Fatal auth initialization error:', err)
         if (mounted) setLoading(false)
@@ -67,7 +72,7 @@ export function AuthProvider({ children }) {
 
     initializeAuth()
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       try {
         if (!mounted) return
         setSession(newSession || null)
@@ -76,8 +81,12 @@ export function AuthProvider({ children }) {
         // UNBLOCK THE UI IMMEDIATELY!
         if (mounted) setLoading(false)
 
-        // Run slow role verification in the background
-        await checkAdmin(newSession?.access_token)
+        // Defer any async work that may touch Supabase auth until after the
+        // auth state callback completes. Calling auth APIs from this callback
+        // can leave operations like updateUser/signOut pending in the browser.
+        setTimeout(() => {
+          if (mounted) checkAdmin(newSession?.access_token)
+        }, 0)
       } catch (err) {
         console.error('Auth state change error:', err)
         if (mounted) setLoading(false)
