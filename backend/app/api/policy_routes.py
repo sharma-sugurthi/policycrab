@@ -285,7 +285,7 @@ async def upload_policy_pdf_async(
     Async version of /upload-pdf — returns instantly with a task_id.
 
     The heavy AI work (chunking, embedding, LLM extraction) runs in a
-    Celery background worker, avoiding Heroku's 30-second HTTP timeout.
+    Celery background worker, avoiding HTTP timeouts.
 
     Poll progress: GET /api/tasks/{task_id}
     Stream progress: GET /api/tasks/{task_id}/stream (SSE)

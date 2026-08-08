@@ -20,7 +20,7 @@ Supabase provides the managed PostgreSQL database (with `pgvector` for AI embedd
    - Enable Email/Password authentication in the Supabase Auth Settings.
    - Disable "Confirm Email" if you want users to be able to sign up and immediately use the app during your initial launch.
 
-## 2. Backend Deployment (Render / AWS / Heroku)
+## 2. Backend Deployment (Google Cloud Run)
 
 The backend is a standard Python FastAPI application. We recommend [Render](https://render.com) for easy deployment.
 

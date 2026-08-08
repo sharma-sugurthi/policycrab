@@ -3,7 +3,7 @@ Celery Application — async task queue for long-running AI pipelines.
 
 Why Celery:
   PolicyCrab's LLM pipelines (policy ingestion, claim evaluation, appeal
-  generation) take 30-90 seconds — far exceeding Heroku's 30-second HTTP
+  generation) take 30-90 seconds, freeing up HTTP request threads.
   timeout.  Celery offloads these to background workers, giving users
   instant feedback and enabling independent scaling.
 

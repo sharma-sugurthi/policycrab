@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
         setSession(currentSession)
         setUser(currentSession?.user ?? null)
         
-        // UNBLOCK THE UI IMMEDIATELY! Do not wait for Heroku API cold starts.
+        // UNBLOCK THE UI IMMEDIATELY! Do not wait for API cold starts.
         if (mounted) setLoading(false)
         
         // Run role verification after auth initialization settles.

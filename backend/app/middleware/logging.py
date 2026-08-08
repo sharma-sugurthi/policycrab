@@ -2,7 +2,7 @@
 Structured Request Logging Middleware
 
 Logs every HTTP request and response as a single JSON line, suitable for
-parsing in Heroku log viewer, Datadog, or any log aggregator.
+parsing in Google Cloud Logging, Datadog, or any log aggregator.
 
 Fields logged per request:
   - method     HTTP method

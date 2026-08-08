@@ -18,7 +18,7 @@ DDoS Protection (automatic, free tier):
   Cloudflare absorbs volumetric DDoS attacks at the edge (300+ Tbps capacity).
   Layer 7 HTTP floods are detected by ML and blocked automatically.
   This middleware does NOT need to implement DDoS logic — Cloudflare handles it
-  before traffic ever reaches Heroku.
+  before traffic ever reaches Cloud Run.
 """
 
 import ipaddress

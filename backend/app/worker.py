@@ -2,7 +2,7 @@
 Lightweight task runner using FastAPI BackgroundTasks + Redis (Upstash).
 
 Why NOT Celery/worker dyno:
-  - Heroku Eco plan has 1,000 hours/month shared across ALL dynos.
+  - Cloud Run scales down to 0, avoiding idle compute costs.
   - web + worker = ~1,488 hours → exceeds the free limit.
   - Cost: $0 extra with this approach vs $5-7/mo for a separate worker dyno.
 
@@ -13,7 +13,7 @@ How it works:
   4. If Redis is unavailable (local dev), an in-memory dict is used as fallback.
 
 Limitations vs Celery:
-  - Tasks die if the dyno restarts mid-task (rare on Heroku, acceptable for demo).
+  - Tasks die if the instance restarts mid-task (rare on Cloud Run, acceptable for demo).
   - No cross-dyno task visibility (but we only run 1 web dyno anyway).
   - No automatic retry (we implement manual retry logic inside each task).
 """

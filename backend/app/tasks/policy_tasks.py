@@ -1,7 +1,7 @@
 """
 Policy ingestion background task — runs inside the FastAPI web dyno.
 
-Uses asyncio (no separate worker process) so it works within Heroku Eco's
+Uses asyncio (no separate worker process) so it works within Cloud Run's
 1,000 hour/month limit without any additional cost.
 """
 

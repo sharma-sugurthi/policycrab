@@ -2,7 +2,7 @@
 HIPAA Document Scrubber (Microsoft Presidio — Regex-Only Mode)
 
 Uses Presidio's built-in pattern recognizers WITHOUT spaCy or any NLP model.
-This eliminates the ~100MB spaCy dependency that bloats Heroku slug size.
+This eliminates the ~100MB spaCy dependency that bloats container size.
 
 What IS detected (regex patterns):
   - US_SSN (Social Security Numbers)
