@@ -1,3 +1,5 @@
+.gcloudignore
+.dockerignore
 .env
 .env.*
 __pycache__/

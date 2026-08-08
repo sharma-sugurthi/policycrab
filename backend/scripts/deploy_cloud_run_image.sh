@@ -5,6 +5,7 @@ set -e
 PROJECT_ID="project-9676fda5-8ba6-476c-8d9"
 SERVICE_NAME="policycrab-backend"
 REGION="us-east1"
+MEMORY="1Gi"
 IMAGE="us-east1-docker.pkg.dev/project-9676fda5-8ba6-476c-8d9/cloud-run-source-deploy/policycrab-backend:latest"
 
 echo "🚀 Deploying Image to Cloud Run..."
@@ -33,6 +34,7 @@ echo "📦 Deploying..."
 gcloud run deploy $SERVICE_NAME \
   --image $IMAGE \
   --region $REGION \
+  --memory $MEMORY \
   --allow-unauthenticated \
   --set-env-vars "$SECRETS" \
   --project $PROJECT_ID

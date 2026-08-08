@@ -2,6 +2,7 @@
 Chat API Routes — WebSocket-based interactive Q&A.
 """
 
+import asyncio
 import json
 import logging
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 CHAT_HTTP_RATE_LIMIT = rate_limit("chat:http", max_requests=20, window_seconds=60)
 CHAT_WS_MESSAGE_LIMIT = RateLimitRule("chat:websocket", max_requests=30, window_seconds=60)
+CHAT_GRAPH_TIMEOUT_SECONDS = 40
 
 
 def _extract_text_content(content) -> str:
@@ -124,7 +126,7 @@ async def chat_websocket(websocket: WebSocket):
 
             # Run the chat graph
             graph = get_chat_graph()
-            result = await graph.ainvoke(conversation_state)
+            result = await asyncio.wait_for(graph.ainvoke(conversation_state), timeout=CHAT_GRAPH_TIMEOUT_SECONDS)
 
             # Extract the new AI messages and append them to our persistent history.
             # The graph uses add_messages, so result["messages"] contains ALL messages
@@ -243,7 +245,7 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user), _:
 
     try:
         graph = get_chat_graph()
-        result = await graph.ainvoke(state)
+        result = await asyncio.wait_for(graph.ainvoke(state), timeout=CHAT_GRAPH_TIMEOUT_SECONDS)
 
         ai_messages = [m for m in result.get("messages", []) if hasattr(m, 'type') and m.type == "ai"]
         response_text = _extract_text_content(ai_messages[-1].content) if ai_messages else "I couldn't generate a response."

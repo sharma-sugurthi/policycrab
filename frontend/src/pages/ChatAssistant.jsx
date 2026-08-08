@@ -1,9 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { apiFetch, readApiResponse } from '../lib/api'
+import { apiFetch, readApiResponse, formatApiError } from '../lib/api'
 import { IconCpu, IconActivity, IconSearch, IconBriefcase, IconZap, IconPlus, IconTrash, IconMessageCircle } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
+const CHAT_TIMEOUT_MS = 45000
+
+function apiFetchWithTimeout(endpoint, options = {}, timeoutMs = CHAT_TIMEOUT_MS) {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+
+  return apiFetch(endpoint, { ...options, signal: controller.signal })
+    .finally(() => window.clearTimeout(timeoutId))
+}
 
 function renderMessageContent(content) {
   const lines = content.split('\n')
@@ -42,7 +51,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
   // Fetch list of all chat sessions
   const fetchSessions = async () => {
     try {
-      const res = await apiFetch('/chat/sessions')
+      const res = await apiFetchWithTimeout('/chat/sessions')
       if (res.ok) {
         const data = await readApiResponse(res)
         setChatSessions(data || [])
@@ -66,7 +75,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
     setActiveChatId(chatId)
     setLoading(true)
     try {
-      const res = await apiFetch(`/chat/session?chat_id=${chatId}`)
+      const res = await apiFetchWithTimeout(`/chat/session?chat_id=${chatId}`)
       if (res.ok) {
         const data = await readApiResponse(res)
         if (data.messages?.length > 0) {
@@ -90,7 +99,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
   const handleDeleteSession = async (e, chatId) => {
     e.stopPropagation()
     try {
-      await apiFetch(`/chat/session/${chatId}`, { method: 'DELETE' })
+      await apiFetchWithTimeout(`/chat/session/${chatId}`, { method: 'DELETE' })
       if (activeChatId === chatId) {
         handleNewChat()
       }
@@ -112,11 +121,15 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       const payload = { message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }
       if (activeChatId) payload.chat_id = activeChatId
 
-      const res = await apiFetch('/chat/message', {
+      const res = await apiFetchWithTimeout('/chat/message', {
         method: 'POST',
         body: JSON.stringify(payload),
       })
       const data = await readApiResponse(res)
+      if (!res.ok) {
+        setMessages(prev => [...prev, { role: 'ai', content: formatApiError(data, 'The assistant could not complete that request. Please try again.') }])
+        return
+      }
       if (!data || typeof data === 'string') {
         console.error('Backend non-JSON response:', data || '')
         setMessages(prev => [...prev, { role: 'ai', content: 'The assistant is temporarily unavailable. Please try again in a few seconds.' }])
@@ -130,8 +143,13 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
         fetchSessions()
       }
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'ai', content: 'Connection error — please check your internet and try again.' }])
-    } finally { setLoading(false) }
+      const message = err.name === 'AbortError'
+        ? 'The assistant took too long to respond. Please try again with a shorter question.'
+        : 'Connection error - please check your internet and try again.'
+      setMessages(prev => [...prev, { role: 'ai', content: message }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const quickQuestions = [

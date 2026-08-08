@@ -5,11 +5,13 @@ set -e
 PROJECT_ID="project-9676fda5-8ba6-476c-8d9"
 SERVICE_NAME="policycrab-backend"
 REGION="us-east1"
+MEMORY="1Gi"
 
 echo "🚀 Starting PolicyCrab Cloud Run Deployment..."
 echo "Project: $PROJECT_ID"
 echo "Service: $SERVICE_NAME"
 echo "Region: $REGION"
+echo "Memory: $MEMORY"
 
 # Navigate to backend directory
 cd "$(dirname "$0")/.."
@@ -43,6 +45,7 @@ echo "📦 Deploying to Cloud Run..."
 gcloud run deploy $SERVICE_NAME \
   --source . \
   --region $REGION \
+  --memory $MEMORY \
   --allow-unauthenticated \
   --set-env-vars "$SECRETS" \
   --project $PROJECT_ID
