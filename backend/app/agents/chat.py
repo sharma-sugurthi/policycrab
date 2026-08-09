@@ -153,7 +153,7 @@ async def chat_node(state: AgentState) -> dict:
                     elif tool_name == "check_provider_network_status":
                         tool_result = NetworkStatusTool().invoke(tool_args)
                     elif tool_name == "web_search":
-                        tool_result = await WebSearchTool()._arun(**tool_args)
+                        tool_result = await WebSearchTool().ainvoke(tool_args)
                     else:
                         tool_result = f"Error: Unknown tool {tool_name}"
                 except Exception as e:
@@ -166,10 +166,22 @@ async def chat_node(state: AgentState) -> dict:
             
             current_step += 1
 
-        logger.info(f"Agent 5: Chat response generated ({len(response.content)} chars)")
+        final_text = response.content
+        if isinstance(final_text, list):
+            text_parts = []
+            for item in final_text:
+                if isinstance(item, dict) and "text" in item:
+                    text_parts.append(item["text"])
+                elif isinstance(item, str):
+                    text_parts.append(item)
+            final_text = "\n".join(text_parts)
+        elif not isinstance(final_text, str):
+            final_text = str(final_text)
+
+        logger.info(f"Agent 5: Chat response generated ({len(final_text)} chars)")
 
         return {
-            "messages": [AIMessage(content=response.content)],
+            "messages": [AIMessage(content=final_text)],
             "current_phase": "chat",
         }
 

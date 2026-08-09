@@ -3,6 +3,7 @@ import os
 from typing import Type
 from pydantic import BaseModel, Field
 from langchain_core.tools import BaseTool
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -14,25 +15,24 @@ class WebSearchTool(BaseTool):
     description: str = (
         "Search the web for up-to-date or state-specific US health insurance information. "
         "Use this tool when you need current deadlines, regulations, or state laws not covered "
-        "in your core knowledge base. The search is automatically restricted to authoritative .gov sites."
+        "in your core knowledge base."
     )
     args_schema: Type[BaseModel] = WebSearchInput
     
     def _run(self, query: str) -> str:
         """Run the tool synchronously."""
         try:
-            # We import here so we don't crash if the library isn't installed.
             from tavily import TavilyClient
             
-            # The API key comes from the environment variable TAVILY_API_KEY
-            api_key = os.getenv("TAVILY_API_KEY")
+            # Retrieve API key from Pydantic settings first, fallback to os.getenv
+            api_key = getattr(settings, "tavily_api_key", None) or os.getenv("TAVILY_API_KEY")
             if not api_key:
-                return "Error: TAVILY_API_KEY is not configured in the environment."
+                logger.warning("WebSearchTool: TAVILY_API_KEY is missing or empty.")
+                return "Web search API key is missing. Please answer the user's question directly using your general US health insurance knowledge."
             
             client = TavilyClient(api_key=api_key)
             
-            # We enforce domain filtering here for authoritative results
-            # We prioritize .gov, cms.gov, dol.gov, hhs.gov
+            # Perform search with domain filtering
             response = client.search(
                 query=query,
                 search_depth="basic",
@@ -44,7 +44,18 @@ class WebSearchTool(BaseTool):
             
             results = response.get("results", [])
             if not results:
-                return f"No authoritative results found for query: {query}"
+                # If restricted domains returned no results, retry without domain restriction
+                response = client.search(
+                    query=query + " US health insurance",
+                    search_depth="basic",
+                    include_answer=False,
+                    include_raw_content=False,
+                    max_results=3,
+                )
+                results = response.get("results", [])
+
+            if not results:
+                return f"No web search results found for query: {query}. Please answer using your core US health insurance knowledge."
                 
             formatted_results = []
             for i, res in enumerate(results):
@@ -56,12 +67,13 @@ class WebSearchTool(BaseTool):
             return "\n".join(formatted_results)
             
         except ImportError:
-            return "Error: The tavily-python library is not installed."
+            logger.error("WebSearchTool: tavily-python package is missing.")
+            return "Web search tool unavailable. Please answer the user's question directly using your core US health insurance knowledge."
         except Exception as e:
-            logger.error(f"WebSearchTool failed: {e}")
-            return f"Error executing web search: {str(e)}"
+            logger.error(f"WebSearchTool execution error: {e}")
+            return f"Web search encountered an issue ({str(e)}). Please answer the user's question directly using your core US health insurance knowledge."
             
     async def _arun(self, query: str) -> str:
-        """Run the tool asynchronously (fallback to sync for now since tavily client is sync)."""
+        """Run the tool asynchronously."""
         import asyncio
         return await asyncio.to_thread(self._run, query)
