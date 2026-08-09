@@ -137,6 +137,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
   const [escalatedResult, setEscalatedResult] = useState(null)
   const [escalatedLoading, setEscalatedLoading] = useState(false)
   const [escalatedError, setEscalatedError] = useState(null)
+  const [networkStatus, setNetworkStatus] = useState('')
 
   useEffect(() => {
     let raw = null
@@ -203,6 +204,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
       const data = await readApiResponse(res)
       if (data.success && data.extracted) {
         setEobResult(data.extracted)
+        prefillFromEob(data.extracted)
       } else {
         setEobError(formatApiError(data, 'EOB extraction failed.'))
       }
@@ -389,7 +391,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
       const res = await apiFetch('/claim/evaluate', { 
         method: 'POST', 
         body: JSON.stringify({
-          claim_description: claimText,
+          claim_description: claimText + (networkStatus ? `\n\nNetwork Status: ${networkStatus}` : ''),
           policy_profile: policyProfile,
           allowed_amount: normalizedAllowedAmount,
           session_id: policySession?.session_id || null,
@@ -459,19 +461,6 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
     setClaimText(prev => `${prev}${providerText}`.trim())
   }
 
-  const loadSample = (type) => {
-    if (type === 'approved') {
-      setClaimText("I went to my in-network doctor for a routine office visit because I had a bad cold. The bill was $250.")
-      setAllowedAmount('160')
-    } else if (type === 'nsa') {
-      setClaimText("I went to the ER at City Hospital because of severe chest pain. The hospital is out-of-network. They billed $15,000.")
-      setAllowedAmount('1200')
-    } else {
-      setClaimText("I had an MRI on my right knee. My insurance denied it saying it wasn't medically necessary (Code CO-50). The facility billed $3,500. No prior authorization was done.")
-      setAllowedAmount('')
-    }
-  }
-
   return (
     <section className="section-white section-pad">
       <div className="main">
@@ -518,7 +507,15 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
 
           <div className="grid-4" style={{ gap: '0.75rem', marginBottom: '1rem' }}>
             <input className="input" placeholder="Last name or facility" value={providerSearch.last_name}
-              onChange={e => setProviderSearch(prev => ({ ...prev, last_name: e.target.value }))} />
+              onChange={e => {
+                const val = e.target.value
+                const isFacilityLike = /\b(hospital|clinic|center|medical|health|imaging|surgery|associates|group|care)\b/i.test(val)
+                setProviderSearch(prev => ({ 
+                  ...prev, 
+                  last_name: val,
+                  ...(isFacilityLike ? { is_facility: true } : {})
+                }))
+              }} />
             <input className="input" placeholder="Specialty" value={providerSearch.taxonomy_description}
               onChange={e => setProviderSearch(prev => ({ ...prev, taxonomy_description: e.target.value }))} />
             <input className="input" placeholder="City" value={providerSearch.city}
@@ -528,10 +525,15 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+            <label style={{ 
+              display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', 
+              color: providerSearch.is_facility ? 'var(--accent)' : 'var(--text-primary)', 
+              fontWeight: providerSearch.is_facility ? 800 : 600,
+              transition: 'all 0.2s'
+            }}>
               <input type="checkbox" checked={providerSearch.is_facility}
                 onChange={e => setProviderSearch(prev => ({ ...prev, is_facility: e.target.checked }))} 
-                style={{ accentColor: 'var(--accent)' }}/>
+                style={{ accentColor: 'var(--accent)', transform: providerSearch.is_facility ? 'scale(1.1)' : 'scale(1)' }}/>
               Search hospitals / facilities
             </label>
             <button className="btn btn-red" onClick={handleProviderSearch} disabled={providerLoading}>
@@ -702,7 +704,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                     )}
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                       <button type="button" className="btn btn-red" style={{ flex: 1, padding: '0.75rem', fontSize: '0.875rem' }} onClick={() => prefillFromEob(eobResult)}>
-                        <IconCheckCircle size={16} /> Pre-fill Claim Description
+                        <IconCheckCircle size={16} /> Re-sync to Claim Description
                       </button>
                       <button type="button" className="btn btn-outline" style={{ padding: '0.75rem 1rem' }} onClick={() => { setEobResult(null); setEobFile(null) }}>Clear</button>
                     </div>
@@ -749,12 +751,24 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                 </span>
               </label>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                {[['In-Network Visit', 'approved'], ['OON Emergency (NSA)', 'nsa'], ['Denied MRI', 'denied']].map(([l, t]) => (
-                  <button key={t} className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.5rem 0.875rem' }} onClick={() => loadSample(t)} disabled={!policyProfile}>
-                    {l}
-                  </button>
-                ))}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <span style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                  Network Status
+                </span>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {[['IN_NETWORK', 'In-Network'], ['OUT_OF_NETWORK', 'Out-of-Network'], ['OON_EMERGENCY', 'OON Emergency (NSA)']].map(([val, label]) => (
+                    <button 
+                      key={val} 
+                      type="button"
+                      className={`btn ${networkStatus === val ? 'btn-red' : 'btn-outline'}`} 
+                      style={{ fontSize: '0.8125rem', padding: '0.5rem 1rem' }} 
+                      onClick={() => setNetworkStatus(networkStatus === val ? '' : val)}
+                      disabled={!policyProfile}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* ── Guided Form ────────────── */}

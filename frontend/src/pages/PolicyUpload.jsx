@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { IconFileText, IconCheckCircle, IconUpload, IconSearch, IconFolder, IconX, IconAlertTriangle } from '../components/Icons'
+import AILogViewer from '../components/AILogViewer'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 const MAX_POLICIES = 5
@@ -291,6 +292,12 @@ export default function PolicyUpload({ onPolicyParsed }) {
               {error && (
                 <div style={{ marginTop: '1rem', padding: '0.875rem 1rem', background: 'var(--danger-bg)', border: '1px solid var(--danger-border)', borderRadius: '0.75rem', color: 'var(--danger)', fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <IconAlertTriangle size={18} /> {error}
+                </div>
+              )}
+
+              {loading && (
+                <div style={{ marginTop: '1rem' }}>
+                  <AILogViewer task="extraction" active={loading} />
                 </div>
               )}
             </div>

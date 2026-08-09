@@ -12,7 +12,8 @@ export default function ProfilePage() {
   const [profileForm, setProfileForm] = useState({
     full_name: '',
     dob: '',
-    gender: ''
+    gender: '',
+    state: ''
   })
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileStatus, setProfileStatus] = useState(null)
@@ -31,7 +32,8 @@ export default function ProfilePage() {
       setProfileForm({
         full_name: user.user_metadata.full_name || '',
         dob: user.user_metadata.dob || '',
-        gender: user.user_metadata.gender || ''
+        gender: user.user_metadata.gender || '',
+        state: user.user_metadata.state || ''
       })
     }
   }, [user])
@@ -60,7 +62,8 @@ export default function ProfilePage() {
       await updateProfile({
         full_name: profileForm.full_name,
         dob: profileForm.dob,
-        gender: profileForm.gender
+        gender: profileForm.gender,
+        state: profileForm.state
       })
       setProfileStatus({ type: 'success', message: 'Profile updated successfully!' })
       setTimeout(() => setProfileStatus(null), 3000)
@@ -149,15 +152,24 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Gender</label>
-                <select className="input" value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})}>
-                  <option value="">Select Gender...</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Non-Binary">Non-Binary</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
-                </select>
+              <div className="grid-2">
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Gender</label>
+                  <select className="input" value={profileForm.gender} onChange={e => setProfileForm({...profileForm, gender: e.target.value})}>
+                    <option value="">Select Gender...</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-Binary">Non-Binary</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>State of Residence</label>
+                  <select className="input" value={profileForm.state} onChange={e => setProfileForm({...profileForm, state: e.target.value})}>
+                    <option value="">Select State...</option>
+                    <option value="AL">Alabama</option><option value="AK">Alaska</option><option value="AZ">Arizona</option><option value="AR">Arkansas</option><option value="CA">California</option><option value="CO">Colorado</option><option value="CT">Connecticut</option><option value="DE">Delaware</option><option value="FL">Florida</option><option value="GA">Georgia</option><option value="HI">Hawaii</option><option value="ID">Idaho</option><option value="IL">Illinois</option><option value="IN">Indiana</option><option value="IA">Iowa</option><option value="KS">Kansas</option><option value="KY">Kentucky</option><option value="LA">Louisiana</option><option value="ME">Maine</option><option value="MD">Maryland</option><option value="MA">Massachusetts</option><option value="MI">Michigan</option><option value="MN">Minnesota</option><option value="MS">Mississippi</option><option value="MO">Missouri</option><option value="MT">Montana</option><option value="NE">Nebraska</option><option value="NV">Nevada</option><option value="NH">New Hampshire</option><option value="NJ">New Jersey</option><option value="NM">New Mexico</option><option value="NY">New York</option><option value="NC">North Carolina</option><option value="ND">North Dakota</option><option value="OH">Ohio</option><option value="OK">Oklahoma</option><option value="OR">Oregon</option><option value="PA">Pennsylvania</option><option value="RI">Rhode Island</option><option value="SC">South Carolina</option><option value="SD">South Dakota</option><option value="TN">Tennessee</option><option value="TX">Texas</option><option value="UT">Utah</option><option value="VT">Vermont</option><option value="VA">Virginia</option><option value="WA">Washington</option><option value="WV">West Virginia</option><option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
+                  </select>
+                </div>
               </div>
 
               {profileStatus && (
