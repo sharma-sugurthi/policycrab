@@ -100,7 +100,7 @@ Visit: `http://localhost:5000`
 ## 🤝 Support & Documentation
 
 The codebase is clean, well-commented, and heavily modularized. See the following documents for more details:
-- [DEPLOYMENT.md](DEPLOYMENT.md) - For deploying to production (Vercel/Render).
+- [DEPLOYMENT.md](DEPLOYMENT.md) - For deploying to production (Vercel & Google Cloud Run).
 - [SECURITY.md](SECURITY.md) - For data privacy and infrastructure protection.
 - [CHANGELOG.md](CHANGELOG.md) - To review all current platform features.
 

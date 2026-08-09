@@ -1,75 +1,97 @@
-import { useState, useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { apiFetch, readApiResponse, formatApiError } from '../lib/api'
-import { IconCpu, IconActivity, IconSearch, IconBriefcase, IconZap, IconPlus, IconTrash, IconMessageCircle } from '../components/Icons'
+import { useAuth } from '../contexts/AuthContext'
+import {
+  IconPlus, IconTrash, IconMessageCircle, IconZap,
+  IconBriefcase, IconActivity, IconSearch
+} from '../components/Icons'
 
-const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 const CHAT_TIMEOUT_MS = 45000
 
 function apiFetchWithTimeout(endpoint, options = {}, timeoutMs = CHAT_TIMEOUT_MS) {
   const controller = new AbortController()
   const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
-
   return apiFetch(endpoint, { ...options, signal: controller.signal })
     .finally(() => window.clearTimeout(timeoutId))
 }
 
-function renderMessageContent(content) {
+// Render markdown-lite: bold + line breaks
+function renderContent(content) {
   const lines = content.split('\n')
-  return lines.map((line, lineIndex) => {
+  return lines.map((line, li) => {
     const parts = line.split(/(\*\*.*?\*\*)/g)
     return (
-      <span key={lineIndex}>
-        {parts.map((part, partIndex) => {
-          if (part.startsWith('**') && part.endsWith('**')) {
-            return <strong key={partIndex} style={{ fontWeight: 800 }}>{part.slice(2, -2)}</strong>
-          }
-          return <span key={partIndex}>{part}</span>
-        })}
-        {lineIndex < lines.length - 1 ? <br /> : null}
+      <span key={li}>
+        {parts.map((part, pi) =>
+          part.startsWith('**') && part.endsWith('**')
+            ? <strong key={pi}>{part.slice(2, -2)}</strong>
+            : <span key={pi}>{part}</span>
+        )}
+        {li < lines.length - 1 ? <br /> : null}
       </span>
     )
   })
 }
 
-export default function ChatAssistant({ policyProfile, costBreakdown }) {
-  const defaultGreeting = { role: 'ai', content: "Hi! I'm the PolicyCrab AI assistant. I can help you understand your insurance coverage, claims, denials, or appeal rights under US law. How can I help you today?" }
+// Send icon (arrow up)
+function IconArrowUp({ size = 16 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </svg>
+  )
+}
 
-  const [messages, setMessages] = useState([defaultGreeting])
+const QUICK_QUESTIONS = [
+  "What are my rights under the No Surprises Act?",
+  "How long do I have to file an ERISA appeal?",
+  "What does 'medical necessity' mean in my policy?",
+  "Can an ER balance bill me if they're out-of-network?",
+  "What's the difference between HMO and PPO?",
+]
+
+export default function ChatAssistant({ policyProfile, costBreakdown }) {
+  const { user } = useAuth()
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [chatSessions, setChatSessions] = useState([])
   const [activeChatId, setActiveChatId] = useState(null)
-  const messagesEndRef = useRef(null)
 
-  const hasMounted = useRef(false)
+  const feedRef = useRef(null)
+  const inputRef = useRef(null)
+
+  const isNewChat = messages.length === 0
+
+  // Auto-scroll feed to bottom whenever messages change
+  const scrollToBottom = useCallback(() => {
+    if (feedRef.current) {
+      feedRef.current.scrollTop = feedRef.current.scrollHeight
+    }
+  }, [])
+
   useEffect(() => {
-    if (!hasMounted.current) { hasMounted.current = true; return }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    scrollToBottom()
+  }, [messages, loading, scrollToBottom])
 
-  // Fetch list of all chat sessions
-  const fetchSessions = async () => {
+  // Fetch chat session list
+  const fetchSessions = useCallback(async () => {
     try {
       const res = await apiFetchWithTimeout('/chat/sessions')
       if (res.ok) {
         const data = await readApiResponse(res)
         setChatSessions(data || [])
-        // Auto-select most recent if none selected
-        if (!activeChatId && data?.length > 0) {
-          loadSession(data[0].id)
-        }
       }
     } catch (err) {
       console.error('Failed to load chat sessions', err)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchSessions()
-  }, [])
+  }, [fetchSessions])
 
-  // Load a specific session
   const loadSession = async (chatId) => {
     if (chatId === activeChatId) return
     setActiveChatId(chatId)
@@ -78,11 +100,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       const res = await apiFetchWithTimeout(`/chat/session?chat_id=${chatId}`)
       if (res.ok) {
         const data = await readApiResponse(res)
-        if (data.messages?.length > 0) {
-          setMessages(data.messages)
-        } else {
-          setMessages([defaultGreeting])
-        }
+        setMessages(data.messages?.length ? data.messages : [])
       }
     } catch (err) {
       console.error('Failed to load session', err)
@@ -93,26 +111,24 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
 
   const handleNewChat = () => {
     setActiveChatId(null)
-    setMessages([defaultGreeting])
+    setMessages([])
+    inputRef.current?.focus()
   }
 
   const handleDeleteSession = async (e, chatId) => {
     e.stopPropagation()
     try {
       await apiFetchWithTimeout(`/chat/session/${chatId}`, { method: 'DELETE' })
-      if (activeChatId === chatId) {
-        handleNewChat()
-      }
+      if (activeChatId === chatId) handleNewChat()
       fetchSessions()
     } catch (err) {
       console.error('Failed to delete session', err)
     }
   }
 
-  const handleSend = async (e) => {
-    e.preventDefault()
-    if (!input.trim() || loading) return
-    const userMsg = input.trim()
+  const handleSend = async (text) => {
+    const userMsg = (text || input).trim()
+    if (!userMsg || loading) return
     setInput('')
     setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setLoading(true)
@@ -126,13 +142,13 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
         body: JSON.stringify(payload),
       })
       const data = await readApiResponse(res)
+
       if (!res.ok) {
         setMessages(prev => [...prev, { role: 'ai', content: formatApiError(data, 'The assistant could not complete that request. Please try again.') }])
         return
       }
       if (!data || typeof data === 'string') {
-        console.error('Backend non-JSON response:', data || '')
-        setMessages(prev => [...prev, { role: 'ai', content: 'The assistant is temporarily unavailable. Please try again in a few seconds.' }])
+        setMessages(prev => [...prev, { role: 'ai', content: 'The assistant is temporarily unavailable. Please try again.' }])
         return
       }
       if (data.messages?.length) setMessages(data.messages)
@@ -143,146 +159,181 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
         fetchSessions()
       }
     } catch (err) {
-      const message = err.name === 'AbortError'
+      const msg = err.name === 'AbortError'
         ? 'The assistant took too long to respond. Please try again with a shorter question.'
-        : 'Connection error - please check your internet and try again.'
-      setMessages(prev => [...prev, { role: 'ai', content: message }])
+        : 'Connection error — please check your connection and try again.'
+      setMessages(prev => [...prev, { role: 'ai', content: msg }])
     } finally {
       setLoading(false)
     }
   }
 
-  const quickQuestions = [
-    "What are my rights under the No Surprises Act?",
-    "How long do I have to file an ERISA appeal?",
-    "What's the difference between HMO and PPO?",
-    "What does 'medical necessity' mean?",
-    "Can an ER balance bill me if they're out-of-network?",
-  ]
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  // Derive user initials for avatar
+  const userInitials = user?.user_metadata?.full_name
+    ? user.user_metadata.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : (user?.email?.[0] ?? 'U').toUpperCase()
+
+  // Context pill labels
+  const hasPolicyCtx = Boolean(policyProfile)
+  const hasClaimCtx = Boolean(costBreakdown)
 
   return (
-    <section className="section-white" style={{ paddingTop: '3rem', paddingBottom: '2rem' }}>
-      <div className="main">
-        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }} style={{ marginBottom: '1.5rem' }}>
-          <motion.p variants={fadeUp} transition={{ duration: 0.45 }} className="section-label">
-            <span className="line" /> Coverage Help
-          </motion.p>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-            <motion.h1 variants={fadeUp} transition={{ duration: 0.55 }} className="section-title">
-              AI <span className="gradient-text">Assistant</span>
-            </motion.h1>
+    <div className="chat-page-shell">
+      {/* ── Sidebar ───────────────────────────────────── */}
+      <aside className="chat-sidebar">
+        <div className="chat-sidebar-header">
+          <button
+            className="btn btn-red"
+            onClick={handleNewChat}
+            style={{ width: '100%', justifyContent: 'center', padding: '0.625rem 1rem', fontSize: '0.875rem' }}
+          >
+            <IconPlus size={15} /> New Chat
+          </button>
+        </div>
+
+        <div className="chat-sidebar-sessions">
+          {chatSessions.length === 0 ? (
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '1.25rem 0.5rem' }}>
+              No previous chats
+            </p>
+          ) : (
+            chatSessions.map(session => (
+              <div
+                key={session.id}
+                className={`chat-session-item${activeChatId === session.id ? ' active' : ''}`}
+                onClick={() => loadSession(session.id)}
+              >
+                <IconMessageCircle size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                <span className="chat-session-title">{session.title || 'New Chat'}</span>
+                <button
+                  className="chat-session-delete"
+                  onClick={(e) => handleDeleteSession(e, session.id)}
+                  title="Delete"
+                >
+                  <IconTrash size={13} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Context status */}
+        <div className="chat-sidebar-footer">
+          <p style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Context</p>
+          <div className="chat-context-status">
+            <div className="chat-context-row">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                <IconBriefcase size={12} /> Policy
+              </span>
+              <span className={`badge ${hasPolicyCtx ? 'badge-success' : 'badge-zinc'}`} style={{ fontSize: '0.65rem', padding: '0.125rem 0.5rem' }}>
+                {hasPolicyCtx ? 'Loaded' : 'None'}
+              </span>
+            </div>
+            <div className="chat-context-row">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                <IconActivity size={12} /> Claim
+              </span>
+              <span className={`badge ${hasClaimCtx ? 'badge-success' : 'badge-zinc'}`} style={{ fontSize: '0.65rem', padding: '0.125rem 0.5rem' }}>
+                {hasClaimCtx ? 'Loaded' : 'None'}
+              </span>
+            </div>
+            <div className="chat-context-row">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                <IconSearch size={12} /> Knowledge
+              </span>
+              <span className="badge badge-info" style={{ fontSize: '0.65rem', padding: '0.125rem 0.5rem' }}>Active</span>
+            </div>
           </div>
-        </motion.div>
+        </div>
+      </aside>
 
-        <div className="grid-2" style={{ gap: '1.5rem', alignItems: 'start', gridTemplateColumns: '1fr 2fr' }}>
-          {/* ── Left Panel (Sidebar) ─────────────────── */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-            style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-            {/* Chat History List */}
-            <div className="card" style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <button className="btn btn-red" onClick={handleNewChat} style={{ width: '100%', justifyContent: 'center' }}>
-                <IconPlus size={16} /> New Chat
-              </button>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                {chatSessions.length === 0 ? (
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', textAlign: 'center', padding: '1rem 0' }}>No previous chats.</p>
-                ) : (
-                  chatSessions.map(session => (
-                    <div key={session.id} 
-                         onClick={() => loadSession(session.id)}
-                         style={{ 
-                           display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-                           padding: '0.75rem', borderRadius: '8px', cursor: 'pointer',
-                           background: activeChatId === session.id ? 'var(--bg-secondary)' : 'transparent',
-                           border: `1px solid ${activeChatId === session.id ? 'var(--border-primary)' : 'transparent'}`
-                         }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-                        <IconMessageCircle size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {session.title || 'New Chat'}
-                        </span>
-                      </div>
-                      <button onClick={(e) => handleDeleteSession(e, session.id)} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', padding: '0.25rem' }}>
-                        <IconTrash size={14} />
-                      </button>
-                    </div>
-                  ))
-                )}
+      {/* ── Main Chat Column ──────────────────────────── */}
+      <main className="chat-main">
+        {/* Message Feed */}
+        <div className="chat-feed" ref={feedRef}>
+          {isNewChat ? (
+            /* Welcome / empty state — suggestions only appear here */
+            <div className="chat-welcome">
+              <div className="chat-welcome-icon">
+                <IconZap size={26} />
               </div>
-            </div>
-
-            {/* Context */}
-            <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <div className="feature-icon" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}><IconCpu size={20} /></div>
-                <div>
-                  <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>Conversation context</h3>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>Used to personalize your answer</p>
-                </div>
+              <div>
+                <h2 className="chat-welcome-title">How can I help you today?</h2>
+                <p className="chat-welcome-sub">
+                  Ask me about your insurance coverage, claims, denials, appeal rights, or any US health insurance question.
+                </p>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-primary)' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconBriefcase size={16} style={{ color: 'var(--text-tertiary)' }} /> Policy Profile</span>
-                  {policyProfile ? <span className="badge badge-success">Loaded</span> : <span className="badge badge-zinc">None</span>}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border-primary)' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconActivity size={16} style={{ color: 'var(--text-tertiary)' }} /> Recent Claim</span>
-                  {costBreakdown ? <span className="badge badge-success">Loaded</span> : <span className="badge badge-zinc">None</span>}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconSearch size={16} style={{ color: 'var(--text-tertiary)' }} /> Reference search</span>
-                  <span className="badge badge-info">Active</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Suggested Questions */}
-            <div className="card" style={{ padding: '1.5rem', background: 'var(--bg-card)', border: '1px solid var(--border-secondary)', boxShadow: 'var(--shadow-sm)' }}>
-              <h3 style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Suggested Questions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                {quickQuestions.map((q, i) => (
-                  <button key={i} className="btn btn-outline"
-                    style={{ textAlign: 'left', whiteSpace: 'normal', lineHeight: 1.5, height: 'auto', justifyContent: 'flex-start', padding: '0.875rem 1rem', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}
-                    onClick={() => setInput(q)}>
-                    <span style={{ color: 'var(--accent)', fontWeight: 800, marginRight: '0.5rem' }}>→</span> {q}
+              <div className="chat-suggestion-chips">
+                {QUICK_QUESTIONS.map((q, i) => (
+                  <button
+                    key={i}
+                    className="chat-suggestion-chip"
+                    onClick={() => handleSend(q)}
+                  >
+                    {q}
                   </button>
                 ))}
               </div>
             </div>
-          </motion.div>
-
-          {/* ── Chat Panel ─────────────────── */}
-          <motion.div initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.55, delay: 0.15 }}>
-            <div className="chat-panel" style={{ height: 'calc(100vh - 220px)' }}>
-              <div className="chat-messages">
-                {messages.map((msg, idx) => (
-                  <div key={idx} className={`chat-bubble ${msg.role}`}>
-                    {msg.role === 'ai' ? renderMessageContent(msg.content) : msg.content}
+          ) : (
+            <div className="chat-feed-inner">
+              {messages.map((msg, idx) => (
+                <div key={idx} className={`chat-message-row ${msg.role}`}>
+                  <div className={`chat-avatar ${msg.role === 'ai' ? 'ai-avatar' : 'user-avatar'}`}>
+                    {msg.role === 'ai' ? 'AI' : userInitials}
                   </div>
-                ))}
-                {loading && (
-                  <div className="chat-bubble ai" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', width: 'fit-content' }}>
-                    <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
-                    <em style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', fontWeight: 500 }}>Thinking...</em>
+                  <div className="chat-message-content">
+                    {msg.role === 'ai' ? renderContent(msg.content) : msg.content}
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                </div>
+              ))}
 
-              <form onSubmit={handleSend} className="chat-input-bar">
-                <input type="text" className="input" value={input} onChange={e => setInput(e.target.value)}
-                  placeholder="Ask about regulations, appeals, or your policy..." disabled={loading} />
-                <button type="submit" className="btn btn-red" disabled={!input.trim() || loading}
-                  style={{ borderRadius: '9999px', padding: '0 1.5rem', flexShrink: 0 }}>
-                  <IconZap size={16} /> Send
-                </button>
-              </form>
+              {loading && (
+                <div className="chat-message-row ai">
+                  <div className="chat-avatar ai-avatar">AI</div>
+                  <div className="chat-typing">
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                </div>
+              )}
             </div>
-          </motion.div>
+          )}
         </div>
-      </div>
-    </section>
+
+        {/* Anchored Input Bar */}
+        <div className="chat-input-dock">
+          <div className="chat-input-dock-inner">
+            <textarea
+              ref={inputRef}
+              className="chat-input-field"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about your coverage, appeals, or policy rights..."
+              disabled={loading}
+              rows={1}
+            />
+            <button
+              className="chat-send-btn"
+              onClick={() => handleSend()}
+              disabled={!input.trim() || loading}
+              title="Send (Enter)"
+            >
+              <IconArrowUp size={16} />
+            </button>
+          </div>
+          <p className="chat-input-hint">Press Enter to send · Shift+Enter for new line</p>
+        </div>
+      </main>
+    </div>
   )
 }

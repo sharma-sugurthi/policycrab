@@ -7,6 +7,10 @@ All notable changes to the PolicyCrab platform will be documented in this file.
 - **Frontend Auth Deadlock**: Resolved an issue where profile saves and sign-outs would hang indefinitely ("Saving..."). The `onAuthStateChange` callback was inadvertently awaiting an async `apiFetch` which triggered another Supabase `getSession()`, deadlocking the auth event loop. Admin verification is now deferred and uses a direct `fetch` call.
 - **GCP Migration Issues**: Fixed `403 Permission Denied` errors during chat model initialization by enabling the `Cloud Resource Manager API` for Vertex AI and forcefully restarting Cloud Run containers to flush cached API states.
 
+### Changed
+- **CI/CD Automation**: Configured automated continuous deployment for the backend to Google Cloud Run via GitHub Actions, secured by Workload Identity Federation (WIF).
+- **Admin Security**: Removed visible navigation links to the Admin Console, restricting access exclusively to authorized emails navigating directly to the route.
+
 ## [1.0.0] - 2026-08-02
 ### Added
 - **Interactive AI Appeal Studio**: Line-by-line revision interface for AI-generated appeals with "Assertive", "State Penalties", "Simplify", and "Medical Urgency" modifiers.

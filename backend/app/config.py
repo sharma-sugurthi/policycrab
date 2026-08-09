@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     moonshot_api_key: str = ""      # Kimi (Moonshot AI)
     siliconflow_api_key: str = ""   # Aggregator (free Qwen 72B)
     grok_api_key: str = ""          # x.ai
+    tavily_api_key: str = ""        # Web Search Tool
 
     # ── Application ───────────────────────────────────────────────
     app_name: str = "US Policy Claimer"

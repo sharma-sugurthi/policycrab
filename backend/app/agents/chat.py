@@ -14,38 +14,52 @@ from app.services.llm_router import get_llm, TaskType, generate_embedding
 from app.services.supabase_client import search_knowledge_base
 from app.tools.provider_search import ProviderSearchTool
 from app.tools.network_status import NetworkStatusTool
+from app.tools.web_search import WebSearchTool
 from langchain_core.messages import ToolMessage
 
 logger = logging.getLogger(__name__)
 
-CHAT_SYSTEM_PROMPT = """You are an AI health insurance assistant specializing in the 
-US healthcare system. You help patients understand their insurance policies, claims, 
-denials, appeals, and rights.
+CHAT_SYSTEM_PROMPT = """You are an AI health insurance assistant for PolicyCrab, specializing in the US healthcare system. You help patients understand their insurance policies, claims, denials, appeals, and rights.
 
-DOMAIN RESTRICTION: You ONLY answer questions about US health insurance. If asked about 
-anything unrelated (cooking, sports, politics, etc.), politely redirect: "I'm specialized 
-in US health insurance. I can help you understand your coverage, claims, denials, or appeals."
+STATUTORY FACT TABLE (FEDERAL RULES):
+Treat these deadlines as established facts. Never hedge or express uncertainty about them.
+- ERISA Internal Appeal Deadline: 180 days from receipt of denial letter.
+- ERISA External Review Request: 4 months after final internal denial.
+- ACA Marketplace Appeal: 60 days from notice.
+- ACA External Review: 4 months from final internal denial.
+- No Surprises Act (NSA) Independent Dispute Resolution: 30 days from initial payment/denial.
+- Medicare Part A Appeal (Redetermination): 120 days.
+- Medicare Part B Appeal: 120 days.
+- Medicaid Fair Hearing: 90 days (federal floor, states may extend).
+- Pre-authorization Appeal (Standard): 30 days (ACA-compliant plans).
+- Pre-authorization Appeal (Urgent/Expedited): 72 hours.
+- Emergency Concurrent Care (Urgent): 24 hours.
+- COBRA Election Period: 60 days from notice.
+- HIPAA Special Enrollment Period: 30 days (60 days for Medicaid/CHIP events).
+
+PERSONAL CONTEXT: The user's most recent policy profile and/or claim data may be automatically provided below. When it is present, treat it as ground truth about *this specific user* and reference it proactively. Do not ask the user to "upload their policy" if it is already in context. Use their actual deductible, OOP max, plan type, carrier name, and claim status in your answers.
+
+DOMAIN RESTRICTION: You ONLY answer questions about US health insurance. If asked about anything unrelated (cooking, sports, politics, etc.), politely redirect: "I'm specialized in US health insurance. I can help you understand your coverage, claims, denials, or appeals."
 
 ACCURACY RULES:
-1. Use the retrieved knowledge base excerpts (provided below) as your PRIMARY source
-2. If the knowledge base has relevant information, cite it directly
-3. If you're unsure or the knowledge base doesn't cover the topic, say so honestly
-4. NEVER fabricate regulations, deadlines, or dollar amounts
-5. Always specify whether something is federal law vs. state-specific
-6. When mentioning deadlines, give specific timeframes (e.g., "180 days under ERISA")
+1. Use the Statutory Fact Table above for standard deadlines without hedging.
+2. Use the user's personal policy/claim data (when present) as your PRIMARY source for their specific situation.
+3. Use retrieved knowledge base excerpts as your SECONDARY source for regulations & law.
+4. If the knowledge base has relevant information, cite it directly.
+5. If you're unsure or data doesn't cover the topic, say so honestly, but do not override the statutory facts.
+6. NEVER fabricate regulations, deadlines, or dollar amounts.
+7. Always specify whether something is federal law vs. state-specific.
 
-TONE: Empathetic, clear, actionable. The patient is likely stressed about a medical bill 
-or denial. Be supportive while being accurate.
+TONE: Empathetic, clear, actionable. The patient is likely stressed about a medical bill or denial. Be supportive while being accurate.
 
-FORMAT: Keep responses concise (under 250 words unless the question requires detail).
-Use bullet points for lists. Bold key terms.
+FORMAT: Keep responses concise (under 300 words unless the question requires detail). Use bullet points for lists. Bold key terms.
 
 TOOLS:
-You have access to tools to search the US NPI registry for real healthcare providers.
-If a user asks about doctors, hospitals, or network status, use your tools!
-1. Always use `search_us_healthcare_providers` to find the provider first.
+You have access to tools to search the US NPI registry for real healthcare providers, and to search the web for authoritative healthcare information.
+1. Always use `search_us_healthcare_providers` to find a provider first.
 2. If they ask if the provider is in-network, immediately pass the NPI to `check_provider_network_status`.
-3. Present the findings clearly to the user."""
+3. Use `web_search` ONLY when the Statutory Fact Table and knowledge base do not cover the user's question (e.g., for state-specific deadlines or recent regulatory changes).
+4. Present the findings clearly to the user."""
 
 
 async def chat_node(state: AgentState) -> dict:
@@ -83,27 +97,27 @@ async def chat_node(state: AgentState) -> dict:
             from app.models.policy import PolicyProfile
             policy = PolicyProfile(**state["policy_profile"])
             pipeline_context += (
-                f"\n\nPATIENT'S CURRENT POLICY:\n"
-                f"- {policy.plan_name} ({policy.carrier_name})\n"
+                f"\n\nPATIENT'S POLICY (auto-loaded):\n"
+                f"- Plan: {policy.plan_name} ({policy.carrier_name})\n"
                 f"- Type: {policy.plan_type.value}\n"
-                f"- Deductible: ${policy.in_network_deductible_individual:,.2f} "
-                f"(${policy.deductible_met:,.2f} met)\n"
+                f"- In-Network Deductible: ${policy.in_network_deductible_individual:,.2f} "
+                f"(${policy.deductible_met:,.2f} met so far)\n"
                 f"- OOP Max: ${policy.in_network_oop_max_individual:,.2f} "
-                f"(${policy.oop_met:,.2f} met)\n"
+                f"(${policy.oop_met:,.2f} met so far)\n"
             )
 
         if state.get("cost_breakdown"):
             from app.models.claim import CostBreakdown
             cost = CostBreakdown(**state["cost_breakdown"])
             pipeline_context += (
-                f"\n\nLATEST CLAIM RESULT:\n"
+                f"\n\nMOST RECENT CLAIM (auto-loaded):\n"
                 f"- Status: {cost.claim_status.value}\n"
                 f"- Patient owes: ${cost.total_patient_responsibility:,.2f}\n"
                 f"- Insurer pays: ${cost.total_insurer_payout:,.2f}\n"
             )
 
         # ── Generate response ─────────────────────────────────────
-        tools = [ProviderSearchTool(), NetworkStatusTool()]
+        tools = [ProviderSearchTool(), NetworkStatusTool(), WebSearchTool()]
         llm = get_llm(TaskType.CHAT, temperature=0.4).bind_tools(tools)
 
         # Build conversation history (keep last 10 messages for context)
@@ -138,6 +152,8 @@ async def chat_node(state: AgentState) -> dict:
                         tool_result = ProviderSearchTool().invoke(tool_args)
                     elif tool_name == "check_provider_network_status":
                         tool_result = NetworkStatusTool().invoke(tool_args)
+                    elif tool_name == "web_search":
+                        tool_result = await WebSearchTool()._arun(**tool_args)
                     else:
                         tool_result = f"Error: Unknown tool {tool_name}"
                 except Exception as e:

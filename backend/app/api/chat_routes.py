@@ -11,7 +11,10 @@ from langchain_core.messages import AIMessage, HumanMessage
 from app.agents.graph import get_chat_graph
 from app.api.auth import get_current_user, get_current_websocket_user
 from app.security.rate_limit import RateLimitRule, check_rate_limit, rate_limit, websocket_identity
-from app.services.user_data import clear_user_chat, get_user_chat, upsert_user_chat, list_user_chats, delete_user_chat
+from app.services.user_data import (
+    clear_user_chat, get_user_chat, upsert_user_chat, list_user_chats, delete_user_chat,
+    list_user_policies, list_user_claims,
+)
 
 router = APIRouter(tags=["Chat"])
 logger = logging.getLogger(__name__)
@@ -75,15 +78,27 @@ async def chat_websocket(websocket: WebSocket):
     chat = get_user_chat(user["id"])
     logger.info("Chat WebSocket: Authenticated connection opened for user %s", user.get("id"))
 
+    # Auto-load user's saved policy and latest claim if chat doesn't carry them
+    _ws_policy = (chat or {}).get("policy_profile_json")
+    _ws_claim = (chat or {}).get("cost_breakdown_json")
+    if not _ws_policy:
+        _user_policies = list_user_policies(user["id"])
+        if _user_policies:
+            _ws_policy = _user_policies[0].get("policy_profile_json")
+    if not _ws_claim:
+        _user_claims = list_user_claims(user["id"])
+        if _user_claims:
+            _ws_claim = _user_claims[0].get("cost_breakdown_json")
+
     # Persistent state across the conversation
     conversation_state = {
         "messages": _stored_messages_to_langchain(chat.get("messages", []) if chat else []),
         "raw_policy_text": "",
         "raw_claim_text": "",
-        "policy_profile": (chat or {}).get("policy_profile_json"),
+        "policy_profile": _ws_policy,
         "claim_case": None,
         "allowed_amount": None,
-        "cost_breakdown": (chat or {}).get("cost_breakdown_json"),
+        "cost_breakdown": _ws_claim,
         "appeal_output": None,
         "current_phase": "chat",
         "route_decision": "",
@@ -225,8 +240,22 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user), _:
     messages = _stored_messages_to_langchain(stored_messages)
     messages.append(HumanMessage(content=user_message))
 
+    # Use context from request body → fallback to the chat session → fallback to the user's
+    # most recently saved policy / claim so the agent is always personalised.
     policy_profile = request.get("policy_profile") or (chat or {}).get("policy_profile_json")
     cost_breakdown = request.get("cost_breakdown") or (chat or {}).get("cost_breakdown_json")
+
+    if not policy_profile:
+        _user_policies = list_user_policies(user["id"])
+        if _user_policies:
+            policy_profile = _user_policies[0].get("policy_profile_json")
+            logger.info("chat/message: auto-loaded latest policy for user %s", user["id"])
+
+    if not cost_breakdown:
+        _user_claims = list_user_claims(user["id"])
+        if _user_claims:
+            cost_breakdown = _user_claims[0].get("cost_breakdown_json")
+            logger.info("chat/message: auto-loaded latest claim for user %s", user["id"])
 
     state = {
         "messages": messages,

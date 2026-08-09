@@ -24,48 +24,14 @@ const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
 const LS_ONBOARDED_KEY = 'policycrab_onboarded'
 const LS_THEME_KEY = 'policycrab_theme'
 
-// ── Theme Hook (3-state: system / light / dark) ──────────────
+// ── Theme — Light mode locked for credibility ─────────────────────────────
+// Dark mode removed: institutional healthcare platforms use light mode only
 function useTheme() {
-  const [theme, setThemeState] = useState(() => {
-    try {
-      const stored = localStorage.getItem(LS_THEME_KEY)
-      if (stored === 'dark' || stored === 'light' || stored === 'system') return stored
-    } catch {}
-    return 'system' // default to system
-  })
-
-  // Apply the resolved theme to <html data-theme>
-  const applyResolved = (t) => {
-    const resolved = t === 'system'
-      ? (window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : t
-    document.documentElement.setAttribute('data-theme', resolved)
-  }
-
   useEffect(() => {
-    applyResolved(theme)
-    localStorage.setItem(LS_THEME_KEY, theme)
-
-    // When in system mode, listen for OS theme changes
-    if (theme === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: dark)')
-      const handler = () => applyResolved('system')
-      mq.addEventListener('change', handler)
-      return () => mq.removeEventListener('change', handler)
-    }
-  }, [theme])
-
-  // Cycle: system → light → dark → system
-  const toggleTheme = () => setThemeState(t => {
-    if (t === 'system') return 'light'
-    if (t === 'light') return 'dark'
-    return 'system'
-  })
-
-  const ThemeIcon = theme === 'dark' ? IconSun : theme === 'light' ? IconMoon : IconMonitor
-  const themeLabel = theme === 'dark' ? 'Switch to system' : theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'
-
-  return { theme, toggleTheme, ThemeIcon, themeLabel }
+    document.documentElement.setAttribute('data-theme', 'light')
+    try { localStorage.setItem(LS_THEME_KEY, 'light') } catch {}
+  }, [])
+  return {}
 }
 
 function ProtectedRoute({ children }) {
@@ -75,7 +41,7 @@ function ProtectedRoute({ children }) {
   return children
 }
 
-// ── Disclaimer Banner ────────────────────────────────────────
+// ── Disclaimer Banner ─────────────────────────────────────────────────
 function DisclaimerBanner() {
   const [visible, setVisible] = useState(false)
 
@@ -92,22 +58,30 @@ function DisclaimerBanner() {
   if (!visible) return null
 
   return (
-    <div style={{ background: 'var(--warning-bg)', borderBottom: '1px solid var(--warning-border)', padding: '0.625rem 1rem' }} role="alert" aria-live="polite">
+    <div style={{
+      background: '#EFF6FF',
+      borderBottom: '1px solid #BFDBFE',
+      padding: '0.625rem 1rem',
+    }} role="alert" aria-live="polite">
       <div className="main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
-          <IconAlertTriangle size={18} style={{ color: 'var(--warning)', flexShrink: 0 }} />
-          <p style={{ fontSize: '0.8125rem', color: 'var(--warning)', fontWeight: 500, lineHeight: 1.4, margin: 0 }}>
-            <strong style={{ fontWeight: 700 }}>Not legal or medical advice.</strong> PolicyCrab is an informational tool only.
-            Always verify calculations with your insurer and consult a licensed professional.
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flex: 1, minWidth: 0 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p style={{ fontSize: '0.8125rem', color: '#1E3A8A', fontWeight: 500, lineHeight: 1.4, margin: 0 }}>
+            <strong style={{ fontWeight: 700 }}>Informational use only.</strong> PolicyCrab is an independent informational platform.
+            Results do not constitute legal or medical advice. Always verify with your licensed insurance professional.
           </p>
         </div>
         <button
           onClick={dismiss}
-          style={{ background: 'transparent', border: 'none', color: 'var(--warning)', cursor: 'pointer', padding: '0.25rem', opacity: 0.7, flexShrink: 0 }}
+          style={{ background: 'transparent', border: 'none', color: '#3B82F6', cursor: 'pointer', padding: '0.25rem', opacity: 0.7, flexShrink: 0 }}
           aria-label="Dismiss disclaimer"
           title="Dismiss"
         >
-          <IconX size={16} />
+          <IconX size={15} />
         </button>
       </div>
     </div>
@@ -266,7 +240,7 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const { user, signOut, isAdmin } = useAuth()
-  const { theme, toggleTheme, ThemeIcon, themeLabel } = useTheme()
+  useTheme() // Lock to light mode on mount
 
   // User Dropdown State
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -337,18 +311,22 @@ function AppContent() {
             <img src="/logo.png" alt="PolicyCrab Logo" className="navbar-brand-logo" />
             <span>PolicyCrab</span>
           </NavLink>
+          {/* HIPAA-Aware trust signal — desktop only */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            background: '#f0fdf4', border: '1px solid #bbf7d0',
+            borderRadius: '999px', padding: '0.2rem 0.625rem',
+            fontSize: '0.6875rem', fontWeight: 700, color: '#16803c',
+            letterSpacing: '0.03em'
+          }} className="navbar-hipaa-pill">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            HIPAA-Aware
+          </div>
 
           <div className="navbar-mobile-actions">
-            <button
-              type="button"
-              className="theme-toggle"
-              onClick={toggleTheme}
-              aria-label={themeLabel}
-              title={themeLabel}
-            >
-              <ThemeIcon size={16} />
-            </button>
-
             <button
               type="button"
               className={`mobile-menu-button${mobileMenuOpen ? ' active' : ''}`}
@@ -386,16 +364,6 @@ function AppContent() {
           </nav>
 
           <div className="navbar-status" style={{ alignItems: 'center', gap: '0.75rem' }}>
-            <button
-              type="button"
-              className="theme-toggle"
-              onClick={toggleTheme}
-              aria-label={themeLabel}
-              title={themeLabel}
-            >
-              <ThemeIcon size={16} />
-            </button>
-            
             {user ? (
               <div style={{ position: 'relative' }} ref={dropdownRef}>
                 <button 
@@ -437,11 +405,7 @@ function AppContent() {
                     <NavLink to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)', borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
                       <IconUser size={16} /> Profile
                     </NavLink>
-                    {isAdmin && (
-                      <NavLink to="/admin" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: '#4f46e5', fontWeight: 700, borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
-                        <IconActivity size={16} /> Admin Console
-                      </NavLink>
-                    )}
+
                     <button onClick={() => { setDropdownOpen(false); handleSignOut(); }} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--danger)', borderRadius: '0.375rem', background: 'transparent', border: 'none', cursor: 'pointer' }} className="dropdown-item">
                       <IconLogOut size={16} /> Sign Out
                     </button>
@@ -485,9 +449,7 @@ function AppContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{user.user_metadata?.full_name || user.email}</span>
                 <NavLink to="/profile" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setMobileMenuOpen(false)}><IconUser size={16} /> Profile</NavLink>
-                {isAdmin && (
-                  <NavLink to="/admin" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center', color: '#4f46e5', borderColor: '#818cf8', fontWeight: 700 }} onClick={() => setMobileMenuOpen(false)}><IconActivity size={16} /> Admin Console</NavLink>
-                )}
+
                 <button onClick={handleSignOut} className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
               </div>
             ) : (

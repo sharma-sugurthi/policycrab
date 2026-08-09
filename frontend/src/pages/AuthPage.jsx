@@ -6,7 +6,7 @@ import { IconShield, IconCheckCircle } from '../components/Icons'
 
 export default function AuthPage() {
   const { user, signIn, signUp, verifyOtp } = useAuth()
-  const [isLogin, setIsLogin] = useState(true)
+  const [isLogin, setIsLogin] = useState(false) // Default to Sign Up
   const [showOtp, setShowOtp] = useState(false)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -30,19 +30,21 @@ export default function AuthPage() {
       if (showOtp) {
         const { error } = await verifyOtp(email, otp)
         if (error) throw error
-        
-        // Trigger backend welcome email (fire-and-forget)
-        import('../lib/api').then(({ apiFetch }) => {
-          apiFetch('/email/welcome', { method: 'POST' }).catch(console.error)
-        })
       } else if (isLogin) {
         const { error } = await signIn(email, password)
         if (error) throw error
       } else {
         const { error } = await signUp(email, password, fullName)
         if (error) throw error
-        setShowOtp(true)
-        setMsg('A verification code has been sent to your email.')
+
+        // Trigger backend welcome email (fire-and-forget)
+        import('../lib/api').then(({ apiFetch }) => {
+          apiFetch('/email/welcome', { method: 'POST' }).catch(console.error)
+        })
+
+        // OTP logic bypassed - Supabase "Confirm email" must be disabled for this to work
+        // setShowOtp(true)
+        // setMsg('A verification code has been sent to your email.')
       }
     } catch (err) {
       setError(err.message)

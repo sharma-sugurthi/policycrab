@@ -60,3 +60,32 @@ jobs:
     - name: Build
       working-directory: ./frontend
       run: npm run build
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    needs: backend-test
+    # Only deploy on pushes to the main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    # Required for Workload Identity Federation
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      
+    steps:
+    - uses: actions/checkout@v4
+    
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        workload_identity_provider: 'projects/55885338380/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider'
+        service_account: 'github-actions-sa@project-9676fda5-8ba6-476c-8d9.iam.gserviceaccount.com'
+        
+    - name: 'Deploy to Cloud Run'
+      uses: 'google-github-actions/deploy-cloudrun@v2'
+      with:
+        service: 'policycrab-backend'
+        region: 'us-east1'
+        source: './backend'
+        flags: '--allow-unauthenticated'
