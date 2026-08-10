@@ -142,3 +142,15 @@ app.include_router(api_router)
 async def health_check():
     """Simple health check endpoint for deployment monitors."""
     return {"status": "ok", "service": "policycrab-backend"}
+
+from fastapi.responses import PlainTextResponse
+
+@app.get("/robots.txt", response_class=PlainTextResponse, tags=["system"])
+async def robots_txt():
+    """Disallow all web crawlers."""
+    return "User-agent: *\nDisallow: /\n"
+
+@app.get("/.env", tags=["system"])
+async def fake_env():
+    """Catch-all for bot scanners looking for .env files."""
+    return JSONResponse(status_code=404, content={"error": "Not Found"})

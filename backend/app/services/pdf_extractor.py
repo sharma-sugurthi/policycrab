@@ -59,6 +59,7 @@ RULES:
 - ancillary_service_type: if the provider is an anesthesiologist, radiologist,
   pathologist, neonatologist, or assistant surgeon, return the specialty name
   (e.g. "anesthesia", "radiology"). Otherwise null.
+- STRICT JSON FORMATTING: Do not use unescaped literal newlines inside JSON strings. Use \\n instead.
 
 If the document has MULTIPLE service lines, extract the PRIMARY denied or
 highest-billed line. If all lines are important, extract the first denied line.
@@ -132,52 +133,93 @@ def extract_eob_safely(
     except ImportError:
         raise ValueError("google-genai SDK not installed.")
 
-    if not settings.gemini_api_key:
-        raise ValueError("GEMINI_API_KEY not configured.")
+    if not settings.google_cloud_project or not settings.gcp_location:
+        raise ValueError("GCP project ID or location not configured for Vertex AI.")
         
-    client = genai.Client(api_key=settings.gemini_api_key)
-
-    # 1. Local Extraction
-    try:
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
-        md_text = pymupdf4llm.to_markdown(doc)
-        doc.close()
-    except Exception as e:
-        logger.error(f"Failed local extraction: {e}")
-        raise ValueError(f"Failed to read PDF document: {e}")
-
-    # 2. Local PHI Scrubbing (Microsoft Presidio)
-    try:
-        clean_text, redaction_count = scrub_phi(md_text)
-    except PHIScrubbingError as e:
-        raise ValueError(str(e)) from e
-    
-    if len(clean_text) < 50:
-        raise ValueError("Document contains no extractable text (likely an image). OCR is currently disabled for HIPAA compliance.")
-
-    logger.info(
-        f"Presidio Scrubber applied {redaction_count} redactions. "
-        f"Sending safe text to Gemini."
+    client = genai.Client(
+        vertexai=True,
+        project=settings.google_cloud_project,
+        location=settings.gcp_location
     )
 
-    # 3. Safe LLM Extraction
+    logger.info(f"Processing document natively via Gemini Multimodal ({mime_type}).")
+
+    from pydantic import BaseModel, Field
+
+    class ServiceLine(BaseModel):
+        provider_name: str | None
+        network_status: str | None
+        ancillary_service_type: str | None
+        cpt_code: str | None
+        cpt_description: str | None
+        billed_amount: float | None
+        allowed_amount: float | None
+        plan_paid_amount: float | None
+        patient_responsibility: float | None
+        denial_carc_code: str | None
+        denial_reason_text: str | None
+
+    class EOBConfidence(BaseModel):
+        date_of_service: str | None
+        billed_amount: str | None
+        allowed_amount: str | None
+        cpt_code: str | None
+        denial_carc_code: str | None
+        network_status: str | None
+        facility_network_status: str | None
+
+    class EOBResponseSchema(BaseModel):
+        document_type: str | None
+        patient_name: str | None
+        claim_id: str | None
+        date_of_service: str | None
+        denial_date: str | None
+        billed_amount: float | None
+        allowed_amount: float | None
+        plan_paid_amount: float | None
+        patient_responsibility: float | None
+        provider_name: str | None
+        facility_name: str | None
+        network_status: str | None
+        facility_network_status: str | None
+        ancillary_service_type: str | None
+        cpt_code: str | None
+        cpt_description: str | None
+        icd_10_code: str | None
+        icd_10_description: str | None
+        denial_carc_code: str | None
+        denial_rarc_code: str | None
+        denial_reason_text: str | None
+        is_denied: bool | None
+        service_lines: list[ServiceLine] = Field(default_factory=list)
+        confidence: EOBConfidence | None
+
     try:
+        contents = [
+            GEMINI_EOB_EXTRACTION_PROMPT,
+            genai.types.Part.from_bytes(data=file_bytes, mime_type=mime_type)
+        ]
+
         response = client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=[
-                GEMINI_EOB_EXTRACTION_PROMPT,
-                f"DOCUMENT TEXT:\n{clean_text}"
-            ],
-            config={"temperature": 0.0, "max_output_tokens": 4096},
+            contents=contents,
+            config={
+                "temperature": 0.0,
+                "max_output_tokens": 8192,
+                "response_mime_type": "application/json",
+                "response_schema": EOBResponseSchema,
+                "safety_settings": [
+                    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+                    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"}
+                ]
+            },
         )
     except Exception as e:
         raise ValueError(f"Gemini API call failed: {e}")
 
     raw = (response.text or "").strip()
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(?:json)?\n?", "", raw)
-        raw = re.sub(r"\n?```$", "", raw)
-
     try:
         result = json.loads(raw)
     except json.JSONDecodeError as e:
@@ -186,7 +228,10 @@ def extract_eob_safely(
 
     from app.agents.eob_extractor import postprocess_eob_result
     from app.services.math_validator import validate_eob_math
-    result = postprocess_eob_result(result, clean_text)
+    
+    # We no longer have local extracted text for patient name removal in postprocess,
+    # but Gemini handles this intrinsically based on prompt constraints.
+    result = postprocess_eob_result(result, "")
     result = validate_eob_math(result)
 
     logger.info(

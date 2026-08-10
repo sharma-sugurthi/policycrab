@@ -12,7 +12,7 @@ import inspect
 import logging
 import time
 from enum import Enum
-from langchain_google_vertexai import ChatVertexAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models import BaseChatModel
 from app.config import settings
 
@@ -115,10 +115,12 @@ def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChat
     """Create a LangChain chat model for the given provider."""
     try:
         if provider == "gemini":
-            return ChatVertexAI(
-                model_name=model,
+            return ChatGoogleGenerativeAI(
+                model=model,
                 temperature=temperature,
-                convert_system_message_to_human=False,
+                vertexai=True,
+                project=settings.google_cloud_project,
+                location=settings.gcp_location,
                 max_retries=0,
                 timeout=30,
             )
@@ -342,9 +344,14 @@ def get_llm_with_retry(
 
 
 def get_embedding_client():
-    from langchain_google_vertexai import VertexAIEmbeddings
-    # Use Vertex AI's embedding model
-    return VertexAIEmbeddings(model_name="text-embedding-004")
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+    from app.config import settings
+    # Use Google GenAI's embedding model with Vertex configuration
+    return GoogleGenerativeAIEmbeddings(
+        model="models/text-embedding-004",
+        project=settings.google_cloud_project,
+        location=settings.gcp_location
+    )
 
 
 async def generate_embedding(text: str) -> list[float]:

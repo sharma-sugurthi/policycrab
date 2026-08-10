@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     # ── Admin Authorization (configured via ADMIN_EMAILS environment variable) ──────────
     admin_emails: str = ""
 
+    google_cloud_project: str = ""
+    gcp_location: str = "us-east1"
+
     @property
     def parsed_cors_origins(self) -> list[str]:
         if isinstance(self.cors_origins, str):
