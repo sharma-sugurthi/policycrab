@@ -6,14 +6,14 @@ import { useAuth } from '../contexts/AuthContext'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { 
   IconReceipt, IconUpload, IconPlus, IconX, IconCheckCircle, 
-  IconAlertTriangle, IconActivity, IconFileText, IconDownload, IconCopy 
+  IconAlertTriangle, IconActivity, IconFileText, IconDownload, IconCopy, IconMail
 } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function BillAuditor() {
   const location = useLocation()
-  const { session } = useAuth()
+  const { session, user } = useAuth()
 
   // Input State
   const [lines, setLines] = useState([
@@ -221,7 +221,15 @@ export default function BillAuditor() {
     doc.setFont('times', 'normal')
     doc.setFontSize(11)
     doc.setTextColor(30)
-    const linesText = doc.splitTextToSize(result.dispute_letter, maxW)
+    
+    // Inject known user info for the PDF download as well
+    let finalLetter = result.dispute_letter
+    if (user?.user_metadata?.full_name) {
+      finalLetter = finalLetter.replace(/\[Patient Name\]/gi, user.user_metadata.full_name)
+      finalLetter = finalLetter.replace(/\[Your Name\]/gi, user.user_metadata.full_name)
+    }
+    
+    const linesText = doc.splitTextToSize(finalLetter, maxW)
     const pageH = doc.internal.pageSize.getHeight()
     for (const line of linesText) {
       if (y > pageH - 80) { doc.addPage(); y = margin }
@@ -231,6 +239,23 @@ export default function BillAuditor() {
 
     doc.save(`billing-dispute-${new Date().toISOString().slice(0, 10)}.pdf`)
     setLetterStatus('Downloaded PDF')
+  }
+
+  const handleOpenGmail = () => {
+    if (!result?.dispute_letter) return
+    
+    let finalLetter = result.dispute_letter
+    if (user?.user_metadata?.full_name) {
+      finalLetter = finalLetter.replace(/\[Patient Name\]/gi, user.user_metadata.full_name)
+      finalLetter = finalLetter.replace(/\[Your Name\]/gi, user.user_metadata.full_name)
+    }
+
+    const subject = encodeURIComponent("Medical Billing Dispute")
+    const body = encodeURIComponent(finalLetter)
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${body}`
+    
+    window.open(gmailUrl, '_blank')
+    setLetterStatus('Opened in Gmail')
   }
 
   return (
@@ -399,7 +424,8 @@ export default function BillAuditor() {
                             </div>
                             <h4 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Letter Ready</h4>
                             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-                              <button className="btn btn-red" onClick={handleDownloadPDF}><IconDownload size={16} /> Download PDF</button>
+                              <button className="btn btn-red" onClick={handleOpenGmail}><IconMail size={16} /> Open in Gmail</button>
+                              <button className="btn btn-outline" onClick={handleDownloadPDF}><IconDownload size={16} /> Download PDF</button>
                               <button className="btn btn-outline" onClick={() => { navigator.clipboard.writeText(result.dispute_letter); setLetterStatus('Copied!') }}><IconCopy size={16} /> Copy Text</button>
                             </div>
                             {letterStatus && <p style={{ fontSize: '0.8125rem', color: 'var(--success)', marginTop: '0.75rem', fontWeight: 600 }}>{letterStatus}</p>}

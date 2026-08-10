@@ -30,9 +30,8 @@ class BenchmarkRunRequest(BaseModel):
 
 def _get_benchmarks_dir() -> Path:
     paths_to_check = [
-        Path(__file__).resolve().parents[3] / "benchmarks",
+        Path(__file__).resolve().parents[2] / "benchmarks",  # Correct location: backend/benchmarks
         Path("benchmarks").resolve(),
-        Path("../benchmarks").resolve(),
     ]
     for p in paths_to_check:
         if p.exists() and (p / "cases").exists():
