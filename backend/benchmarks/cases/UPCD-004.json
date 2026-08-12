@@ -2,7 +2,7 @@
   "id": "UPCD-004",
   "category": "upcoding_billing_error",
   "title": "Upcoding and Unbundling Billing Fraud - Scenario 4",
-  "claim_description": "I visited the hospital emergency room for a mild wrist sprain after slipping on steps. A doctor looked at it for 5 minutes, wrapped it in an elastic bandage without any X-rays or diagnostic lab work, and discharged me. My hospital billed $5,400 for CPT 99285 (Level 5 Emergency Department Trauma Visit) plus an extra $350 itemized charge for the routine bandage supply. My insurer adjusted and denied payment citing NCCI Unbundling edit CO-97 and improper Level 5 coding.",
+  "claim_description": "1 visited the hospital emergency room for a mild wrist sprain after slipping on steps A doctor looked at it for 5 minutes wrapped it in an elastie bandagc without any X-rays or diagnostie 1ab work, and discharged me My hospital billed $5,400 for CPT 99285 (Level S Emergency Departrnent Trauma Visit) plus an extra $350 itemized charge for the routine bandage supply My insurer adjusted and denied payment citing NCCI Unbundling edit CO-97 and impropcr Level 5 coding",
   "policy_profile": {
     "plan_name": "Standard PPO",
     "carrier_name": "BenchmarkHealth",

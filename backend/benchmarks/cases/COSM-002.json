@@ -2,7 +2,7 @@
   "id": "COSM-002",
   "category": "explicit_exclusion",
   "title": "Elective Rhinoplasty Denied as Cosmetic - Scenario 2",
-  "claim_description": "I went to an out-of-network plastic surgery clinic for a cosmetic rhinoplasty to improve the appearance of my nose. The clinic billed $12,000. Insurance denied it as not covered.",
+  "claim_description": "I went to an out-of-network plastic surgery clinic for a cosmetic rhinoplasty to improve the appearance of my nose The clinic billed $12000. Insurance denied it as not covered.",
   "policy_profile": {
     "plan_name": "Standard PPO",
     "carrier_name": "BenchmarkHealth",

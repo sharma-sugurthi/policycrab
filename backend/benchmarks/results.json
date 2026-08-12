@@ -1,31 +1,55 @@
 {
   "summary": {
-    "total": 200,
-    "passed": 200,
-    "accuracy_percent": 100.0
+    "total": 21,
+    "passed": 21,
+    "failed": 0,
+    "accuracy_percent": 100.0,
+    "timestamp": 1786526916.2846951,
+    "mode": "quick",
+    "categories": {
+      "explicit_exclusion": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      },
+      "emergency_care": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      },
+      "formulary_exception": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      },
+      "hard_exclusion": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      },
+      "annual_limit": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      },
+      "nsa_balance_billing": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      },
+      "upcoding_billing_error": {
+        "total": 3,
+        "passed": 3,
+        "accuracy": 100.0
+      }
+    }
   },
   "results": [
     {
-      "case_id": "FORM-021",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-004",
-      "category": "upcoding_billing_error",
+      "case_id": "COSM-001",
+      "category": "explicit_exclusion",
+      "title": "Elective Rhinoplasty Denied as Cosmetic - Scenario 1",
+      "claim_description": "I went to an out-of-network plastic surgery c1inic for a eosmetic rhinoplasty to improve the appearance of my nose. The clinic billed $120O0. Insurance denied it as not covered",
       "expected": {
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
@@ -36,2903 +60,20 @@
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-021",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-004",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-015",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-009",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-029",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-027",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-008",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-024",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-019",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-010",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-030",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-005",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-020",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-028",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-009",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-017",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
         "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-020",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-030",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-014",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-007",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-013",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-012",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-019",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-016",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-016",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-016",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-022",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-010",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-025",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-027",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-013",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-026",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-004",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-029",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-012",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-026",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-018",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-017",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-020",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-028",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-002",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-014",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-023",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-030",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-004",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-010",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-021",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-003",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-002",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-003",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-003",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-007",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-019",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-022",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-027",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-009",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-010",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-024",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-030",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-013",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-009",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-002",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-013",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-008",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-019",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-011",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-012",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-020",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-011",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-023",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-018",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-006",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-007",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-025",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-002",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-009",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-012",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-006",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-017",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-015",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-026",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-011",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-020",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-004",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-001",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-021",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-005",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-002",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-014",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-011",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-009",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-006",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-012",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-006",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-018",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-014",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-012",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-001",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-027",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-028",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-028",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-018",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-007",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-011",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-017",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-019",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-018",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-009",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-029",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-005",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-012",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-017",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-006",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-018",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-013",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-005",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-024",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-004",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-027",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-023",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-015",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-026",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-014",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-016",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-025",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-014",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-002",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-024",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-014",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-005",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-001",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-017",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-015",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-010",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-010",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-016",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-011",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-025",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-013",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-026",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-030",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-010",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-029",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-023",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-001",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-005",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-025",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-022",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-019",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-006",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-016",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-001",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-008",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-007",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-019",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-015",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-022",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 15473,
+      "ground_truth_rationale": "Cosmetic surgery is explicitly excluded in Section 8 of the policy. The denial is legally and contractually accurate."
     },
     {
       "case_id": "COSM-002",
       "category": "explicit_exclusion",
+      "title": "Elective Rhinoplasty Denied as Cosmetic - Scenario 2",
+      "claim_description": "I went to an out-of-network plastic surgery clinic for a cosmetic rhinoplasty to improve the appearance of my nose The clinic billed $12000. Insurance denied it as not covered.",
       "expected": {
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
@@ -2943,287 +84,20 @@
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-020",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-029",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-021",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-005",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-008",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-008",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-025",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-013",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-017",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-001",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-007",
-      "category": "nsa_balance_billing",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
         "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-022",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-018",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-022",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-023",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 14081,
+      "ground_truth_rationale": "Cosmetic surgery is explicitly excluded in Section 8 of the policy. The denial is legally and contractually accurate."
     },
     {
       "case_id": "COSM-003",
       "category": "explicit_exclusion",
+      "title": "Elective Rhinoplasty Denied as Cosmetic - Scenario 3",
+      "claim_description": "I went to an out-of-network plastic surgery clinic for a cosmetic rhinoplasty to improve the appearance of my nose. The clinic billed $12,000 Insurance dcnied it as not covered.",
       "expected": {
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
@@ -3234,50 +108,20 @@
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 17759,
+      "ground_truth_rationale": "Cosmetic surgery is explicitly excluded in Section 8 of the policy. The denial is legally and contractually accurate."
     },
     {
-      "case_id": "INFR-025",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-007",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-016",
+      "case_id": "EMRG-001",
       "category": "emergency_care",
+      "title": "Emergency Surgery Denied for Prior Auth - Scenario 1",
+      "claim_description": "Scanned Document (low quality):\nI went to the ER with severe abdominal pain and was diagnosed with appendicitis. They performed emergency surgery. The hospital bi1led $1S,000 My insurancc denied it stating I didn't get prior authorization\n[END OF PAGE]",
       "expected": {
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
@@ -3285,92 +129,23 @@
         "route_decision": "denied"
       },
       "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-024",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-006",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-024",
-      "category": "nsa_balance_billing",
-      "expected": {
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
         "contradiction_strength": "STRONG",
         "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 16691,
+      "ground_truth_rationale": "Emergency surgery is explicitly covered and prior auth is waived for emergencies under federal law and policy terms. Insurer's denial is wrong."
     },
     {
-      "case_id": "COSM-008",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-024",
+      "case_id": "EMRG-002",
       "category": "emergency_care",
+      "title": "Emergency Surgery Denied for Prior Auth - Scenario 2",
+      "claim_description": "I went to the ER with severe abdominal pain and was diagnosed with appendieitis. They performed emergency surgcry The hospital billed $l5,000. My insurance denied it stating I didn't get prior authorization",
       "expected": {
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
@@ -3378,200 +153,95 @@
         "route_decision": "denied"
       },
       "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-003",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-023",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "EMRG-021",
-      "category": "emergency_care",
-      "expected": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "STRONG_APPEAL",
-        "contradiction_detected": true,
-        "contradiction_strength": "STRONG",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "UPCD-022",
-      "category": "upcoding_billing_error",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "INFR-015",
-      "category": "hard_exclusion",
-      "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "LMIT-011",
-      "category": "annual_limit",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-008",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "FORM-015",
-      "category": "formulary_exception",
-      "expected": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "EXCEPTION_REQUEST",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "COSM-001",
-      "category": "explicit_exclusion",
-      "expected": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "actual": {
-        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
-        "contradiction_detected": false,
-        "contradiction_strength": "NONE",
-        "route_decision": "denied"
-      },
-      "status": "pass",
-      "reason": "Perfect Match"
-    },
-    {
-      "case_id": "NSA-021",
-      "category": "nsa_balance_billing",
-      "expected": {
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
         "contradiction_strength": "STRONG",
         "route_decision": "denied",
-        "legal_patient_responsibility_for_line_2": 400.0,
-        "nsa_violation_detected": true,
-        "illegal_balance_billed_amount": 2000.0
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
-      "actual": {
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 17992,
+      "ground_truth_rationale": "Emergency surgery is explicitly covered and prior auth is waived for emergencies under federal law and policy terms. Insurer's denial is wrong."
+    },
+    {
+      "case_id": "EMRG-003",
+      "category": "emergency_care",
+      "title": "Emergency Surgery Denied for Prior Auth - Scenario 3",
+      "claim_description": "I went to the ER with severe abdorninal pain and was diagnosed with appendicitis. They performed emergency surgery. The hospital billed $15O00 My insurance denied it stating I didn't get prior authorization.",
+      "expected": {
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
         "contradiction_strength": "STRONG",
         "route_decision": "denied"
       },
+      "actual": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 16486,
+      "ground_truth_rationale": "Emergency surgery is explicitly covered and prior auth is waived for emergencies under federal law and policy terms. Insurer's denial is wrong."
+    },
+    {
+      "case_id": "FORM-001",
+      "category": "formulary_exception",
+      "title": "Non-Formulary Diabetes Medication Denied - Scenario 1",
+      "claim_description": "My doctor prescribed Ozempic for my Type 2 Diabetes The pharmacy said it was denied because it's not on the plan's formulary list.",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 18113,
+      "ground_truth_rationale": "Medication is not on the formulary. A standard appeal will fail; an exception request is legally required."
+    },
+    {
+      "case_id": "FORM-002",
+      "category": "formulary_exception",
+      "title": "Non-Formulary Diabetes Medication Denied - Scenario 2",
+      "claim_description": "*** CONFIDENTIAL PATIENT RECORD ***\nMy doctor prescribed Ozempic for my Type 2 Diabetes The pharmacy said it was denied because it's not on the plan's formulary list",
+      "expected": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "EXCEPTION_REQUEST",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 19110,
+      "ground_truth_rationale": "Medication is not on the formulary. A standard appeal will fail; an exception request is legally required."
     },
     {
       "case_id": "FORM-003",
       "category": "formulary_exception",
+      "title": "Non-Formulary Diabetes Medication Denied - Scenario 3",
+      "claim_description": "Scanned Document (low quality):\nMy doctor prescribed Ozempic for my Type 2 Diabetes. The pharmacy said it was denied bceause it's not on the plan's formulary list\n--- dictation transcribed by auto-svc ---",
       "expected": {
         "appeal_recommendation": "EXCEPTION_REQUEST",
         "contradiction_detected": false,
@@ -3582,14 +252,92 @@
         "appeal_recommendation": "EXCEPTION_REQUEST",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 17738,
+      "ground_truth_rationale": "Medication is not on the formulary. A standard appeal will fail; an exception request is legally required."
     },
     {
-      "case_id": "COSM-028",
-      "category": "explicit_exclusion",
+      "case_id": "INFR-001",
+      "category": "hard_exclusion",
+      "title": "IVF Treatment Denied Under Hard Exclusion - Scenario 1",
+      "claim_description": "[ILLEGIBLE...]\nI had a round of In Vitro Fertilization (IVF) at a fertility clinie The bill was $18000. Insurance denied the claim entirely.",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 14629,
+      "ground_truth_rationale": "IVF is a hard exclusion under self-funded ERISA plan rules. Appealing is unlikely to succeed; honest assessment required."
+    },
+    {
+      "case_id": "INFR-002",
+      "category": "hard_exclusion",
+      "title": "IVF Treatment Denied Under Hard Exclusion - Scenario 2",
+      "claim_description": "*** CONFIDENTIAL PATIENT RECORD ***\nI had a round of In Vitro Fertilization (IVF) at a fertility clinic. The bill was $18,000 Insurance denied the claim entirely.",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 18442,
+      "ground_truth_rationale": "IVF is a hard exclusion under self-funded ERISA plan rules. Appealing is unlikely to succeed; honest assessment required."
+    },
+    {
+      "case_id": "INFR-003",
+      "category": "hard_exclusion",
+      "title": "IVF Treatment Denied Under Hard Exclusion - Scenario 3",
+      "claim_description": "I had a round of In Vitro Fertilization (IVF) at a fertility clinic. The bill was $18,000. Insurance denied the claim entirely.\n[END OF PAGE]",
+      "expected": {
+        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 17120,
+      "ground_truth_rationale": "IVF is a hard exclusion under self-funded ERISA plan rules. Appealing is unlikely to succeed; honest assessment required."
+    },
+    {
+      "case_id": "LMIT-001",
+      "category": "annual_limit",
+      "title": "Physical Therapy Visits Exceeded Annual Cap - Scenario 1",
+      "claim_description": "I had my 25th physical therapy session for the year. Thc bill was $200 Insurance denied it saying I exceeded the maximum allowed visits.",
       "expected": {
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
@@ -3600,14 +348,68 @@
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 13181,
+      "ground_truth_rationale": "Patient exceeded the hard 20-visit limit stated in Section 5 of the policy."
     },
     {
-      "case_id": "NSA-020",
+      "case_id": "LMIT-002",
+      "category": "annual_limit",
+      "title": "Physical Therapy Visits Exceeded Annual Cap - Scenario 2",
+      "claim_description": "[FAX RCV 10:24 AM PAGE 2/4]\nI had my 25th physical therapy session for the year The bill was $200. Insuranee denied it saying I exceeded the maximurn allowed visits",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 14256,
+      "ground_truth_rationale": "Patient exceeded the hard 20-visit limit stated in Section 5 of the policy."
+    },
+    {
+      "case_id": "LMIT-003",
+      "category": "annual_limit",
+      "title": "Physical Therapy Visits Exceeded Annual Cap - Scenario 3",
+      "claim_description": "I had my 25th physical thcrapy scssion for the year. The bill was $200 Insurance denied it saying I exceeded the maximum allowed visits.",
+      "expected": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied"
+      },
+      "actual": {
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
+        "contradiction_detected": false,
+        "contradiction_strength": "NONE",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 14437,
+      "ground_truth_rationale": "Patient exceeded the hard 20-visit limit stated in Section 5 of the policy."
+    },
+    {
+      "case_id": "NSA-001",
       "category": "nsa_balance_billing",
+      "title": "NSA Violation: OON Anesthesia Balance Billing at INN Hospital - Scenario 1",
+      "claim_description": "I had a laparoscopic cholecystectomy at St. Jude Medical Center, which is in my insurance network. The surgeon was also in-network. However, the anesthesiologist (Apex Anesthesia Group) was out-of-network. I never chose thern \u2014 they were assigned in the operating room My EOB shows Apex Anesthcsia billed $2800 for CPT 00790 (Anesthesia for intraperitoneal procedures). The plan paid $0 and I am being told I owe the full $2,800 (Denial Reason: PR-242, Services not providcd by network/primary care providers) The EOB lists total patient responsibility as $3200 \u2014 $400 for thc surgery and $2,800 for anesthesia.",
       "expected": {
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
@@ -3621,14 +423,74 @@
         "appeal_recommendation": "STRONG_APPEAL",
         "contradiction_detected": true,
         "contradiction_strength": "STRONG",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": true
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 21386,
+      "ground_truth_rationale": "Apex Anesthesia Group is an OON ancillary provider at an INN facility. Under 45 CFR \u00a7 149.410(b) of the No Surprises Act, balance billing is prohibited. Patient responsibility is capped at 20% of allowed amount ($400)."
     },
     {
-      "case_id": "UPCD-023",
+      "case_id": "NSA-002",
+      "category": "nsa_balance_billing",
+      "title": "NSA Violation: OON Anesthesia Balance Billing at INN Hospital - Scenario 2",
+      "claim_description": "NOTES: I had a laparoscopic cholecystectomy at St. Jude Medical Center which is in my insurance network The surgeon was also in-network. However the anesthesiologist (Apex Anesthesia Group) was out-of-network. I never chose them \u2014 they were assigned in the operating room My EOB shows Apex Ancsthesia billed $2,800 for CPT 00790 (Anesthesia for intraperitoneal proccdures). Thc plan paid $0 and I am being told I owe the full $2,800 (Denial Reason: PR-242 Services not provided by network/primary care providers). The EOB lists total patient responsibility as $3,200 \u2014 $400 for the surgery and $2800 for anesthesia.",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied",
+        "legal_patient_responsibility_for_line_2": 400.0,
+        "nsa_violation_detected": true,
+        "illegal_balance_billed_amount": 2000.0
+      },
+      "actual": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": true
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 20332,
+      "ground_truth_rationale": "Apex Anesthesia Group is an OON ancillary provider at an INN facility. Under 45 CFR \u00a7 149.410(b) of the No Surprises Act, balance billing is prohibited. Patient responsibility is capped at 20% of allowed amount ($400)."
+    },
+    {
+      "case_id": "NSA-003",
+      "category": "nsa_balance_billing",
+      "title": "NSA Violation: OON Anesthesia Balance Billing at INN Hospital - Scenario 3",
+      "claim_description": "Scanned Document (low quality):\nI had a laparoseopic cholecystectomy at St. Jude Medical Center which is in my insurance network. The surgeon was also in-network However, the anesthesiologist (Apex Anesthesia Group) was out-of-network. 1 never chose them \u2014 they were assigned in the operating room My EOB shows Apex Anesthesia billed $2,800 for CPT 00790 (Anesthesia for intraperitoneal procedures) The plan paid $0 and I am being told I owe the full $2800 (Denial Reason: PR-242, Services not provided by network/primary care providers). Thc EOB 1ists total patient responsibility as $3200 \u2014 $400 for the surgery and $2800 for anesthesia.",
+      "expected": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied",
+        "legal_patient_responsibility_for_line_2": 400.0,
+        "nsa_violation_detected": true,
+        "illegal_balance_billed_amount": 2000.0
+      },
+      "actual": {
+        "appeal_recommendation": "STRONG_APPEAL",
+        "contradiction_detected": true,
+        "contradiction_strength": "STRONG",
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": true
+      },
+      "status": "pass",
+      "reason": "Match verified against ground truth",
+      "duration_ms": 22695,
+      "ground_truth_rationale": "Apex Anesthesia Group is an OON ancillary provider at an INN facility. Under 45 CFR \u00a7 149.410(b) of the No Surprises Act, balance billing is prohibited. Patient responsibility is capped at 20% of allowed amount ($400)."
+    },
+    {
+      "case_id": "UPCD-001",
       "category": "upcoding_billing_error",
+      "title": "Upcoding and Unbundling Billing Fraud - Scenario 1",
+      "claim_description": "I visited the hospital emergency roorn for a mild wrist sprain after slipping on steps A doctor looked at it for 5 minutes wrapped it in an elastic bandage without any X-rays or diagnostic lab work and diseharged me. My hospital billed $5,400 for CPT 99285 (Level 5 Emergency Departrnent Trauma Visit) plus an extra $350 itemized charge for the routine bandage supply. My insurer adjusted and denied payment citing NCCI Unbundling edit CO-97 and improper Level 5 coding",
       "expected": {
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
@@ -3639,46 +501,62 @@
         "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 18785,
+      "ground_truth_rationale": "Hospital attempted illegal upcoding (Level 5 trauma code 99285 for minor sprain) and unbundling of routine medical supplies. The insurer's denial under CARC CO-97 is legally and contractually accurate; the patient must demand a corrected claim from the provider billing department."
     },
     {
-      "case_id": "INFR-003",
-      "category": "hard_exclusion",
+      "case_id": "UPCD-002",
+      "category": "upcoding_billing_error",
+      "title": "Upcoding and Unbundling Billing Fraud - Scenario 2",
+      "claim_description": "I visited the hospital ernergency room for a mild wrist sprain after slipping on steps. A doctor looked at it for 5 minutes wrapped it in an elastic bandage without any X-rays or diagnostic lab work, and discharged me My hospital billed $5400 for CPT 99285 (Level 5 Emergency Department Trauma Visit) plus an extra $350 itemized charge for the routine bandage supply. My insurer adjusted and denied payment citing NCCI Unbundling edit C0-97 and improper Level 5 coding",
       "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
         "route_decision": "denied"
       },
       "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 19816,
+      "ground_truth_rationale": "Hospital attempted illegal upcoding (Level 5 trauma code 99285 for minor sprain) and unbundling of routine medical supplies. The insurer's denial under CARC CO-97 is legally and contractually accurate; the patient must demand a corrected claim from the provider billing department."
     },
     {
-      "case_id": "INFR-004",
-      "category": "hard_exclusion",
+      "case_id": "UPCD-003",
+      "category": "upcoding_billing_error",
+      "title": "Upcoding and Unbundling Billing Fraud - Scenario 3",
+      "claim_description": "I visited the hospital emergency room for a mild wrist sprain after slipping on steps. A doetor looked at it for 5 minutes, wrapped it in an e1astic bandagc without any X-rays or diagnostic lab work and discharged me. My hospital billcd $5,400 for CPT 99285 (Level 5 Emergency Department Trauma Visit) plus an extra $350 itemized charge for the routine bandage supply. My insurer adjusted and denied payment citing NCCI Unbundling edit CO-97 and improper Level 5 coding. ?? [verify code]",
       "expected": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
         "route_decision": "denied"
       },
       "actual": {
-        "appeal_recommendation": "UNLIKELY_TO_WIN",
+        "appeal_recommendation": "CLAIM_CORRECTLY_DENIED",
         "contradiction_detected": false,
         "contradiction_strength": "NONE",
-        "route_decision": "denied"
+        "route_decision": "denied",
+        "triage_path": "PAYER_ILLEGAL_DENIAL",
+        "nsa_violation_detected": false
       },
       "status": "pass",
-      "reason": "Perfect Match"
+      "reason": "Match verified against ground truth",
+      "duration_ms": 17305,
+      "ground_truth_rationale": "Hospital attempted illegal upcoding (Level 5 trauma code 99285 for minor sprain) and unbundling of routine medical supplies. The insurer's denial under CARC CO-97 is legally and contractually accurate; the patient must demand a corrected claim from the provider billing department."
     }
   ]
 }

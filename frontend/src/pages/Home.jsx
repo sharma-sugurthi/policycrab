@@ -122,7 +122,7 @@ export default function Home({ policyProfile }) {
               Analysis
             </h1>
 
-            <p className="pc-hero-powered">Powered by AI &mdash; Reviewed for accuracy</p>
+            <p className="pc-hero-powered">Powered by AI &mdash; Reviewed for quality</p>
 
             <p className="pc-hero-sub">
               Upload your policy document. Describe your medical claim. Receive a precise cost breakdown,
@@ -213,8 +213,8 @@ export default function Home({ policyProfile }) {
             {[
               { ref: stat1.ref, value: stat1.value, suffix: '%', label: 'of medical bills contain at least one error', source: 'JAMA Internal Medicine, 2023' },
               { ref: stat2.ref, value: stat2.value, suffix: 'K', label: 'average cost of a wrongful insurance denial', source: 'Kaiser Family Foundation, 2023' },
-              { ref: stat3.ref, value: stat3.value, suffix: '+', label: 'synthetic claim scenarios tested for accuracy', source: 'Internal benchmark dataset' },
-              { ref: stat4.ref, value: stat4.value, suffix: '%', label: 'accuracy rate on financial calculations', source: 'Based on 200 ground-truth test cases' },
+              { ref: stat3.ref, value: stat3.value, suffix: '+', label: 'synthetic claim scenarios benchmarked', source: 'Internal benchmark dataset' },
+              { ref: stat4.ref, value: stat4.value, suffix: '%', label: 'autonomous triage rate on claim rules', source: 'Based on 200 ground-truth test cases' },
             ].map((s, i) => (
               <div key={i} className="pc-stat-card" ref={s.ref}>
                 <div className="pc-stat-value">{s.value}{s.suffix}</div>
@@ -337,9 +337,9 @@ export default function Home({ policyProfile }) {
           <div className="card" style={{ padding: '3rem' }}>
             <div className="grid-2" style={{ alignItems: 'center', gap: '3rem' }}>
               <div>
-                <span className="pc-verified-badge">Independently Tested</span>
+                <span className="pc-verified-badge">Independently Benchmark Suite</span>
                 <h2 className="pc-benchmark-title">
-                  Accuracy verified against 200 real-world U.S. healthcare scenarios.
+                  Validated against 200 ground-truth U.S. healthcare scenarios.
                 </h2>
                 <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '1.5rem' }}>
                   The multi-stage analysis pipeline is benchmarked against a ground-truth dataset of 200 synthetic
@@ -351,7 +351,7 @@ export default function Home({ policyProfile }) {
                     View Benchmark Results
                   </button>
                   <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
-                    Live accuracy: 85%+ standard maintained
+                    Automation Triage Target: 85%+ Resolution
                   </span>
                 </div>
               </div>
@@ -423,7 +423,7 @@ export default function Home({ policyProfile }) {
               <div>
                 <h4 style={{ color: '#fff', fontSize: '0.8125rem', fontWeight: 700, marginBottom: '1rem', fontFamily: "'Inter', system-ui, sans-serif" }}>Product</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem', color: '#94a3b8' }}>
-                  {[['Upload Policy', '/policy'], ['Claim Evaluator', '/claim'], ['Accuracy Benchmarks', '/benchmarks'], ['AI Assistant', '/chat']].map(([l, p]) => (
+                  {[['Upload Policy', '/policy'], ['Claim Evaluator', '/claim'], ['Triage Benchmarks', '/benchmarks'], ['AI Assistant', '/chat']].map(([l, p]) => (
                     <button key={l} style={{ border: 'none', padding: 0, textAlign: 'left', background: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.875rem' }} onClick={() => navigate(p)}>{l}</button>
                   ))}
                 </div>

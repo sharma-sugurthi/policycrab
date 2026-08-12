@@ -64,29 +64,34 @@ TASK_TTL = 3600  # seconds — results expire after 1 hour
 
 
 def set_task_state(task_id: str, state: dict) -> None:
-    """Persist task state to Redis or in-memory fallback."""
+    """Persist task state to Redis and always to in-memory fallback."""
     payload = json.dumps(state)
+    _memory_store[task_id] = payload  # Always keep local memory in sync
     r = _get_redis()
     if r:
         try:
             r.setex(f"task:{task_id}", TASK_TTL, payload)
-            return
         except Exception as e:
-            logger.warning(f"Redis write failed: {e}, falling back to memory")
-    _memory_store[task_id] = payload
+            logger.warning(f"Redis write failed: {e}")
 
 
 def get_task_state(task_id: str) -> dict | None:
-    """Retrieve task state from Redis or in-memory fallback."""
+    """Retrieve task state from memory first, then Redis as a fallback."""
+    # Always try memory first (fastest, eliminates split-brain on single dyno)
+    if task_id in _memory_store:
+        return json.loads(_memory_store[task_id])
+        
     r = _get_redis()
     if r:
         try:
             raw = r.get(f"task:{task_id}")
-            return json.loads(raw) if raw else None
+            if raw:
+                _memory_store[task_id] = raw  # Cache it locally
+                return json.loads(raw)
         except Exception as e:
-            logger.warning(f"Redis read failed: {e}, falling back to memory")
-    raw = _memory_store.get(task_id)
-    return json.loads(raw) if raw else None
+            logger.warning(f"Redis read failed: {e}")
+            
+    return None
 
 
 def update_progress(task_id: str, progress: int, current_step: str,

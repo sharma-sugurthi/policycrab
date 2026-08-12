@@ -2,7 +2,7 @@
   "id": "NSA-012",
   "category": "nsa_balance_billing",
   "title": "NSA Violation: OON Anesthesia Balance Billing at INN Hospital - Scenario 12",
-  "claim_description": "I had a laparoscopic cholecystectomy at St. Jude Medical Center, which is in my insurance network. The surgeon was also in-network. However, the anesthesiologist (Apex Anesthesia Group) was out-of-network. I never chose them \u2014 they were assigned in the operating room. My EOB shows Apex Anesthesia billed $2,800 for CPT 00790 (Anesthesia for intraperitoneal procedures). The plan paid $0 and I am being told I owe the full $2,800 (Denial Reason: PR-242, Services not provided by network/primary care providers). The EOB lists total patient responsibility as $3,200 \u2014 $400 for the surgery and $2,800 for anesthesia.",
+  "claim_description": "I had a 1aparoscopic cholecystectomy at St. Jude Medical Center, which is in my insurance network. The surgeon was also in-network. However, the anesthesiologist (Apex Anesthesia Group) was out-of-network I never chose them \u2014 they were assigned in the operating room. My EOB shows Apex Ancsthesia billed $2,800 for CPT 00790 (Anesthesia for intrapcritoneal procedures). The p1an paid $0 and I am being told I owe the full $2800 (Denial Reason: PR-242, Serviccs not provided by network/primary care providers). The E0B lists total patient responsibi1ity as $3200 \u2014 $400 for thc surgery and $2,8O0 for anesthesia",
   "policy_profile": {
     "plan_name": "CrabCare Prime PPO",
     "carrier_name": "CrabCare",

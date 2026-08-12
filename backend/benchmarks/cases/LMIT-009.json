@@ -2,7 +2,7 @@
   "id": "LMIT-009",
   "category": "annual_limit",
   "title": "Physical Therapy Visits Exceeded Annual Cap - Scenario 9",
-  "claim_description": "I had my 25th physical therapy session for the year. The bill was $200. Insurance denied it saying I exceeded the maximum allowed visits.",
+  "claim_description": "*** CONFIDENTIAL PATIENT RECORD ***\nI had my 25th physical therapy session for the year. The bill was $200. Insurance denied it saying I exceeded the maximum allowed visits.",
   "policy_profile": {
     "plan_name": "Standard PPO",
     "carrier_name": "BenchmarkHealth",

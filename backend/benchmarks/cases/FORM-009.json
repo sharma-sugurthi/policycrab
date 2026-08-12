@@ -2,7 +2,7 @@
   "id": "FORM-009",
   "category": "formulary_exception",
   "title": "Non-Formulary Diabetes Medication Denied - Scenario 9",
-  "claim_description": "My doctor prescribed Ozempic for my Type 2 Diabetes. The pharmacy said it was denied because it's not on the plan's formulary list.",
+  "claim_description": "[FAX RCV 10:24 AM PAGE 2/4]\nMy doctor prcscribed Ozempic for my Type 2 Diabetes. The pharmacy said it was denied because it's not on the plan's formulary list.",
   "policy_profile": {
     "plan_name": "Standard HMO",
     "carrier_name": "BenchmarkHealth",

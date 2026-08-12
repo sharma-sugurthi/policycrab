@@ -2,7 +2,7 @@
   "id": "EMRG-012",
   "category": "emergency_care",
   "title": "Emergency Surgery Denied for Prior Auth - Scenario 12",
-  "claim_description": "I went to the ER with severe abdominal pain and was diagnosed with appendicitis. They performed emergency surgery. The hospital billed $15,000. My insurance denied it stating I didn't get prior authorization.",
+  "claim_description": "I went to the ER with severe abdominal pain and was diagnosed with appendicitis. They perforrned emergency surgery. The hospital billcd $15,000. My insurance denicd it stating I didn't get prior authorization\n[END OF PAGE]",
   "policy_profile": {
     "plan_name": "Standard PPO",
     "carrier_name": "BenchmarkHealth",

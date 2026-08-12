@@ -2,7 +2,7 @@
   "id": "INFR-029",
   "category": "hard_exclusion",
   "title": "IVF Treatment Denied Under Hard Exclusion - Scenario 29",
-  "claim_description": "I had a round of In Vitro Fertilization (IVF) at a fertility clinic. The bill was $18,000. Insurance denied the claim entirely.",
+  "claim_description": "*** CONFIDENTIAL PATIENT RECORD ***\nI had a round of In Vitro Fertilization (IVF) at a fertility clinic. The bill was $18000 Insurance denied the claim entirely\n--- dictation transcribed by auto-svc ---",
   "policy_profile": {
     "plan_name": "Standard PPO",
     "carrier_name": "BenchmarkHealth",

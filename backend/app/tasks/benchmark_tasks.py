@@ -17,9 +17,8 @@ logger = logging.getLogger(__name__)
 # Locate benchmarks directory reliably
 def get_benchmarks_dir() -> Path:
     paths_to_check = [
-        Path(__file__).resolve().parents[3] / "benchmarks",
+        Path(__file__).resolve().parents[2] / "benchmarks",  # backend/benchmarks
         Path("benchmarks").resolve(),
-        Path("../benchmarks").resolve(),
     ]
     for p in paths_to_check:
         if p.exists() and (p / "cases").exists():
@@ -133,6 +132,7 @@ async def evaluate_single_case(case: dict, sem: asyncio.Semaphore) -> dict:
             "case_id": case_id,
             "category": category,
             "title": case.get("title", f"Case {case_id}"),
+            "claim_description": case.get("claim_description", ""),
             "expected": expected,
             "actual": actual,
             "status": status,
@@ -254,12 +254,11 @@ async def run_benchmark_task(task_id: str, mode: str = "quick", concurrency: int
             "results": results_list
         }
 
-        # Save to official results.json if it was a full run or if results.json does not exist
+        # Save to official results.json
         try:
-            if mode == "full" or not results_file.exists():
-                with open(results_file, "w", encoding="utf-8") as f:
-                    json.dump(final_output, f, indent=2)
-                logger.info(f"Updated official benchmark test results at {results_file}")
+            with open(results_file, "w", encoding="utf-8") as f:
+                json.dump(final_output, f, indent=2)
+            logger.info(f"Updated official benchmark test results at {results_file}")
         except Exception as e:
             logger.warning(f"Failed to write results.json: {e}")
 

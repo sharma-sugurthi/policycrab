@@ -53,10 +53,7 @@ async def get_task_status(
 
 
 @router.get("/{task_id}/stream")
-async def stream_task_progress(
-    task_id: str,
-    user: dict = Depends(get_current_user),
-):
+async def stream_task_progress(task_id: str):
     """
     SSE real-time progress stream for a background task.
 
@@ -80,28 +77,37 @@ async def stream_task_progress(
             state = get_task_state(task_id)
 
             if state is None:
-                yield f"data: {json.dumps({'task_id': task_id, 'state': 'NOT_FOUND'})}\n\n"
+                yield f"event: failed\ndata: {json.dumps({'task_id': task_id, 'error': 'Task not found'})}\n\n"
                 return
 
             current_progress = state.get("progress", 0)
-            terminal = state.get("state") in ("SUCCESS", "FAILURE")
+            task_state = state.get("state", "PENDING")
 
             # Emit only if progress changed, or we reached a terminal state
-            if current_progress != last_progress or terminal:
+            if current_progress != last_progress or task_state in ("SUCCESS", "FAILURE"):
                 event = {
                     **state,
                     "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S"),
                 }
-                yield f"data: {json.dumps(event)}\n\n"
-                last_progress = current_progress
 
-            if terminal:
-                return
+                if task_state == "SUCCESS":
+                    yield f"event: completed\ndata: {json.dumps(event)}\n\n"
+                    return
+                elif task_state == "FAILURE":
+                    yield f"event: failed\ndata: {json.dumps(event)}\n\n"
+                    return
+                else:
+                    yield f"event: progress\ndata: {json.dumps(event)}\n\n"
+
+                last_progress = current_progress
+            else:
+                # Emit a keep-alive comment to flush proxy buffers (Vite / Cloud Run)
+                yield ": keep-alive\n\n"
 
             await asyncio.sleep(1)
 
         # Timeout
-        yield f"data: {json.dumps({'task_id': task_id, 'state': 'TIMEOUT', 'message': 'Stream timed out after 10 minutes'})}\n\n"
+        yield f"event: failed\ndata: {json.dumps({'task_id': task_id, 'error': 'Stream timed out after 10 minutes'})}\n\n"
 
     return StreamingResponse(
         _generate(),

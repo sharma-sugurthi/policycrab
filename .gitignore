@@ -38,6 +38,7 @@ Thumbs.db
 
 # ── Misc ───────────────────────────────────────────────────
 *.log
+cases_clean_backup/
 *.pdf
 
 # ── Project Specific ───────────────────────────────────────
@@ -47,3 +48,4 @@ Thumbs.db
 screenshots/
 Policy Samples USA/
 results/
+policycrab-benchmark-2026-08-10.json
