@@ -38,6 +38,22 @@ SEED_DATA = [
         "tags": ["deadlines", "aca", "appeals"]
     },
     {
+        "concept_id": "ACA-EHB-01",
+        "title": "ACA Essential Health Benefits (EHB) Requirements (45 CFR § 156.110)",
+        "semantic_summary": (
+            "Under the Affordable Care Act (ACA), all non-grandfathered individual and small group market plans must "
+            "cover 10 Essential Health Benefit (EHB) categories, including ambulatory patient services, emergency services, "
+            "hospitalization, maternity and newborn care, mental health and substance use disorder services, prescription "
+            "drugs, rehabilitative and habilitative services, laboratory services, preventive and wellness services, and "
+            "pediatric services. Plans cannot impose annual or lifetime dollar limits on EHBs or deny them based on pre-existing conditions."
+        ),
+        "source_url": "https://www.healthcare.gov/glossary/essential-health-benefits/",
+        "domain": "ACA",
+        "jurisdiction": "FEDERAL",
+        "audience": "GENERAL",
+        "tags": ["aca", "ehb", "essential-health-benefits", "coverage"]
+    },
+    {
         "concept_id": "ERISA-CLAIMS-01",
         "title": "ERISA Claims Procedure Regulations (29 CFR 2560.503-1)",
         "semantic_summary": (
@@ -80,6 +96,49 @@ SEED_DATA = [
         "jurisdiction": "FEDERAL",
         "audience": "GENERAL",
         "tags": ["deadlines", "medicare", "appeals"]
+    },
+    {
+        "concept_id": "MHPAEA-NQTL-01",
+        "title": "Mental Health Parity and Addiction Equity Act (MHPAEA) NQTL Requirements",
+        "semantic_summary": (
+            "Under MHPAEA, health plans cannot impose Non-Quantitative Treatment Limitations (NQTLs)—such as prior "
+            "authorization, concurrent review, or medical necessity standards—on mental health or substance use "
+            "disorder (MH/SUD) benefits that are more stringent than those applied to medical/surgical benefits. "
+            "Patients have the right to request the plan's NQTL comparative analysis to prove parity compliance."
+        ),
+        "source_url": "https://www.dol.gov/agencies/ebsa/laws-and-regulations/laws/mental-health-parity",
+        "domain": "MHPAEA",
+        "jurisdiction": "FEDERAL",
+        "audience": "GENERAL",
+        "tags": ["mental-health", "parity", "nqtl", "appeals"]
+    },
+    {
+        "concept_id": "ACA-FORMULARY-EXC-01",
+        "title": "ACA Formulary Exception Process (45 CFR § 156.122(c))",
+        "semantic_summary": (
+            "Under the ACA, health plans must have a standard and expedited process for enrollees to request "
+            "an exception to a formulary to gain access to a clinically appropriate non-formulary drug. "
+            "If approved, the plan must treat the excepted drug as an essential health benefit."
+        ),
+        "source_url": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-156",
+        "domain": "PHARMACY",
+        "jurisdiction": "FEDERAL",
+        "audience": "GENERAL",
+        "tags": ["formulary", "pharmacy", "exceptions", "drugs"]
+    },
+    {
+        "concept_id": "STEP-THERAPY-OVR-01",
+        "title": "Step Therapy Exception Protections",
+        "semantic_summary": (
+            "Many states and some federal regulations allow patients to bypass 'fail first' or step therapy protocols "
+            "if the required drug is contraindicated, likely to cause an adverse reaction, expected to be ineffective "
+            "based on patient history, or if the patient is already stable on the requested medication."
+        ),
+        "source_url": "https://www.ama-assn.org/practice-management/prior-authorization/step-therapy-legislation-overview",
+        "domain": "PHARMACY",
+        "jurisdiction": "FEDERAL",
+        "audience": "GENERAL",
+        "tags": ["step-therapy", "pharmacy", "prior-auth", "drugs"]
     }
 ]
 

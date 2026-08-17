@@ -50,6 +50,7 @@ from app.services.llm_router import get_llm, TaskType
 from app.models.claim import ClaimCase, CostBreakdown
 from app.models.policy import PolicyProfile
 from app.models.enums import DenialReason, NetworkStatus
+from app.engine.carrier_intelligence import get_carrier_intelligence, format_carrier_intelligence_for_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +148,8 @@ CRITICAL RULES:
 - If the NSA violation is detected (OON ancillary at INN facility), it is ALWAYS PAYER_ILLEGAL_DENIAL.
 - If the CARC code is CO-97 (unbundling/NCCI edit), it is ALMOST ALWAYS PROVIDER_CODING_ERROR.
 - If the CARC code is CO-50 (medical necessity) without supporting policy clause, classify as PAYER_ILLEGAL_DENIAL.
+- If the denial involves mental health, behavioral health, or substance use disorder services, evaluate for Mental Health Parity and Addiction Equity Act (MHPAEA) violations (e.g. stricter prior auth or concurrent review than medical/surgical). Classify as PAYER_ILLEGAL_DENIAL.
+- If the denial is for a prescription drug not on the formulary (Formulary Exclusion) or requiring a fail-first protocol (Step Therapy), classify as PAYER_ILLEGAL_DENIAL (requires a formal exception request or clinical appeal).
 - If it is ambiguous, choose the path more favorable to the patient (PAYER_ILLEGAL_DENIAL with LOW confidence).
 - estimated_success_probability: 0.0-1.0 — be honest. NSA violations = 0.90+. Cosmetic = 0.05."""
 
@@ -331,9 +334,25 @@ async def triage_node(state: AgentState) -> dict:
             claim_context += (
                 f"\nPLAN DETAILS:\n"
                 f"- Plan: {policy.plan_name} ({policy.plan_type.value})\n"
+                f"- Carrier: {policy.carrier_name}\n"
                 f"- Legal Classification: {policy.legal_classification.value}\n"
                 f"- State: {policy.state}\n"
             )
+
+            # Inject insurer-specific intelligence if available
+            carrier_intel = get_carrier_intelligence(policy.carrier_name)
+            if carrier_intel:
+                claim_context += (
+                    f"\nINSURER INTELLIGENCE:\n"
+                    f"- Known Denial Patterns: {carrier_intel.denial_rate_context or 'Standard'}\n"
+                )
+                if carrier_intel.algorithmic_system:
+                    claim_context += (
+                        f"- ⚠️  ALGORITHMIC SYSTEM: {carrier_intel.algorithmic_system}\n"
+                        f"  {carrier_intel.algorithmic_system_description}\n"
+                    )
+                if carrier_intel.reversal_rate_on_appeal:
+                    claim_context += f"- Reversal Rate: {carrier_intel.reversal_rate_on_appeal}\n"
 
         if cost:
             claim_context += (

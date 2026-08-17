@@ -45,6 +45,9 @@ class DenialReason(str, Enum):
     PRE_EXISTING_CONDITION = "PRE_EXISTING_CONDITION"     # ACA Section 2704 violation
     REFERRAL_MISSING = "REFERRAL_MISSING"                 # HMO/POS without PCP referral
     OUT_OF_NETWORK_DENIAL = "OUT_OF_NETWORK_DENIAL"       # HMO/EPO out-of-network
+    MENTAL_HEALTH_PARITY = "MENTAL_HEALTH_PARITY"         # MHPAEA violation (e.g. strict concurrent review for psych)
+    FORMULARY_EXCLUSION = "FORMULARY_EXCLUSION"           # Drug not on plan formulary
+    STEP_THERAPY_REQUIRED = "STEP_THERAPY_REQUIRED"       # Plan requires failing a cheaper drug first
     OTHER = "OTHER"
 
 
@@ -52,8 +55,11 @@ class AppealFramework(str, Enum):
     """Legal appeal pathway, determined by plan legal classification."""
     ERISA_FEDERAL = "ERISA_FEDERAL"                          # 180-day deadline, federal law
     STATE_EXTERNAL_REVIEW = "STATE_EXTERNAL_REVIEW"          # State DOI external review
-    MEDICARE_ADVANTAGE_5LEVEL = "MEDICARE_ADVANTAGE_5LEVEL"  # CMS 5-level process
+    MEDICARE_ADVANTAGE_5LEVEL = "MEDICARE_ADVANTAGE_5LEVEL"  # CMS 5-level process (Plan → IRE → ALJ)
+    MEDICARE_ORIGINAL_5LEVEL = "MEDICARE_ORIGINAL_5LEVEL"    # Original Medicare (MAC → QIC → ALJ)
     NSA_IDR = "NSA_IDR"                                      # No Surprises Act IDR
+    MEDICAID_FAIR_HEARING = "MEDICAID_FAIR_HEARING"          # State Medicaid fair hearing process
+    ACA_MARKETPLACE_APPEAL = "ACA_MARKETPLACE_APPEAL"        # Obamacare/ACA specific appeal rights
     STATE_DOI_COMPLAINT = "STATE_DOI_COMPLAINT"              # State DOI complaint filing
 
 

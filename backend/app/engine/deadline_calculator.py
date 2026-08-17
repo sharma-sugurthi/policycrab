@@ -30,10 +30,25 @@ _DEADLINE_RULES: dict[AppealFramework, dict] = {
         "description": "Medicare Advantage Level 1 Redetermination: 60 calendar days from denial notice",
         "urgency_note": "Expedited review available in 72 hours if standard timeline could jeopardize health",
     },
+    AppealFramework.MEDICARE_ORIGINAL_5LEVEL: {
+        "calendar_days": 120,
+        "description": "Original Medicare Level 1 Redetermination by MAC: 120 calendar days from initial determination",
+        "urgency_note": "Submit all clinical evidence with the MAC redetermination — the QIC at Level 2 may close the record",
+    },
     AppealFramework.NSA_IDR: {
         "business_days": 30,
         "description": "No Surprises Act: 30 business days open negotiation period from initial payment/denial",
         "urgency_note": "This is the provider's deadline to initiate IDR; patient cost-sharing is already capped",
+    },
+    AppealFramework.MEDICAID_FAIR_HEARING: {
+        "calendar_days": 60,
+        "description": "Medicaid MCO internal appeal: 60 calendar days from denial notice (42 CFR § 438.402)",
+        "urgency_note": "File within 10 days of denial to request 'aid paid pending' — the MCO must continue benefits during the appeal",
+    },
+    AppealFramework.ACA_MARKETPLACE_APPEAL: {
+        "calendar_days": 180,
+        "description": "ACA Internal Appeal: 180 calendar days from receipt of denial (45 CFR § 147.136)",
+        "urgency_note": "If internal appeal is denied, you have 4 months to request external review.",
     },
     AppealFramework.STATE_DOI_COMPLAINT: {
         "calendar_days": 365,

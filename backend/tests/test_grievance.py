@@ -165,9 +165,63 @@ class TestGrievanceAgentRouting:
         assert appeal_data.get("letter_type") == "payer_appeal"
         assert appeal_data.get("letter_format") == "formal"
         assert "Dear Appeals Department" in appeal_data.get("appeal_letter", "")
-        # Must parse and include cited regulations
         assert len(appeal_data.get("cited_regulations", [])) == 1
         assert appeal_data["cited_regulations"][0]["statute"] == "ERISA 503"
+
+    @pytest.mark.asyncio
+    async def test_mhpaea_rag_query_injected(self, minimal_state_for_grievance):
+        """If denial reason is MENTAL_HEALTH_PARITY, an extra RAG query for NQTL should be injected."""
+        from app.agents.grievance import grievance_node
+        from app.models.enums import DenialReason
+        
+        state = minimal_state_for_grievance.copy()
+        state["claim_case"]["denial_reason"] = DenialReason.MENTAL_HEALTH_PARITY.value
+        state["triage_decision"] = {"path": "PAYER_ILLEGAL_DENIAL"}
+
+        mock_embedding = _make_generate_embedding_fn()
+        with patch("app.agents.grievance.get_llm", return_value=_make_llm(PAYER_APPEAL_JSON)), \
+             patch("app.agents.grievance.generate_embedding", new=mock_embedding), \
+             patch("app.agents.grievance.search_knowledge_base", new=_make_search_kb_fn()):
+            await grievance_node(state)
+
+        # Standard queries = 3. MHPAEA adds 1 extra query = 4 total calls to generate_embedding
+        assert mock_embedding.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_formulary_rag_query_injected(self, minimal_state_for_grievance):
+        """If denial reason is FORMULARY_EXCLUSION, an extra RAG query should be injected."""
+        from app.agents.grievance import grievance_node
+        from app.models.enums import DenialReason
+        
+        state = minimal_state_for_grievance.copy()
+        state["claim_case"]["denial_reason"] = DenialReason.FORMULARY_EXCLUSION.value
+        state["triage_decision"] = {"path": "PAYER_ILLEGAL_DENIAL"}
+
+        mock_embedding = _make_generate_embedding_fn()
+        with patch("app.agents.grievance.get_llm", return_value=_make_llm(PAYER_APPEAL_JSON)), \
+             patch("app.agents.grievance.generate_embedding", new=mock_embedding), \
+             patch("app.agents.grievance.search_knowledge_base", new=_make_search_kb_fn()):
+            await grievance_node(state)
+
+        assert mock_embedding.call_count == 4
+
+    @pytest.mark.asyncio
+    async def test_step_therapy_rag_query_injected(self, minimal_state_for_grievance):
+        """If denial reason is STEP_THERAPY_REQUIRED, an extra RAG query should be injected."""
+        from app.agents.grievance import grievance_node
+        from app.models.enums import DenialReason
+        
+        state = minimal_state_for_grievance.copy()
+        state["claim_case"]["denial_reason"] = DenialReason.STEP_THERAPY_REQUIRED.value
+        state["triage_decision"] = {"path": "PAYER_ILLEGAL_DENIAL"}
+
+        mock_embedding = _make_generate_embedding_fn()
+        with patch("app.agents.grievance.get_llm", return_value=_make_llm(PAYER_APPEAL_JSON)), \
+             patch("app.agents.grievance.generate_embedding", new=mock_embedding), \
+             patch("app.agents.grievance.search_knowledge_base", new=_make_search_kb_fn()):
+            await grievance_node(state)
+
+        assert mock_embedding.call_count == 4
 
 
 class TestGrievanceAgentMissingData:

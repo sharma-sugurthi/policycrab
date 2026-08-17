@@ -40,20 +40,20 @@ def route_to_appeal_framework(
             return AppealFramework.STATE_EXTERNAL_REVIEW
 
         case PlanLegalClassification.INDIVIDUAL_ACA:
-            # ACA marketplace plans: state external review
-            return AppealFramework.STATE_EXTERNAL_REVIEW
+            # ACA Marketplace plans: Internal appeal → State/Federal external review
+            return AppealFramework.ACA_MARKETPLACE_APPEAL
 
         case PlanLegalClassification.MEDICARE_ADVANTAGE:
             # Medicare Advantage: CMS 5-level appeal process
             return AppealFramework.MEDICARE_ADVANTAGE_5LEVEL
 
         case PlanLegalClassification.MEDICARE_ORIGINAL:
-            # Original Medicare (Parts A/B): similar to MA but via MACs
-            return AppealFramework.MEDICARE_ADVANTAGE_5LEVEL
+            # Original Medicare (Parts A/B): MAC → QIC → ALJ → Appeals Council → Federal Court
+            return AppealFramework.MEDICARE_ORIGINAL_5LEVEL
 
         case PlanLegalClassification.MEDICAID_MANAGED:
-            # Medicaid managed care: state-specific fair hearing process
-            return AppealFramework.STATE_DOI_COMPLAINT
+            # Medicaid managed care: internal plan appeal → state Medicaid fair hearing
+            return AppealFramework.MEDICAID_FAIR_HEARING
 
         case _:
             # Default to state complaint — safest fallback
@@ -103,6 +103,19 @@ def get_appeal_framework_details(framework: AppealFramework) -> dict:
             "key_requirement": "Each level must be exhausted before proceeding to the next",
             "deadline_days": 60,
         },
+        AppealFramework.MEDICARE_ORIGINAL_5LEVEL: {
+            "governing_law": "42 CFR Part 405, Subpart I",
+            "regulation": "CMS Original Medicare (Parts A/B) appeal regulations",
+            "process": [
+                "Level 1: Redetermination by the Medicare Administrative Contractor (MAC) — 120 days to file, decision within 60 days",
+                "Level 2: Reconsideration by a Qualified Independent Contractor (QIC) — 180 days to file, decision within 60 days",
+                "Level 3: ALJ hearing at OMHA (Amount in Controversy ≥ $180 for 2025) — 60 days to file",
+                "Level 4: Medicare Appeals Council (DAB) review — 60 days to file",
+                "Level 5: Federal District Court (Amount in Controversy ≥ $1,840 for 2025) — 60 days to file",
+            ],
+            "key_requirement": "Level 1 must be filed with the MAC within 120 days of the initial determination. All evidence should be submitted at the QIC stage — the record may close after Level 2.",
+            "deadline_days": 120,
+        },
         AppealFramework.NSA_IDR: {
             "governing_law": "No Surprises Act, Consolidated Appropriations Act 2021",
             "regulation": "45 CFR Part 149",
@@ -114,6 +127,28 @@ def get_appeal_framework_details(framework: AppealFramework) -> dict:
             ],
             "key_requirement": "Patient is NOT a party to IDR — it's between provider and payer. Patient cost-sharing is capped at in-network rates.",
             "deadline_days": 30,
+        },
+        AppealFramework.MEDICAID_FAIR_HEARING: {
+            "governing_law": "42 CFR § 438.402 (Managed Medicaid); 42 CFR § 431.200 (Fee-for-Service Medicaid)",
+            "regulation": "State Medicaid agency fair hearing regulations",
+            "process": [
+                "Step 1: File internal appeal with the Medicaid managed care plan (MCO) within 60 days of the denial notice",
+                "Step 2: MCO must issue a decision within 30 days (standard) or 72 hours (expedited)",
+                "Step 3: If MCO upholds denial, request a State Fair Hearing through the state Medicaid agency within 120 days",
+                "Step 4: An Administrative Law Judge (ALJ) conducts a formal hearing and issues a binding decision",
+            ],
+            "key_requirement": "The MCO must continue benefits during the appeal if the appeal is filed within 10 days of the denial AND the service was previously authorized. Request 'aid paid pending' to maintain coverage during the process.",
+            "deadline_days": 60,
+        },
+        AppealFramework.ACA_MARKETPLACE_APPEAL: {
+            "governing_law": "Affordable Care Act (ACA), 45 CFR § 147.136 & § 156.122",
+            "regulation": "Federal ACA regulations governing non-grandfathered plans",
+            "process": [
+                "Step 1: Internal Appeal (180 days to file)",
+                "Step 2: External Review by State DOI or HHS-administered Federal External Review Process (within 4 months of internal denial)",
+            ],
+            "key_requirement": "ACA protections enforce coverage for Essential Health Benefits (EHBs), prohibit pre-existing condition exclusions, and mandate standard/expedited formulary exception pathways.",
+            "deadline_days": 180,
         },
         AppealFramework.STATE_DOI_COMPLAINT: {
             "governing_law": "State insurance code (varies by state)",

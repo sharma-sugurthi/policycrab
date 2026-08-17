@@ -22,6 +22,7 @@ from app.models.policy import PolicyProfile
 from app.models.claim import ClaimCase, CostBreakdown
 from app.models.appeal import AppealOutput, RegulatoryCitation
 from app.models.enums import DenialReason
+from app.engine.carrier_intelligence import get_carrier_intelligence, format_carrier_intelligence_for_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,10 @@ LETTER REQUIREMENTS:
 9. Include a deadline for the plan to respond
 10. Be persuasive but factual — never fabricate citations, page numbers, or clause text
 11. End with consequences of non-compliance (DOI complaint, federal court, etc.)
-12. If the HONEST ASSESSMENT indicates the patient is unlikely to win, still write the letter but include a note in recommended_next_steps about the realistic prospects
+12. If the denial reason is MENTAL_HEALTH_PARITY, the letter MUST include a formal request for a Comparative Analysis of Non-Quantitative Treatment Limitations (NQTLs) as required by the Mental Health Parity and Addiction Equity Act (MHPAEA). Demand the plan prove that its criteria for mental health are no more stringent than for medical/surgical benefits.
+13. If the denial reason is FORMULARY_EXCLUSION or STEP_THERAPY_REQUIRED, the letter MUST explicitly request a "Formulary Exception" under 45 CFR 156.122(c) (for ACA plans) or standard medical necessity exception, noting that the prescribing physician deems the requested drug clinically necessary and/or that step therapy alternatives are contraindicated.
+14. If the plan classification is INDIVIDUAL_ACA, the letter MUST explicitly cite 45 CFR § 147.136 for internal appeal/external review rights and, if a core service was denied, cite 45 CFR § 156.110 (Essential Health Benefits) prohibiting pre-existing condition exclusions and lifetime limits.
+15. If the HONEST ASSESSMENT indicates the patient is unlikely to win, still write the letter but include a note in recommended_next_steps about the realistic prospects
 
 CRITICAL: When policy contradictions are available, the letter must include a section titled
 'SPECIFIC POLICY CONTRADICTIONS' that states verbatim: 'On page [X] of the policy, it states:
@@ -314,6 +318,13 @@ async def _draft_payer_appeal_letter(
             f"patient defense strategies against {denial_reason.value} denial",
         ]
 
+        if denial_reason == DenialReason.MENTAL_HEALTH_PARITY:
+            search_queries.append("MHPAEA Mental Health Parity and Addiction Equity Act NQTL non-quantitative treatment limitation violation")
+        elif denial_reason == DenialReason.FORMULARY_EXCLUSION:
+            search_queries.append("formulary exception request ACA 45 CFR 156.122 non-formulary drug appeal")
+        elif denial_reason == DenialReason.STEP_THERAPY_REQUIRED:
+            search_queries.append("step therapy exception fail first protocol override appeal")
+
         all_chunks = []
         chunk_ids = []
         for query in search_queries:
@@ -379,6 +390,11 @@ async def _draft_payer_appeal_letter(
                 case_summary += "- Notable State Mandates:\n"
                 for m in state_ctx['notable_mandates'][:3]:
                     case_summary += f"  • {m}\n"
+
+        # ── Step 4a-bis: Inject Insurer-Specific Intelligence ─────────
+        carrier_intel = get_carrier_intelligence(policy.carrier_name)
+        if carrier_intel:
+            case_summary += format_carrier_intelligence_for_prompt(carrier_intel) + "\n"
 
         # ── Step 4b: Inject Policy Contradiction Evidence ─────────────
         # This is the key upgrade: if the Policy Analyzer found contradictions,

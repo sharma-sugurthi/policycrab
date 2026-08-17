@@ -91,3 +91,43 @@ class TestEdgeCases:
         result = calculate_appeal_deadline(AppealFramework.ERISA_FEDERAL, date.today())
         assert "ERISA" in result["framework_description"]
         assert result["framework"] == "ERISA_FEDERAL"
+
+
+class TestNewFrameworks:
+    """Tests for the new MEDICARE_ORIGINAL_5LEVEL and MEDICAID_FAIR_HEARING frameworks."""
+
+    def test_medicare_original_120_days(self):
+        """Original Medicare gives 120 days to file with the MAC (vs. 60 for MA plans)."""
+        denial = date(2025, 1, 1)
+        result = calculate_appeal_deadline(AppealFramework.MEDICARE_ORIGINAL_5LEVEL, denial)
+        assert result["deadline_date"] == "2025-05-01"
+        assert result["calendar_days_allowed"] == 120
+        assert "MAC" in result["framework_description"]
+
+    def test_medicaid_fair_hearing_60_days(self):
+        """Medicaid MCO internal appeal deadline is 60 calendar days."""
+        denial = date(2025, 3, 1)
+        result = calculate_appeal_deadline(AppealFramework.MEDICAID_FAIR_HEARING, denial)
+        assert result["deadline_date"] == "2025-04-30"
+        assert result["calendar_days_allowed"] == 60
+        assert "438.402" in result["framework_description"]
+        assert "aid paid pending" in result["urgency_note"]
+
+    def test_medicaid_denial_today(self):
+        """Medicaid fresh denial should be MODERATE urgency (60 days remaining)."""
+        result = calculate_appeal_deadline(AppealFramework.MEDICAID_FAIR_HEARING, date.today())
+        assert result["days_remaining"] == 60
+        assert result["urgency"] == "MODERATE"
+
+    def test_medicare_original_denial_today(self):
+        """Original Medicare fresh denial should be STANDARD urgency (120 days remaining)."""
+        result = calculate_appeal_deadline(AppealFramework.MEDICARE_ORIGINAL_5LEVEL, date.today())
+        assert result["days_remaining"] == 120
+        assert result["urgency"] == "STANDARD"
+
+    def test_aca_marketplace_denial_today(self):
+        """ACA fresh denial should be STANDARD urgency (180 days remaining)."""
+        result = calculate_appeal_deadline(AppealFramework.ACA_MARKETPLACE_APPEAL, date.today())
+        assert result["days_remaining"] == 180
+        assert result["urgency"] == "STANDARD"
+
