@@ -16,28 +16,26 @@ Supabase provides the managed PostgreSQL database (with `pgvector` for AI embedd
      3. `003_create_user_chats.sql`
      4. `004_create_policy_vectors.sql`
      5. `005_create_documents_and_audits.sql`
+     6. `006_chat_history.sql`
+     7. `007_hipaa_auto_purge.sql`
 4. **Authentication:**
    - Enable Email/Password authentication in the Supabase Auth Settings.
    - Disable "Confirm Email" if you want users to be able to sign up and immediately use the app during your initial launch.
 
 ## 2. Backend Deployment (Google Cloud Run)
 
-The backend is a standard Python FastAPI application. We recommend [Render](https://render.com) for easy deployment.
+The backend is a standard Python FastAPI application. We use **Google Cloud Run** for serverless, scalable deployment, automated via GitHub Actions Workload Identity Federation.
 
-1. Create a new **Web Service** on Render and connect it to your GitHub repository.
-2. Set the following settings:
-   - **Root Directory:** `backend`
-   - **Environment:** `Python 3`
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-3. Add the following **Environment Variables** (from your `.env` file):
+1. Setup a Google Cloud Project and enable the Cloud Run API.
+2. In your GitHub repository, configure the necessary repository secrets for GCP deployment (e.g., `GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`).
+3. Set the following **Environment Variables** in your Cloud Run service (or via GitHub Secrets depending on your setup):
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_KEY`
    - `DATABASE_URL` (Use the Transaction pooler URL from Supabase)
    - `GEMINI_API_KEY`
    - `GROQ_API_KEY` / `CEREBRAS_API_KEY` (Optional for LLM routing)
    - `REDIS_URL` (If you want background async tasks to use Redis)
-4. Deploy the service and note the live backend URL (e.g., `https://policycrab-api.onrender.com`).
+4. The deployment is handled automatically by the GitHub Actions pipeline upon merging to the `main` branch. Note the live backend URL (e.g., `https://policycrab-api-xyz.a.run.app`).
 
 ## 3. Frontend Deployment (Vercel)
 
@@ -52,7 +50,7 @@ The frontend is a Vite-powered React application. We recommend [Vercel](https://
 3. Add the following **Environment Variables**:
    - `VITE_SUPABASE_URL`: Your Supabase Project URL.
    - `VITE_SUPABASE_ANON_KEY`: Your Supabase anon key.
-4. Update `frontend/vercel.json` if needed to proxy API calls correctly to your Render backend URL.
+4. Update `frontend/vercel.json` if needed to proxy API calls correctly to your Cloud Run backend URL.
 5. Deploy the frontend.
 
 ## 4. Final Verification
@@ -63,4 +61,4 @@ The frontend is a Vite-powered React application. We recommend [Vercel](https://
 
 ---
 **Need Help?**
-If you have any questions during handoff, refer to the source code comments which heavily document the LangGraph agents and FastAPI routes.
+If you have any questions, refer to the source code comments which heavily document the LangGraph agents and FastAPI routes.

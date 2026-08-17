@@ -1,26 +1,26 @@
 # PolicyCrab: AI-Powered US Healthcare Advocacy Engine
 
-**PolicyCrab** is a fully functional, production-ready AI platform designed to help Americans navigate the complexities of their healthcare insurance. It automatically ingests complex policy documents (SBCs/EOBs), deterministically evaluates claims for over-billing or regulatory violations, and uses autonomous agents to generate legally sound appeal letters.
+**PolicyCrab** is an enterprise-grade AI platform designed to help medical advocates, HR benefits managers, and individual Americans navigate the complexities of US healthcare insurance. It automatically ingests complex policy documents (SBCs/EOBs), deterministically evaluates claims for over-billing or regulatory violations, and uses autonomous agents to generate legally sound appeal letters.
 
-This is a premium SaaS codebase built on a modern AI stack, perfect for an entrepreneur or organization looking to enter the $4 Trillion US healthcare market with a powerful, automated advocacy tool.
+By combining strict deterministic math with advanced Multi-LLM reasoning, PolicyCrab scales the expertise of a professional medical bill advocate.
 
 ---
 
-## 🚀 The Opportunity
+## 🚀 The Platform
 
-The US healthcare billing system is notoriously opaque, with up to **80% of medical bills containing errors**, and millions of claims being wrongfully denied each year. PolicyCrab automates the job of a professional medical bill advocate.
+The US healthcare billing system is notoriously opaque, with up to **80% of medical bills containing errors**, and millions of claims being wrongfully denied each year. PolicyCrab tackles this problem directly with automation and regulatory intelligence.
 
-**Core Value Proposition:**
-- **For Consumers:** Save thousands of dollars by identifying billing errors and successfully appealing denied claims.
-- **For B2B/HR:** Offer as a premium benefit to employees to reduce their out-of-pocket healthcare expenses.
-- **For the Acquirer:** A turnkey, highly scalable AI platform with immediate monetization potential (e.g., $15-$50 per generated appeal letter, or a $10/mo subscription).
+**Core Capabilities:**
+- **For Medical Advocates & Brokers:** A force-multiplier that analyzes denials, determines provider vs. payer fault, calculates deadlines, and drafts regulatory appeals.
+- **For HR & Benefits Managers:** A powerful platform to reduce out-of-pocket healthcare expenses for employees, improving benefits satisfaction.
+- **For Patients:** A seamless, easy-to-use interface to fight wrongful denials without needing a law degree.
 
-## 🛠 Tech Stack
+## 🛠 Tech Stack & Architecture
 
 PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medical math is accurate (preventing LLM hallucination) while leveraging AI for complex reasoning and writing.
 
 - **Frontend:** React, Vite, Framer Motion, Vanilla CSS (Premium, custom-branded UI).
-- **Backend:** FastAPI (Python), SQLAlchemy, asyncpg. Includes an async task queue via **FastAPI BackgroundTasks + Upstash Redis** for resilient background processing.
+- **Backend:** FastAPI (Python), SQLAlchemy, asyncpg. Deployed on **Google Cloud Run** via GitHub Actions.
 - **AI Agents & RAG:** LangGraph, LangChain. Uses a curated, localized knowledge base covering federal regulations (ERISA, ACA, NSA, Medicare, HIPAA).
 - **LLM Routing:** Intelligent Multi-LLM setup. Groq (Llama 3) for fast, cheap data extraction; Google Gemini 2.5 Pro for complex reasoning and drafting.
 - **Document Processing:** PyMuPDF (digital text) and **Gemini Multimodal API** (native OCR/vision for complex tables and scanned PDFs).
@@ -30,20 +30,21 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 
 1. **AI Policy Ingestion (RAG):** Extracts complex SBC/EOB terms into a normalized deterministic schema. Includes Gemini Multimodal for pixel-perfect table extraction on scanned images.
 2. **Deterministic Adjudication Engine:** Accurately calculates patient responsibilities (deductibles, coinsurance, OOP maximums, NSA protections) with exact math, bypassing LLM limitations on numerical reasoning.
-3. **Automated ERISA Appeals (Interactive Studio):** If a claim is denied, the engine triggers an autonomous agent to draft a formal, legally grounded appeal letter using federal guidelines. Users can review, tweak, and generate a final PDF dossier.
-4. **Human-in-the-Loop Data Editor:** Post-extraction verification step. If the AI hallucinates medical billing math, a built-in `math_validator` flags the errors, prompting users to correct the data before generating an appeal.
+3. **Automated ERISA & ACA Appeals (Interactive Studio):** If a claim is denied, the engine triggers an autonomous agent to draft a formal, legally grounded appeal letter using federal guidelines. Users can review, tweak (Assertive, Simplify, Medical Urgency modifiers), and generate a final PDF dossier.
+4. **Intelligent Triage & Carrier Intelligence:** Routes denials accurately between Provider Errors (upcoding, unbundling) and Payer Violations, utilizing litigation-aware appeal tactics per insurer (e.g., UHC's nH Predict, Cigna's PXDX).
 5. **Interactive AI Advocate:** A contextual chat assistant with multi-thread persistent history that references the user's specific policy and claim to answer regulatory questions.
-6. **Secure Dashboard & History:** Powered by Supabase, users can save and revisit past policies, track claim evaluations, and monitor statutory deadlines.
-7. **Privacy-First Architecture with Automated Retention Controls:** Uses Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions and medical audits after 30 days to enforce strict data minimization.
+6. **Enterprise AI Security Framework (EASF):** Employs strict "Agentic Zero Trust" boundaries. Includes local heuristic Prompt Injection Shields, a Deterministic Policy Engine to govern tool calls, and complete JSON Audit Logging for all AI decisions.
+7. **Privacy-First HIPAA Compliance:** Uses local scrubbing tools (Microsoft Presidio) before data leaves the server, and utilizes Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions after 30 days.
 
 ## 📂 Repository Structure
 
-```
+```text
 ├── frontend/               # React + Vite user interface
 ├── backend/                # FastAPI Python application
 │   ├── app/
 │   │   ├── agents/         # LangGraph AI agents (appeal, ingestion, triage)
 │   │   ├── engine/         # Deterministic calculators (costs, deadlines)
+│   │   ├── security/       # Enterprise AI Security Framework (EASF)
 │   │   ├── api/            # API routing and endpoints
 │   │   └── models/         # Pydantic data schemas
 │   └── tests/              # Pytest suite and synthetic benchmarks
@@ -81,7 +82,7 @@ npm install
 Copy `.env.example` to `.env` in the root directory. You will need API keys for:
 - Supabase (URL, Anon Key, Service Role Key)
 - Google Gemini API
-- Groq / Cerebras / OpenRouter (Optional, for optimized routing)
+- Groq / Cerebras (Optional, for optimized routing)
 
 ### 3. Run the Application
 
@@ -105,4 +106,4 @@ The codebase is clean, well-commented, and heavily modularized. See the followin
 - [CHANGELOG.md](CHANGELOG.md) - To review all current platform features.
 
 ---
-*Built for the future of patient advocacy.*
+*PolicyCrab: The Future of Patient Advocacy.*
