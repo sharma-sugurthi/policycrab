@@ -34,7 +34,7 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 4. **Human-in-the-Loop Data Editor:** Post-extraction verification step. If the AI hallucinates medical billing math, a built-in `math_validator` flags the errors, prompting users to correct the data before generating an appeal.
 5. **Interactive AI Advocate:** A contextual chat assistant with multi-thread persistent history that references the user's specific policy and claim to answer regulatory questions.
 6. **Secure Dashboard & History:** Powered by Supabase, users can save and revisit past policies, track claim evaluations, and monitor statutory deadlines.
-7. **HIPAA-Compliant Auto-Purge:** Uses Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions and medical audits after 30 days to enforce minimal data liability.
+7. **Privacy-First Architecture with Automated Retention Controls:** Uses Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions and medical audits after 30 days to enforce strict data minimization.
 
 ## 📂 Repository Structure
 

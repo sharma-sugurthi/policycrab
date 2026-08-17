@@ -1,7 +1,7 @@
 -- Enable pg_cron extension if it's not already enabled
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- Create a function to delete records older than 30 days for HIPAA compliance
+-- Create a function to delete records older than 30 days for data minimization and privacy
 CREATE OR REPLACE FUNCTION purge_hipaa_records_after_30_days()
 RETURNS void AS $$
 BEGIN
@@ -19,6 +19,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Schedule the job to run daily at midnight
-SELECT cron.schedule('hipaa-data-purge', '0 0 * * *', $$
+SELECT cron.schedule('privacy-data-purge', '0 0 * * *', $$
   SELECT purge_hipaa_records_after_30_days();
 $$);

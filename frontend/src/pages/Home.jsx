@@ -114,7 +114,7 @@ export default function Home({ policyProfile }) {
 
           {/* Left: Headline + trust bar + CTAs */}
           <div className="pc-hero-left">
-            <p className="pc-hero-eyebrow">Independent Healthcare Advocacy Platform</p>
+            <p className="pc-hero-eyebrow">Healthcare Advocacy Engine for Individuals & Teams</p>
 
             <h1 className="pc-hero-title">
               Evidence-Based<br />
@@ -138,7 +138,7 @@ export default function Home({ policyProfile }) {
               </div>
               <div className="pc-trust-item">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                HIPAA-Aware Platform
+                Privacy-First Architecture
               </div>
               <div className="pc-trust-item">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
@@ -414,7 +414,7 @@ export default function Home({ policyProfile }) {
                 appeal letter generation. Not affiliated with any insurance carrier.
               </p>
               <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#6ee7b7', background: 'rgba(110,231,183,0.1)', padding: '0.2rem 0.625rem', borderRadius: '999px', border: '1px solid rgba(110,231,183,0.25)' }}>HIPAA-Aware</span>
+                <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#6ee7b7', background: 'rgba(110,231,183,0.1)', padding: '0.2rem 0.625rem', borderRadius: '999px', border: '1px solid rgba(110,231,183,0.25)' }}>Privacy-First</span>
                 <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#93c5fd', background: 'rgba(147,197,253,0.1)', padding: '0.2rem 0.625rem', borderRadius: '999px', border: '1px solid rgba(147,197,253,0.25)' }}>256-bit TLS</span>
               </div>
             </div>
