@@ -23,6 +23,8 @@ from app.models.claim import ClaimCase, CostBreakdown
 from app.models.appeal import AppealOutput, RegulatoryCitation
 from app.models.enums import DenialReason
 from app.engine.carrier_intelligence import get_carrier_intelligence, format_carrier_intelligence_for_prompt
+from app.security.ai_gateway import ai_gateway
+from app.models.security import ProposedAction, PolicyDecisionOutcome
 
 logger = logging.getLogger(__name__)
 
@@ -196,6 +198,22 @@ async def _draft_provider_correction_letter(
 
         if corrected_claim_instructions:
             case_summary += f"\nSUGGESTED CORRECTIVE ACTIONS:\n{corrected_claim_instructions}\n"
+
+        # ── Security Gateway: Context Scanning & Policy Check ─────
+        is_safe, violation = ai_gateway.inspect_input(case_summary)
+        if not is_safe:
+            return {"errors": errors + [f"Security Gateway Blocked (Prompt Injection): {violation}"], "current_phase": "appeal"}
+            
+        action_req = ProposedAction(
+            agent_id="grievance_agent",
+            action_type="appeal.generate",
+            context={"letter_type": "provider_correction"}
+        )
+        decision = ai_gateway.request_action_execution(action_req)
+        if decision.outcome == PolicyDecisionOutcome.DENY:
+            return {"errors": errors + [f"Policy Engine Denied Action: {decision.reason}"], "current_phase": "appeal"}
+        elif decision.outcome == PolicyDecisionOutcome.REQUIRE_APPROVAL:
+            return {"errors": errors + [f"Action Paused: {decision.reason}. Sent to Human-in-the-Loop queue."], "current_phase": "approval_required"}
 
         llm = get_llm(TaskType.LEGAL_WRITING, temperature=0.3)
         messages = [
@@ -444,14 +462,32 @@ async def _draft_payer_appeal_letter(
             if honest_assessment:
                 contradiction_context += f"\nHONEST ASSESSMENT: {honest_assessment}\n"
 
+        full_prompt_context = (
+            f"{case_summary}\n\n"
+            f"{contradiction_context}\n"
+            f"RETRIEVED REGULATORY KNOWLEDGE:\n{rag_context}\n\n"
+            f"Draft the formal appeal letter now."
+        )
+
+        # ── Security Gateway: Context Scanning & Policy Check ─────
+        is_safe, violation = ai_gateway.inspect_input(full_prompt_context)
+        if not is_safe:
+            return {"errors": errors + [f"Security Gateway Blocked (Prompt Injection): {violation}"], "current_phase": "appeal"}
+            
+        action_req = ProposedAction(
+            agent_id="grievance_agent",
+            action_type="appeal.generate",
+            context={"letter_type": "payer_appeal"}
+        )
+        decision = ai_gateway.request_action_execution(action_req)
+        if decision.outcome == PolicyDecisionOutcome.DENY:
+            return {"errors": errors + [f"Policy Engine Denied Action: {decision.reason}"], "current_phase": "appeal"}
+        elif decision.outcome == PolicyDecisionOutcome.REQUIRE_APPROVAL:
+            return {"errors": errors + [f"Action Paused: {decision.reason}. Sent to Human-in-the-Loop queue."], "current_phase": "approval_required"}
+
         messages = [
             SystemMessage(content=APPEAL_DRAFTING_PROMPT),
-            HumanMessage(content=(
-                f"{case_summary}\n\n"
-                f"{contradiction_context}\n"
-                f"RETRIEVED REGULATORY KNOWLEDGE:\n{rag_context}\n\n"
-                f"Draft the formal appeal letter now."
-            )),
+            HumanMessage(content=full_prompt_context),
         ]
 
         response = await llm.ainvoke(messages)
