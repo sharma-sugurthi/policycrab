@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import AILogViewer from '../components/AILogViewer'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
+import { useTasks } from '../contexts/TaskContext'
 import { jsPDF } from 'jspdf'
 import { CPT_CODES } from '../data/cpt_codes'
 import { IconSearch, IconFileText, IconUpload, IconCheckCircle, IconX, IconChevronDown, IconChevronUp, IconAlertTriangle, IconActivity, IconBriefcase, IconZap, IconMapPin, IconStethoscope, IconShield, IconCpu, IconServer, IconScale, IconEdit, IconDownload, IconCopy, IconMap, IconWand, IconArrowRight } from '../components/Icons'
@@ -114,6 +115,7 @@ const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 
 export default function ClaimEvaluator({ policyProfile, policySession, onResult }) {
   const navigate = useNavigate()
+  const { addTask, getLatestTask } = useTasks()
   const [claimText, setClaimText] = useState('')
   const [allowedAmount, setAllowedAmount] = useState('')
   const [loading, setLoading] = useState(false)
@@ -138,6 +140,35 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
   const [escalatedLoading, setEscalatedLoading] = useState(false)
   const [escalatedError, setEscalatedError] = useState(null)
   const [networkStatus, setNetworkStatus] = useState('')
+
+  // Restore completed claim evaluation if user navigated away
+  useEffect(() => {
+    const task = getLatestTask('claim_eval')
+    if (task?.status === 'done' && task.result && !result) {
+      const { data } = task.result
+      if (data?.success && data.cost_breakdown) {
+        setResult(data)
+        onResult(data.cost_breakdown)
+      }
+    } else if (task?.status === 'running' && !loading) {
+      setLoading(true)
+      const poll = setInterval(() => {
+        const t = getLatestTask('claim_eval')
+        if (!t || t.status !== 'running') {
+          clearInterval(poll)
+          setLoading(false)
+          if (t?.status === 'done' && t.result) {
+            setResult(t.result.data)
+            onResult(t.result.data.cost_breakdown)
+          } else if (t?.status === 'error') {
+            setError(t.error || 'Evaluation failed.')
+          }
+        }
+      }, 800)
+      return () => clearInterval(poll)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     let raw = null
@@ -378,7 +409,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
     setLetterActionStatus('Downloaded PDF')
   }
 
-  const handleEvaluate = async () => {
+  const handleEvaluate = () => {
     if (!policyProfile) { setError('Upload a policy first.'); return }
     if (claimText.trim().length < 20) { setError('Please describe the claim in more detail.'); return }
     const normalizedAllowedAmount = allowedAmount === '' ? null : Number(allowedAmount)
@@ -387,22 +418,35 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
       return
     }
     setLoading(true); setError(null); setResult(null); setLetterActionStatus(''); setProgressStep(0)
-    try {
-      const res = await apiFetch('/claim/evaluate', { 
-        method: 'POST', 
+
+    const capturedText   = claimText
+    const capturedStatus = networkStatus
+    const capturedAmount = normalizedAllowedAmount
+
+    addTask('claim_eval', 'Evaluating your claim…', async () => {
+      const res = await apiFetch('/claim/evaluate', {
+        method: 'POST',
         body: JSON.stringify({
-          claim_description: claimText + (networkStatus ? `\n\nNetwork Status: ${networkStatus}` : ''),
+          claim_description: capturedText + (capturedStatus ? `\n\nNetwork Status: ${capturedStatus}` : ''),
           policy_profile: policyProfile,
-          allowed_amount: normalizedAllowedAmount,
+          allowed_amount: capturedAmount,
           session_id: policySession?.session_id || null,
           policy_indexed: Boolean(policySession?.policy_indexed),
-        }) 
+        })
       })
       const data = await readApiResponse(res)
-      if (data.success && data.cost_breakdown) { setResult(data); onResult(data.cost_breakdown) }
-      else { setError(formatApiError(data, 'Evaluation failed')) }
-    } catch (err) { setError(`Network error: ${err.message}`) }
-    finally { setLoading(false) }
+      if (data.success && data.cost_breakdown) {
+        setResult(data)
+        onResult(data.cost_breakdown)
+        setLoading(false)
+        return { data }
+      } else {
+        throw new Error(formatApiError(data, 'Evaluation failed'))
+      }
+    }).catch(err => {
+      setError(err.message || 'Network error during evaluation.')
+      setLoading(false)
+    })
   }
 
   const handleProviderSearch = async () => {

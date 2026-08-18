@@ -95,32 +95,36 @@ _MODEL_REGISTRY: dict[TaskType, list[dict]] = {
         {"provider": "gemini", "model": "gemini-2.5-flash"},
     ],
     TaskType.LEGAL_WRITING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "gemini", "model": "gemini-2.5-pro", "location": "us-east1"},
+        {"provider": "gemini", "model": "gemini-2.5-pro", "location": "us-central1"},
+        {"provider": "gemini", "model": "gemini-2.5-flash", "location": "us-east1"},
     ],
     TaskType.REASONING: [
-        {"provider": "gemini", "model": "gemini-2.5-pro"},
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "gemini", "model": "gemini-2.5-pro", "location": "us-east1"},
+        {"provider": "gemini", "model": "gemini-2.5-pro", "location": "us-central1"},
+        {"provider": "gemini", "model": "gemini-2.5-flash", "location": "us-east1"},
     ],
     TaskType.EXPLANATION: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "gemini", "model": "gemini-2.5-flash", "location": "us-east1"},
     ],
     TaskType.CHAT: [
-        {"provider": "gemini", "model": "gemini-2.5-flash"},
+        {"provider": "gemini", "model": "gemini-2.5-flash", "location": "us-east1"},
     ],
 }
 
 
-def _create_llm(provider: str, model: str, temperature: float = 0.0) -> BaseChatModel | None:
+def _create_llm(provider: str, model: str, temperature: float = 0.0, location: str | None = None) -> BaseChatModel | None:
     """Create a LangChain chat model for the given provider."""
     try:
         if provider == "gemini":
+            # Default to settings.gcp_location if none provided in registry
+            gcp_loc = location or settings.gcp_location
             return ChatGoogleGenerativeAI(
                 model=model,
                 temperature=temperature,
                 vertexai=True,
                 project=settings.google_cloud_project,
-                location=settings.gcp_location,
+                location=gcp_loc,
                 max_retries=0,
                 timeout=30,
             )
@@ -189,9 +193,11 @@ class FallbackChatModel:
         self._created_llms: dict[tuple[str, str], BaseChatModel] = {}
 
     def _create_candidate(self, entry: dict) -> BaseChatModel | None:
-        key = (entry["provider"], entry["model"])
+        # Use location in the key so we cache regional models separately
+        loc = entry.get("location", "")
+        key = (entry["provider"], entry["model"], loc)
         if key not in self._created_llms:
-            self._created_llms[key] = _create_llm(entry["provider"], entry["model"], self.temperature)
+            self._created_llms[key] = _create_llm(entry["provider"], entry["model"], self.temperature, location=entry.get("location"))
         return self._created_llms[key]
 
     def bind_tools(self, tools):

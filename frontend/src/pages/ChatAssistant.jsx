@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { apiFetch, readApiResponse, formatApiError } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
+import { useTasks } from '../contexts/TaskContext'
 import {
   IconPlus, IconTrash, IconMessageCircle, IconZap,
   IconBriefcase, IconActivity, IconSearch
@@ -53,6 +54,7 @@ const QUICK_QUESTIONS = [
 
 export default function ChatAssistant({ policyProfile, costBreakdown }) {
   const { user } = useAuth()
+  const { addTask, getLatestTask } = useTasks()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -89,8 +91,30 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
   }, [])
 
   useEffect(() => {
-    fetchSessions()
-  }, [fetchSessions])
+    if (user) {
+      fetchSessions()
+    }
+  }, [fetchSessions, user])
+
+  // Restore last active chat session when user navigates back to Chat
+  useEffect(() => {
+    const task = getLatestTask('chat_session')
+    if (task?.status === 'done' && task.result) {
+      const { chatId, msgs } = task.result
+      if (chatId && msgs?.length) {
+        setActiveChatId(chatId)
+        setMessages(msgs)
+        return
+      }
+    }
+    // If a message was in-flight, show it as pending in the thread
+    const pending = getLatestTask('chat_message')
+    if (pending?.status === 'running' && pending.result?.pendingMessages) {
+      setMessages(pending.result.pendingMessages)
+      setLoading(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const loadSession = async (chatId) => {
     if (chatId === activeChatId) return
@@ -130,12 +154,16 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
     const userMsg = (text || input).trim()
     if (!userMsg || loading) return
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }])
+    const newMessages = [...messages, { role: 'user', content: userMsg }]
+    setMessages(newMessages)
     setLoading(true)
 
-    try {
+    const capturedChatId = activeChatId
+    const capturedMessages = newMessages
+
+    addTask('chat_message', 'Chat response loading…', async () => {
       const payload = { message: userMsg, policy_profile: policyProfile, cost_breakdown: costBreakdown }
-      if (activeChatId) payload.chat_id = activeChatId
+      if (capturedChatId) payload.chat_id = capturedChatId
 
       const res = await apiFetchWithTimeout('/chat/message', {
         method: 'POST',
@@ -143,30 +171,41 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
       })
       const data = await readApiResponse(res)
 
+      let finalMessages
       if (!res.ok) {
-        setMessages(prev => [...prev, { role: 'ai', content: formatApiError(data, 'The assistant could not complete that request. Please try again.') }])
-        return
+        finalMessages = [...capturedMessages, { role: 'ai', content: formatApiError(data, 'The assistant could not complete that request. Please try again.') }]
+      } else if (!data || typeof data === 'string') {
+        finalMessages = [...capturedMessages, { role: 'ai', content: 'The assistant is temporarily unavailable. Please try again.' }]
+      } else if (data.messages?.length) {
+        finalMessages = data.messages
+      } else {
+        finalMessages = [...capturedMessages, { role: 'ai', content: data.error ? `Error: ${data.error}` : data.response }]
       }
-      if (!data || typeof data === 'string') {
-        setMessages(prev => [...prev, { role: 'ai', content: 'The assistant is temporarily unavailable. Please try again.' }])
-        return
-      }
-      if (data.messages?.length) setMessages(data.messages)
-      else setMessages(prev => [...prev, { role: 'ai', content: data.error ? `Error: ${data.error}` : data.response }])
 
-      if (data.chat_id && data.chat_id !== activeChatId) {
+      const finalChatId = data?.chat_id || capturedChatId
+      setMessages(finalMessages)
+      setLoading(false)
+      if (data?.chat_id && data.chat_id !== capturedChatId) {
         setActiveChatId(data.chat_id)
         fetchSessions()
       }
-    } catch (err) {
-      const msg = err.name === 'AbortError'
+
+      // Persist session state into TaskContext so returning to Chat restores it
+      return { chatId: finalChatId, msgs: finalMessages }
+    }).then(sessionData => {
+      // Store the session under its own type key so the restore-on-mount check finds it
+      if (sessionData?.chatId) {
+        addTask('chat_session', '_session_snapshot_', async () => sessionData)
+      }
+    }).catch(err => {
+      const msg = err?.name === 'AbortError'
         ? 'The assistant took too long to respond. Please try again with a shorter question.'
         : 'Connection error — please check your connection and try again.'
       setMessages(prev => [...prev, { role: 'ai', content: msg }])
-    } finally {
       setLoading(false)
-    }
+    })
   }
+
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

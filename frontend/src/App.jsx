@@ -12,6 +12,8 @@ import CarrierHub from './pages/CarrierHub'
 import AppealStudio from './pages/AppealStudio'
 import ResourcesHub from './pages/ResourcesHub'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { TaskProvider } from './contexts/TaskContext'
+import TaskStatusBar from './components/TaskStatusBar'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -518,6 +520,8 @@ function AppContent() {
           <Route path="/resources/:slug" element={<ResourcesHub />} />
         </Routes>
       </Suspense>
+      {/* ── Floating background task status bar ─────────── */}
+      <TaskStatusBar />
     </>
   )
 }
@@ -525,7 +529,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <TaskProvider>
+        <AppContent />
+      </TaskProvider>
     </AuthProvider>
   )
 }

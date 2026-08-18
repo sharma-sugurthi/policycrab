@@ -112,6 +112,11 @@ async def upload_and_scan_bill(
 
         if "error" in extraction_result:
             raise ValueError(extraction_result["error"])
+            
+        # 1.5 Validate document type (Gemini identified this visually)
+        doc_type = (extraction_result.get("document_type") or "").lower()
+        if doc_type and doc_type not in ["bill", "eob"]:
+            raise ValueError(f"Document visually identified as '{doc_type}'. Please upload a valid medical bill or EOB.")
 
         # 2. Format extracted service lines into ServiceLineInput models
         raw_lines = extraction_result.get("service_lines", [])
@@ -189,6 +194,9 @@ async def upload_and_scan_bill(
             "extracted_lines": extracted_lines
         }
 
+    except ValueError as ve:
+        logger.error(f"Audit upload validation error: {ve}")
+        raise HTTPException(status_code=400, detail=str(ve))
     except HTTPException:
         raise
     except Exception as e:

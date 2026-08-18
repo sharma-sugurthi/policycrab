@@ -6,9 +6,10 @@ import asyncio
 import json
 import logging
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from app.agents.graph import get_chat_graph
+from app.services.llm_router import get_llm_with_retry, TaskType
 from app.api.auth import get_current_user, get_current_websocket_user
 from app.security.rate_limit import RateLimitRule, check_rate_limit, rate_limit, websocket_identity
 from app.services.user_data import (
@@ -56,6 +57,23 @@ def _langchain_messages_to_stored(messages: list) -> list[dict]:
         elif msg_type == "ai":
             stored.append({"role": "ai", "content": _extract_text_content(message.content)})
     return stored
+
+
+async def generate_chat_title(user_message: str) -> str:
+    """Generate a short, smart summary of the user's first message for the sidebar."""
+    try:
+        # Use ROUTING task type to get a fast/cheap model like flash or 8b
+        llm = get_llm_with_retry(TaskType.ROUTING)
+        messages = [
+            SystemMessage(content="Generate a short, 2-5 word conversational title summarizing the user's message. Reply ONLY with the title. Do not use quotes or punctuation."),
+            HumanMessage(content=user_message)
+        ]
+        result = await asyncio.wait_for(llm.ainvoke(messages), timeout=10.0)
+        title = result.content.strip(' "')
+        return title[:50] # Keep it reasonably short
+    except Exception as e:
+        logger.warning(f"Failed to generate smart chat title: {e}")
+        return user_message[:30] + ("..." if len(user_message) > 30 else "")
 
 
 @router.websocket("/api/chat")
@@ -165,11 +183,17 @@ async def chat_websocket(websocket: WebSocket):
                 conversation_state["messages"] = result_messages
 
             stored_after = _langchain_messages_to_stored(conversation_state["messages"])
+            
+            title = None
+            if not chat and len(stored_after) <= 2:
+                title = await generate_chat_title(user_message)
+
             upsert_user_chat(
                 user["id"],
                 stored_after,
                 policy_profile=conversation_state.get("policy_profile"),
                 cost_breakdown=conversation_state.get("cost_breakdown"),
+                title=title
             )
 
             await websocket.send_json({
@@ -282,7 +306,7 @@ async def chat_message(request: dict, user: dict = Depends(get_current_user), _:
         
         title = None
         if not chat_id and len(stored_after) <= 2:
-            title = user_message[:30] + ("..." if len(user_message) > 30 else "")
+            title = await generate_chat_title(user_message)
 
         new_chat = upsert_user_chat(
             user["id"], 

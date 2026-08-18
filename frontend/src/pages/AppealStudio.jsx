@@ -9,6 +9,7 @@ import {
   IconCopy, IconDownload, IconScale, IconFileText
 } from '../components/Icons'
 import { apiFetch, readApiResponse, formatApiError } from '../lib/api'
+import { useTasks } from '../contexts/TaskContext'
 
 // ── Smart Send Panel ──────────────────────────────────────────────────────────
 function SmartSendPanel({ policyProfile, claimCase, currentLetter }) {
@@ -188,6 +189,7 @@ function SmartSendPanel({ policyProfile, claimCase, currentLetter }) {
 export default function AppealStudio() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { addTask, getLatestTask } = useTasks()
   
   // Data passed from ClaimEvaluator
   const state = location.state || {}
@@ -208,6 +210,20 @@ export default function AppealStudio() {
   
   const [lastRevisionResult, setLastRevisionResult] = useState(null)
 
+  // Restore letter edits if user navigated away mid-revision
+  useEffect(() => {
+    const task = getLatestTask('appeal_revision')
+    if (task?.status === 'done' && task.result?.revisedLetter) {
+      // Only restore if it's for the same initial letter (prevent cross-session contamination)
+      if (!currentLetter || currentLetter === initialLetter) {
+        setCurrentLetter(task.result.revisedLetter)
+        if (task.result.history) setRevisionHistory(task.result.history)
+        if (task.result.revisionResult) setLastRevisionResult(task.result.revisionResult)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Redirect if accessed directly without state
   useEffect(() => {
     if (!initialLetter) {
@@ -218,17 +234,20 @@ export default function AppealStudio() {
   if (!initialLetter) return null
 
   // ── 1. Apply AI Revision ─────────────────────────────
-  const handleRevise = async (actionType) => {
+  const handleRevise = (actionType) => {
     setLoadingAction(actionType)
     setError(null)
     setLastRevisionResult(null)
 
-    try {
+    const capturedLetter  = currentLetter
+    const capturedHistory = revisionHistory
+
+    addTask('appeal_revision', `Revising letter (${actionType})…`, async () => {
       const response = await apiFetch('/studio/revise', {
         method: 'POST',
         body: JSON.stringify({
           action_type: actionType,
-          current_letter: currentLetter,
+          current_letter: capturedLetter,
           context_claim_id: claimCase?.claim_id || '',
           context_denial_reason: claimCase?.denial_reason_text || ''
         })
@@ -236,25 +255,24 @@ export default function AppealStudio() {
 
       const result = await readApiResponse(response)
 
-      if (!response.ok) {
-        throw new Error(formatApiError(result))
-      }
+      if (!response.ok) throw new Error(formatApiError(result))
 
       if (result.success) {
-        // Save current state to history for undo
-        setRevisionHistory(prev => [...prev, currentLetter])
+        const newHistory = [...capturedHistory, capturedLetter]
+        setRevisionHistory(newHistory)
         setCurrentLetter(result.revised_letter)
         setLastRevisionResult(result)
+        setLoadingAction(null)
+        return { revisedLetter: result.revised_letter, history: newHistory, revisionResult: result }
       } else {
-        // Soft failure — LLM rate limit or parse error
         setError(result.change_summary || 'Failed to apply revision. Your original draft was kept safe.')
+        setLoadingAction(null)
+        throw new Error(result.change_summary || 'Revision failed')
       }
-
-    } catch (err) {
+    }).catch(err => {
       setError(err.message)
-    } finally {
       setLoadingAction(null)
-    }
+    })
   }
 
   const handleUndo = () => {
@@ -281,16 +299,17 @@ export default function AppealStudio() {
   }
 
   // ── 3. Compile & Download Dossier PDF ────────────────
-  const handleGenerateDossier = async () => {
+  const handleGenerateDossier = () => {
     setDossierLoading(true)
     setError(null)
 
-    try {
-      // Step 1: Request structured dossier compilation from backend
+    const capturedLetter = currentLetter
+
+    addTask('appeal_draft', 'Compiling dossier PDF…', async () => {
       const response = await apiFetch('/studio/dossier', {
         method: 'POST',
         body: JSON.stringify({
-          letter_text: currentLetter,
+          letter_text: capturedLetter,
           claim_case: claimCase,
           policy_profile: policyProfile,
           cost_breakdown: costBreakdown,
@@ -300,12 +319,9 @@ export default function AppealStudio() {
       })
 
       const dossier = await readApiResponse(response)
+      if (!response.ok) throw new Error(formatApiError(dossier))
 
-      if (!response.ok) {
-        throw new Error(formatApiError(dossier))
-      }
-
-      // Step 2: Render PDF client-side using jsPDF
+      // Render PDF client-side using jsPDF
       const doc = new jsPDF()
       let y = 20
       
@@ -313,32 +329,27 @@ export default function AppealStudio() {
         if (y + requiredSpace > 280) {
           doc.addPage()
           y = 20
-          // Footer
           doc.setFontSize(8)
           doc.setTextColor(150, 150, 150)
-          doc.text("Generated by PolicyCrab AI Advocate", 105, 290, { align: 'center' })
+          doc.text('Generated by PolicyCrab AI Advocate', 105, 290, { align: 'center' })
           doc.setTextColor(0, 0, 0)
         }
       }
 
-      // Title Page
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(22)
-      doc.setTextColor(225, 29, 72) // Accent Red
-      doc.text("Medical Claim Appeal Dossier", 105, y, { align: 'center' })
+      doc.setTextColor(225, 29, 72)
+      doc.text('Medical Claim Appeal Dossier', 105, y, { align: 'center' })
       y += 10
-      
       doc.setFontSize(10)
       doc.setTextColor(100, 100, 100)
       doc.text(`Generated: ${new Date(dossier.generated_at).toLocaleDateString()}`, 105, y, { align: 'center' })
       y += 20
 
-      // Case Summary block
       doc.setFontSize(14)
       doc.setTextColor(0, 0, 0)
-      doc.text("Case Summary", 20, y)
+      doc.text('Case Summary', 20, y)
       y += 8
-      
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       const summaryItems = [
@@ -348,81 +359,59 @@ export default function AppealStudio() {
         `Billed Amount: $${dossier.case_summary?.billed_amount?.toLocaleString() || '0'}`,
         `Patient Responsibility: $${dossier.case_summary?.patient_responsibility?.toLocaleString() || '0'}`,
       ]
-      summaryItems.forEach(item => {
-        doc.text(item, 25, y)
-        y += 7
-      })
-      
+      summaryItems.forEach(item => { doc.text(item, 25, y); y += 7 })
       y += 10
 
-      // Render Sections
+
       for (const section of dossier.sections) {
         addPageIfNeeded(30)
-        
         doc.setFontSize(16)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor(225, 29, 72)
         doc.text(section.title, 20, y)
         y += 10
-        
         doc.setFontSize(11)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(0, 0, 0)
 
         if (section.section_type === 'letter') {
           const lines = doc.splitTextToSize(section.content, 170)
-          for (let i = 0; i < lines.length; i++) {
-            addPageIfNeeded(10)
-            doc.text(lines[i], 20, y)
-            y += 6
-          }
+          for (const line of lines) { addPageIfNeeded(10); doc.text(line, 20, y); y += 6 }
         } else if (section.section_type === 'policy_citations') {
-          doc.text(section.content, 20, y)
-          y += 10
+          doc.text(section.content, 20, y); y += 10
           section.items?.forEach(item => {
             addPageIfNeeded(30)
-            doc.setFont('helvetica', 'bold')
-            doc.text(`Page ${item.page}:`, 25, y)
-            y += 6
+            doc.setFont('helvetica', 'bold'); doc.text(`Page ${item.page}:`, 25, y); y += 6
             doc.setFont('helvetica', 'italic')
             const quoteLines = doc.splitTextToSize(`"${item.text}"`, 160)
-            doc.text(quoteLines, 30, y)
-            y += (quoteLines.length * 6) + 4
-            
+            doc.text(quoteLines, 30, y); y += (quoteLines.length * 6) + 4
             if (item.mistake) {
-              doc.setFont('helvetica', 'bold')
-              doc.setTextColor(220, 38, 38)
-              doc.text(`Error: ${item.mistake}`, 30, y)
-              doc.setTextColor(0, 0, 0)
-              y += 8
+              doc.setFont('helvetica', 'bold'); doc.setTextColor(220, 38, 38)
+              doc.text(`Error: ${item.mistake}`, 30, y); doc.setTextColor(0, 0, 0); y += 8
             }
           })
         } else if (section.section_type === 'next_steps') {
           section.items?.forEach((item, idx) => {
             addPageIfNeeded(15)
-            doc.setFont('helvetica', 'bold')
-            doc.text(`${idx + 1}.`, 20, y)
+            doc.setFont('helvetica', 'bold'); doc.text(`${idx + 1}.`, 20, y)
             doc.setFont('helvetica', 'normal')
             const stepLines = doc.splitTextToSize(item.step, 160)
-            doc.text(stepLines, 28, y)
-            y += (stepLines.length * 6) + 4
+            doc.text(stepLines, 28, y); y += (stepLines.length * 6) + 4
           })
         } else {
-          // Generic section render
           const lines = doc.splitTextToSize(section.content || '', 170)
-          doc.text(lines, 20, y)
-          y += (lines.length * 6) + 4
+          doc.text(lines, 20, y); y += (lines.length * 6) + 4
         }
         y += 10
       }
 
       doc.save(`Appeal-Dossier-${dossier.cover?.claim_id || 'Draft'}.pdf`)
-
-    } catch (err) {
-      setError(err.message)
-    } finally {
       setDossierLoading(false)
-    }
+      return { done: true }
+    }).catch(err => {
+      setError(err.message)
+      setDossierLoading(false)
+    })
   }
 
   // ── Toolbar Button Definitions ───────────────────────

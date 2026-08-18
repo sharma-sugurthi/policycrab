@@ -35,7 +35,7 @@ async def test_get_llm_with_retry_falls_back_to_next_provider(monkeypatch):
         candidates
     )
 
-    def fake_create_llm(provider, model, temperature=0.0):
+    def fake_create_llm(provider, model, *args, **kwargs):
         if provider == "gemini":
             return FakeLLM(provider, model, should_fail=True)
         if provider == "groq":

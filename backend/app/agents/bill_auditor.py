@@ -155,7 +155,8 @@ def _parse_audit_response(raw: str) -> dict:
 
 async def audit_batch(lines: list[ServiceLineInput], policy_context: str = "") -> dict:
     """Audit a single batch of service lines (up to BATCH_SIZE)."""
-    llm = get_llm_with_retry(TaskType.REASONING)
+    # Fail fast on timeouts (max_retries=1) to prevent long-running endpoint hangs
+    llm = get_llm_with_retry(TaskType.REASONING, max_retries=1)
 
     formatted = _format_lines_for_prompt(lines)
     user_message = f"Audit these service lines:\n\n{formatted}"
@@ -220,12 +221,19 @@ async def run_bill_audit(
 
         except Exception as e:
             logger.error(f"Bill Audit batch {i + 1} failed: {e}")
+            
+            err_msg = str(e).lower()
+            if "504" in err_msg or "timeout" in err_msg or "deadline_exceeded" in err_msg:
+                friendly_desc = "AI Servers are currently very busy. Please try again later."
+            else:
+                friendly_desc = f"Automated audit could not complete for lines {batch[0].line_number}-{batch[-1].line_number}: {str(e)[:100]}"
+                
             all_flags.append(
                 AuditFlag(
                     line_number=batch[0].line_number,
                     issue_type="general_warning",
                     severity="info",
-                    description=f"Automated audit could not complete for lines {batch[0].line_number}-{batch[-1].line_number}: {str(e)[:100]}",
+                    description=friendly_desc,
                     recommendation="Review these lines manually.",
                 )
             )

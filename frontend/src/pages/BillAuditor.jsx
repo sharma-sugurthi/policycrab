@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { jsPDF } from 'jspdf'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useTasks } from '../contexts/TaskContext'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { 
   IconReceipt, IconUpload, IconPlus, IconX, IconCheckCircle, 
@@ -14,6 +15,7 @@ const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 export default function BillAuditor() {
   const location = useLocation()
   const { session, user } = useAuth()
+  const { addTask, getLatestTask } = useTasks()
 
   // Input State
   const [lines, setLines] = useState([
@@ -49,7 +51,9 @@ export default function BillAuditor() {
     fetchAudits()
   }, [fetchAudits])
 
+  // ── On mount: restore result from TaskContext if user navigated away ──
   useEffect(() => {
+    // Priority 1: explicit navigation from history panel
     if (location.state?.loadAudit) {
       const a = location.state.loadAudit
       setAuditId(a.id)
@@ -58,7 +62,40 @@ export default function BillAuditor() {
         setLines(a.service_lines_json.map((l, idx) => ({ ...l, line_number: idx + 1, billed_amount: l.billed_amount?.toString() || '' })))
       }
       window.scrollTo({ top: 400, behavior: 'smooth' })
+      return
     }
+
+    // Priority 2: restore from global TaskContext (user navigated away mid/post audit)
+    const task = getLatestTask('bill_audit')
+    if (task) {
+      if (task.status === 'done' && task.result) {
+        const { auditResult, auditIdVal, extractedLines } = task.result
+        setResult(auditResult)
+        setAuditId(auditIdVal)
+        if (Array.isArray(extractedLines) && extractedLines.length > 0) setLines(extractedLines)
+      } else if (task.status === 'running') {
+        setLoading(true)
+        // Poll until done — task will resolve independently
+        const poll = setInterval(() => {
+          const t = getLatestTask('bill_audit')
+          if (!t || t.status !== 'running') {
+            clearInterval(poll)
+            setLoading(false)
+            if (t?.status === 'done' && t.result) {
+              const { auditResult, auditIdVal, extractedLines } = t.result
+              setResult(auditResult)
+              setAuditId(auditIdVal)
+              if (Array.isArray(extractedLines) && extractedLines.length > 0) setLines(extractedLines)
+              fetchAudits()
+            } else if (t?.status === 'error') {
+              setError(t.error || 'Audit failed.')
+            }
+          }
+        }, 800)
+        return () => clearInterval(poll)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state])
 
   const deleteAudit = async (id, e) => {
@@ -115,34 +152,37 @@ export default function BillAuditor() {
   }
 
   // ── Submit Handlers ─────────────────────────────────────────────────
-  const handleAudit = async () => {
+  const handleAudit = () => {
+    // Validate before kicking off the background task
+    if (!file) {
+      const formattedLines = lines.map(l => ({
+        ...l, billed_amount: l.billed_amount ? parseFloat(l.billed_amount) : null,
+      })).filter(l => l.cpt_code || l.billed_amount)
+      if (formattedLines.length === 0) {
+        setError('Please enter at least one service line with a CPT code or billed amount.')
+        return
+      }
+    }
+
     setLoading(true)
     setError(null)
     setResult(null)
     setLetterStatus('')
 
-    try {
-      let res
-      if (file) {
-        // Upload Mode
-        const formData = new FormData()
-        formData.append('file', file)
-        res = await apiFetch('/audit/upload', {
-          method: 'POST',
-          body: formData,
-        })
-      } else {
-        // Manual Entry Mode
-        // Format strings to numbers where appropriate
-        const formattedLines = lines.map(l => ({
-          ...l,
-          billed_amount: l.billed_amount ? parseFloat(l.billed_amount) : null,
-        })).filter(l => l.cpt_code || l.billed_amount) // drop totally empty lines
-        
-        if (formattedLines.length === 0) {
-          throw new Error("Please enter at least one service line with a CPT code or billed amount.")
-        }
+    // Capture current file/lines for the closure (they may change if user navigates back)
+    const capturedFile = file
+    const capturedLines = lines
 
+    addTask('bill_audit', capturedFile ? `Auditing "${capturedFile.name}"…` : 'Auditing bill…', async () => {
+      let res
+      if (capturedFile) {
+        const formData = new FormData()
+        formData.append('file', capturedFile)
+        res = await apiFetch('/audit/upload', { method: 'POST', body: formData })
+      } else {
+        const formattedLines = capturedLines.map(l => ({
+          ...l, billed_amount: l.billed_amount ? parseFloat(l.billed_amount) : null,
+        })).filter(l => l.cpt_code || l.billed_amount)
         res = await apiFetch('/audit/scan', {
           method: 'POST',
           body: JSON.stringify({ service_lines: formattedLines }),
@@ -150,27 +190,33 @@ export default function BillAuditor() {
       }
 
       const data = await readApiResponse(res)
-      if (data.success && data.audit_result) {
-        setResult(data.audit_result)
-        setAuditId(data.audit_id || null)
-        fetchAudits()
-        if (data.extracted_lines) {
-          // If upload mode, populate the lines table so user sees what was extracted
-          setLines(data.extracted_lines.map((l, idx) => ({
-            ...l,
-            line_number: idx + 1,
-            billed_amount: l.billed_amount?.toString() || ''
-          })))
-        }
-      } else {
-        setError(formatApiError(data, 'Audit failed'))
+      if (!data.success || !data.audit_result) {
+        throw new Error(formatApiError(data, 'Audit failed'))
       }
-    } catch (err) {
-      setError(err.message)
-    } finally {
+
+      const auditResult   = data.audit_result
+      const auditIdVal    = data.audit_id || null
+      const extractedLines = data.extracted_lines
+        ? data.extracted_lines.map((l, idx) => ({
+            ...l, line_number: idx + 1, billed_amount: l.billed_amount?.toString() || ''
+          }))
+        : capturedLines
+
+      // If the component is still mounted, update local state immediately
+      setResult(auditResult)
+      setAuditId(auditIdVal)
+      if (data.extracted_lines) setLines(extractedLines)
       setLoading(false)
-    }
+      fetchAudits()
+
+      // Return payload so TaskContext stores it for restoration on re-mount
+      return { auditResult, auditIdVal, extractedLines }
+    }).catch(err => {
+      setError(err.message || 'Audit failed')
+      setLoading(false)
+    })
   }
+
 
   // ── Letter Generation ───────────────────────────────────────────────
   const handleGenerateLetter = async () => {
@@ -351,6 +397,7 @@ export default function BillAuditor() {
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Awaiting Audit</h3>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', maxWidth: '280px' }}>Upload a bill or enter service lines on the left to see potential savings and errors.</p>
                 </motion.div>
+
               ) : (
                 <motion.div key="results" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="card" style={{ overflow: 'hidden' }}>
                   

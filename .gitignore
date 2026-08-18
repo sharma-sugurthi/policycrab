@@ -49,3 +49,9 @@ screenshots/
 Policy Samples USA/
 results/
 policycrab-benchmark-2026-08-10.json
+
+# ── Content / Articles ─────────────────────────────────────
+articles/
+*.png
+Architecture_*.png
+architecture_*.png

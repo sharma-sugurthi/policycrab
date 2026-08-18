@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { useNavigate } from 'react-router-dom'
+import { useTasks } from '../contexts/TaskContext'
 import { IconFileText, IconCheckCircle, IconUpload, IconSearch, IconFolder, IconX, IconAlertTriangle } from '../components/Icons'
 import AILogViewer from '../components/AILogViewer'
 
@@ -68,6 +69,7 @@ function EditableSelectField({ label, field, value, onChange, options }) {
 
 export default function PolicyUpload({ onPolicyParsed }) {
   const navigate = useNavigate()
+  const { addTask, getLatestTask } = useTasks()
   const [policyText, setPolicyText] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -98,6 +100,20 @@ export default function PolicyUpload({ onPolicyParsed }) {
   }, [])
 
   useEffect(() => { fetchPolicies() }, [fetchPolicies])
+
+  // Restore completed policy upload if user navigated away
+  useEffect(() => {
+    const task = getLatestTask('policy_upload')
+    if (task?.status === 'done' && task.result && !result) {
+      const { data: savedData } = task.result
+      if (savedData?.success && savedData.policy_profile) {
+        setResult(savedData)
+        setEditableProfile({ ...savedData.policy_profile })
+        if (savedData.extracted_text) setPolicyText(savedData.extracted_text)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleDeletePolicy = async (policyId) => {
     if (!confirm('Delete this saved policy? This cannot be undone.')) return
@@ -147,7 +163,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
     setConfirmed(true)
   }
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!selectedFile && policyText.trim().length < 50) {
       setError('Please upload a PDF or paste at least 50 characters of policy text.')
       return
@@ -155,16 +171,19 @@ export default function PolicyUpload({ onPolicyParsed }) {
 
     setLoading(true); setError(null); setResult(null); setEditableProfile(null); setConfirmed(false)
 
-    try {
-      let res;
-      if (selectedFile) {
+    const capturedFile = selectedFile
+    const capturedText = policyText
+
+    addTask('policy_upload', capturedFile ? `Analyzing "${capturedFile.name}"…` : 'Analyzing policy text…', async () => {
+      let res
+      if (capturedFile) {
         const formData = new FormData()
-        formData.append('file', selectedFile)
+        formData.append('file', capturedFile)
         res = await apiFetch('/policy/upload-pdf', { method: 'POST', body: formData })
       } else {
         res = await apiFetch('/policy/upload', {
           method: 'POST',
-          body: JSON.stringify({ policy_text: policyText })
+          body: JSON.stringify({ policy_text: capturedText })
         })
       }
 
@@ -173,19 +192,20 @@ export default function PolicyUpload({ onPolicyParsed }) {
         setResult(data)
         setEditableProfile({ ...data.policy_profile })
         if (data.extracted_text) setPolicyText(data.extracted_text)
-        // Refresh saved policies list
         fetchPolicies()
       } else if (data?.session_id && data.policy_indexed) {
         setResult(data)
         setError(formatApiError(data, 'Policy details were saved, but the summary could not be completed.'))
       } else {
-        setError(formatApiError(data, 'We could not read this policy. Please try again.'))
+        throw new Error(formatApiError(data, 'We could not read this policy. Please try again.'))
       }
-    } catch (err) {
-      setError(`We could not reach the server: ${err.message}`)
-    } finally {
+
       setLoading(false)
-    }
+      return { data }
+    }).catch(err => {
+      setError(err.message || 'We could not reach the server.')
+      setLoading(false)
+    })
   }
 
   const confidenceClass = result?.extraction_confidence
