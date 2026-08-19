@@ -93,7 +93,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
       const data = await readApiResponse(res)
       setSavedPolicies(Array.isArray(data) ? data : [])
     } catch {
-      // Silently fail — saved policies are a convenience feature
+      // Silently fail - saved policies are a convenience feature
     } finally {
       setPoliciesLoading(false)
     }
@@ -461,8 +461,8 @@ export default function PolicyUpload({ onPolicyParsed }) {
                         <div>
                           <p style={{ fontSize: '0.875rem', fontWeight: 700, color: result.policy_indexed ? 'var(--success)' : 'var(--warning)', marginBottom: '0.25rem' }}>
                             {result?.policy_indexed
-                                        ? `Policy search ready — ${result.policy_page_count || '?'} pages indexed`
-                                        : 'Document indexing failed — appeal letters will use the available policy details'}
+                                        ? `Policy search ready - ${result.policy_page_count || '?'} pages indexed`
+                                        : 'Document indexing failed - appeal letters will use the available policy details'}
                           </p>
                           <p style={{ fontSize: '0.8125rem', color: result.policy_indexed ? 'var(--success)' : 'var(--warning)', opacity: 0.8, lineHeight: 1.5 }}>
                             {result.policy_indexed
@@ -479,7 +479,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
                     )}
 
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
-                      Review AI-extracted values below. <strong style={{ color: 'var(--warning)' }}>Amber fields</strong> were estimated (not explicitly found in the document) — please verify before using.
+                      Review AI-extracted values below. <strong style={{ color: 'var(--warning)' }}>Amber fields</strong> were estimated (not explicitly found in the document) - please verify before using.
                     </p>
 
                     {/* Plan identity */}
@@ -579,7 +579,7 @@ export default function PolicyUpload({ onPolicyParsed }) {
                   >
                     <IconCheckCircle size={18} />
                     <span>Policy is active</span>
-                    <span style={{ opacity: 0.5 }}>—</span>
+                    <span style={{ opacity: 0.5 }}>-</span>
                     <span style={{ textDecoration: 'underline' }}>Go to Claim Evaluator →</span>
                   </motion.button>
                 )}

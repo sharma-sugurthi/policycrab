@@ -35,7 +35,7 @@ export default function AdminDashboard() {
           apiFetch('/admin/users')
         ])
 
-        // Backend returned 403 — user is not admin on server side
+        // Backend returned 403 - user is not admin on server side
         if (statsRes.status === 403 || actRes.status === 403 || usersRes.status === 403) {
           setError('access_denied')
           setFetching(false)
@@ -73,7 +73,7 @@ export default function AdminDashboard() {
     )
   }
 
-  // ── 403 Forbidden: strict gate — if not admin, immediately block ──
+  // ── 403 Forbidden: strict gate - if not admin, immediately block ──
   if (!isAdmin || error === 'access_denied') {
     return (
       <section className="section" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>

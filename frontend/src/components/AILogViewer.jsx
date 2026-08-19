@@ -1,5 +1,5 @@
 /**
- * AILogViewer — Real-time terminal-style AI step log viewer.
+ * AILogViewer - Real-time terminal-style AI step log viewer.
  *
  * Connects to the backend SSE endpoint (/api/stream/ai-logs) and
  * streams step-by-step progress updates live to the user.
@@ -142,7 +142,7 @@ export default function AILogViewer({ task = 'legal_writing', active = false, on
             <span />
           </div>
           <span className="ai-log-title">
-            Coverage assistant — {TASK_LABELS[task] || task}
+            Coverage assistant - {TASK_LABELS[task] || task}
           </span>
         </div>
 

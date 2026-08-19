@@ -288,19 +288,26 @@ async def policy_ingestion_node(state: AgentState) -> dict:
     # ── Phase 1b: Embed all chunks ────────────────────────────────────
     policy_indexed = False
     try:
+        logger.info(f"Agent 1: Starting embedding for {len(raw_chunks)} chunks...")
         embedded_chunks = await embed_document_chunks(raw_chunks)
         # Filter out any chunks where embedding failed
         valid_chunks = [c for c in embedded_chunks if c.get("embedding") is not None]
+        
+        logger.info(f"Agent 1: Embedding completed. {len(valid_chunks)}/{len(raw_chunks)} chunks valid.")
 
         if valid_chunks:
             # Attach carrier/plan metadata for denormalized filtering
             # We'll update this after extraction, but insert now for speed
+            logger.info(f"Agent 1: Inserting {len(valid_chunks)} chunks into Supabase...")
             inserted = await insert_policy_chunks(session_id, valid_chunks)
             policy_indexed = inserted > 0
-            logger.info(
-                f"Agent 1: Phase 1 complete — {inserted} chunks stored "
-                f"in Supabase for session '{session_id}'"
-            )
+            if not policy_indexed:
+                logger.warning(f"Agent 1: insert_policy_chunks returned 0. Supabase upsert may have failed silently.")
+            else:
+                logger.info(
+                    f"Agent 1: Phase 1 complete — {inserted} chunks stored "
+                    f"in Supabase for session '{session_id}'"
+                )
         else:
             logger.warning("Agent 1: No valid embeddings produced; skipping Supabase storage")
 
@@ -320,7 +327,7 @@ async def policy_ingestion_node(state: AgentState) -> dict:
         llm = get_llm(TaskType.EXTRACTION, temperature=0.0)
 
         messages = [
-            SystemMessage(content=POLICY_EXTRACTION_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + POLICY_EXTRACTION_PROMPT),
             HumanMessage(content=f"Extract the policy details from this document:\n\n{first_pages_text}"),
         ]
 

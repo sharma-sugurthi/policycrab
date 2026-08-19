@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import SEOHead from '../components/SEOHead'
 import '../legacy.css'
 
-/* ── Animated counter hook — identical to original ─────────── */
+/* ── Animated counter hook - identical to original ─────────── */
 function useCounter(target, duration = 1.8) {
   const [value, setValue] = useState(0)
   const ref = useRef(null)
@@ -45,7 +45,7 @@ export default function Home({ policyProfile }) {
     {
       step: '02',
       title: 'Evaluate Your Claim',
-      desc: 'Describe your medical encounter. The engine calculates your exact financial responsibility — deductible, coinsurance, and out-of-pocket maximum.',
+      desc: 'Describe your medical encounter. The engine calculates your exact financial responsibility - deductible, coinsurance, and out-of-pocket maximum.',
     },
     {
       step: '03',

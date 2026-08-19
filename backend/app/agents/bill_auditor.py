@@ -164,7 +164,7 @@ async def audit_batch(lines: list[ServiceLineInput], policy_context: str = "") -
         user_message += f"\n\nPolicy context (if relevant):\n{policy_context}"
 
     messages = [
-        SystemMessage(content=AUDIT_SYSTEM_PROMPT),
+        SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + AUDIT_SYSTEM_PROMPT),
         HumanMessage(content=user_message),
     ]
 

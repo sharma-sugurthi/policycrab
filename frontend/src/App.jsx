@@ -26,7 +26,7 @@ const LS_DISCLAIMER_KEY = 'policycrab_disclaimer_dismissed'
 const LS_ONBOARDED_KEY = 'policycrab_onboarded'
 const LS_THEME_KEY = 'policycrab_theme'
 
-// ── Theme — Light mode locked for credibility ─────────────────────────────
+// ── Theme - Light mode locked for credibility ─────────────────────────────
 // Dark mode removed: institutional healthcare platforms use light mode only
 function useTheme() {
   useEffect(() => {
@@ -313,7 +313,7 @@ function AppContent() {
             <img src="/logo.png" alt="PolicyCrab Logo" className="navbar-brand-logo" />
             <span>PolicyCrab</span>
           </NavLink>
-          {/* HIPAA-Aware trust signal — desktop only */}
+          {/* HIPAA-Aware trust signal - desktop only */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: '0.3rem',
             background: '#f0fdf4', border: '1px solid #bbf7d0',

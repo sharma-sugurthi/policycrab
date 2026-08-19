@@ -111,7 +111,7 @@ async def explanation_node(state: AgentState) -> dict:
             return {"explanations": explanations, "current_phase": phase}
 
         messages = [
-            SystemMessage(content=EXPLANATION_SYSTEM_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + EXPLANATION_SYSTEM_PROMPT),
             HumanMessage(content=f"Explain this to the patient:\n\n{technical}"),
         ]
 

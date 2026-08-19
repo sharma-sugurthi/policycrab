@@ -33,7 +33,7 @@ function CptLookup({ onSelect, disabled }) {
   }, [])
 
   const handleSelect = ([code, desc, cat]) => {
-    setQuery(`${code} — ${desc}`)
+    setQuery(`${code} - ${desc}`)
     setOpen(false)
     onSelect({ code, desc, cat })
   }
@@ -43,7 +43,7 @@ function CptLookup({ onSelect, disabled }) {
       <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
         <IconSearch size={16} style={{ color: 'var(--text-tertiary)' }} />
         CPT Code Lookup
-        <span style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>— search by code or procedure name</span>
+        <span style={{ fontWeight: 500, color: 'var(--text-tertiary)' }}>- search by code or procedure name</span>
       </label>
       <input
         className="input"
@@ -94,7 +94,7 @@ const PROGRESS_STEPS = [
 ]
 
 const DENIAL_REASONS = [
-  ['', '— Select denial reason —'],
+  ['', '- Select denial reason -'],
   ['MEDICAL_NECESSITY', 'Medical Necessity (CO-50)'],
   ['PRIOR_AUTH_MISSING', 'Prior Auth Missing (PR-243)'],
   ['TIMELY_FILING', 'Timely Filing (CO-29)'],
@@ -109,6 +109,18 @@ const APPEAL_LEVELS = [
   { title: 'External Review (IRO)', desc: 'Independent Review Organization reviews the denial. Required for ACA/state-regulated plans.' },
   { title: 'State DOI Complaint', desc: 'File a formal complaint with your State Department of Insurance.' },
   { title: 'Federal Court / ERISA Lawsuit', desc: 'Last resort for ERISA plans after exhausting administrative remedies.' },
+]
+
+const US_STATES = [
+  ['AL', 'Alabama'], ['AK', 'Alaska'], ['AZ', 'Arizona'], ['AR', 'Arkansas'], ['CA', 'California'], ['CO', 'Colorado'],
+  ['CT', 'Connecticut'], ['DE', 'Delaware'], ['FL', 'Florida'], ['GA', 'Georgia'], ['HI', 'Hawaii'], ['ID', 'Idaho'],
+  ['IL', 'Illinois'], ['IN', 'Indiana'], ['IA', 'Iowa'], ['KS', 'Kansas'], ['KY', 'Kentucky'], ['LA', 'Louisiana'],
+  ['ME', 'Maine'], ['MD', 'Maryland'], ['MA', 'Massachusetts'], ['MI', 'Michigan'], ['MN', 'Minnesota'], ['MS', 'Mississippi'],
+  ['MO', 'Missouri'], ['MT', 'Montana'], ['NE', 'Nebraska'], ['NV', 'Nevada'], ['NH', 'New Hampshire'], ['NJ', 'New Jersey'],
+  ['NM', 'New Mexico'], ['NY', 'New York'], ['NC', 'North Carolina'], ['ND', 'North Dakota'], ['OH', 'Ohio'], ['OK', 'Oklahoma'],
+  ['OR', 'Oregon'], ['PA', 'Pennsylvania'], ['RI', 'Rhode Island'], ['SC', 'South Carolina'], ['SD', 'South Dakota'],
+  ['TN', 'Tennessee'], ['TX', 'Texas'], ['UT', 'Utah'], ['VT', 'Vermont'], ['VA', 'Virginia'], ['WA', 'Washington'],
+  ['WV', 'West Virginia'], ['WI', 'Wisconsin'], ['WY', 'Wyoming']
 ]
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
@@ -129,8 +141,8 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
   const [networkChecks, setNetworkChecks] = useState({})
   const [providerError, setProviderError] = useState(null)
   const [letterActionStatus, setLetterActionStatus] = useState('')
-  const [guidedOpen, setGuidedOpen] = useState(false)
-  const [guided, setGuided] = useState({ date_of_service: '', provider_name: '', denial_date: '', denial_reason: '', carc_code: '' })
+  const [guidedOpen, setGuidedOpen] = useState(true) // Open by default for better UX
+  const [guided, setGuided] = useState({ date_of_service: '', provider_name: '', is_emergency: false, is_denied: false, denial_date: '', denial_reason: '', carc_code: '' })
   const [eobFile, setEobFile] = useState(null)
   const [eobLoading, setEobLoading] = useState(false)
   const [eobResult, setEobResult] = useState(null)
@@ -262,8 +274,14 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
     if (eob.allowed_amount) setAllowedAmount(String(eob.allowed_amount))
     if (eob.date_of_service) setGuided(p => ({ ...p, date_of_service: eob.date_of_service || '' }))
     if (eob.provider_name) setGuided(p => ({ ...p, provider_name: eob.provider_name || '' }))
-    if (eob.denial_date) setGuided(p => ({ ...p, denial_date: eob.denial_date || '' }))
-    if (eob.denial_carc_code) setGuided(p => ({ ...p, carc_code: eob.denial_carc_code || '' }))
+    if (eob.denial_date || eob.denial_reason_text || eob.denial_carc_code) {
+      setGuided(p => ({ 
+        ...p, 
+        is_denied: true,
+        denial_date: eob.denial_date || '',
+        carc_code: eob.denial_carc_code || '' 
+      }))
+    }
   }
 
   // Progress step auto-advance during loading
@@ -287,9 +305,12 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
     const parts = []
     if (guided.date_of_service) parts.push(`Date of service: ${guided.date_of_service}.`)
     if (guided.provider_name) parts.push(`Provider: ${guided.provider_name}.`)
-    if (guided.denial_reason) parts.push(`Denial reason: ${DENIAL_REASONS.find(d => d[0] === guided.denial_reason)?.[1] || guided.denial_reason}.`)
-    if (guided.carc_code) parts.push(`CARC/RARC code: ${guided.carc_code}.`)
-    if (guided.denial_date) parts.push(`Denial date: ${guided.denial_date}.`)
+    if (guided.is_emergency) parts.push(`Emergency: Yes.`)
+    if (guided.is_denied) {
+      if (guided.denial_reason) parts.push(`Denial reason: ${DENIAL_REASONS.find(d => d[0] === guided.denial_reason)?.[1] || guided.denial_reason}.`)
+      if (guided.carc_code) parts.push(`CARC/RARC code: ${guided.carc_code}.`)
+      if (guided.denial_date) parts.push(`Denial date: ${guided.denial_date}.`)
+    }
     if (parts.length) setClaimText(prev => (prev ? prev + '\n\n' : '') + parts.join(' '))
     setGuidedOpen(false)
   }
@@ -354,7 +375,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(16)
     doc.setTextColor(220, 38, 38)
-    doc.text('PolicyCrab — Appeal Letter', margin, y)
+    doc.text('PolicyCrab - Appeal Letter', margin, y)
     y += 24
     doc.setDrawColor(220, 38, 38)
     doc.setLineWidth(1.5)
@@ -564,8 +585,14 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
               onChange={e => setProviderSearch(prev => ({ ...prev, taxonomy_description: e.target.value }))} />
             <input className="input" placeholder="City" value={providerSearch.city}
               onChange={e => setProviderSearch(prev => ({ ...prev, city: e.target.value }))} />
-            <input className="input" placeholder="State" maxLength={2} value={providerSearch.state}
-              onChange={e => setProviderSearch(prev => ({ ...prev, state: e.target.value.toUpperCase() }))} />
+            <select className="input" value={providerSearch.state}
+              onChange={e => setProviderSearch(prev => ({ ...prev, state: e.target.value }))}
+              style={{ padding: '0.625rem' }}>
+              <option value="">State (Any)</option>
+              {US_STATES.map(([code, name]) => (
+                <option key={code} value={code}>{code} - {name}</option>
+              ))}
+            </select>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
@@ -659,7 +686,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                 >
                   <span className="guided-form-title">
                     <IconUpload size={16} style={{ color: 'var(--accent)' }} /> Upload EOB PDF
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500, marginLeft: '0.5rem' }}>— auto-fill from Explanation of Benefits</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', fontWeight: 500, marginLeft: '0.5rem' }}>- auto-fill from Explanation of Benefits</span>
                   </span>
                   {eobFile && !eobResult && (
                     <button
@@ -761,7 +788,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                 disabled={!policyProfile}
                 onSelect={({ code, desc }) => {
                   // Append structured CPT line to textarea if not already present
-                  const line = `Procedure: CPT ${code} — ${desc}.`
+                  const line = `Procedure: CPT ${code} - ${desc}.`
                   setClaimText(prev =>
                     prev.includes(`CPT ${code}`)
                       ? prev
@@ -818,7 +845,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
               {/* ── Guided Form ────────────── */}
               <div className="guided-form-panel">
                 <div className={`guided-form-header${guidedOpen ? ' open' : ''}`} onClick={() => setGuidedOpen(o => !o)}>
-                  <span className="guided-form-title"><IconEdit size={16} style={{ color: 'var(--text-secondary)' }} /> Guided Intake Fields <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>(optional)</span></span>
+                  <span className="guided-form-title"><IconEdit size={16} style={{ color: 'var(--text-secondary)' }} /> Guided Intake Fields <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>(Fill these in to easily build your claim text)</span></span>
                   <span style={{ fontSize: '1rem', color: 'var(--text-tertiary)' }}>{guidedOpen ? <IconChevronUp size={20} /> : <IconChevronDown size={20} />}</span>
                 </div>
                 {guidedOpen && (
@@ -831,20 +858,41 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                       <label>Provider Name</label>
                       <input className="input" placeholder="e.g., Dr. Smith" value={guided.provider_name} onChange={e => setGuided(p => ({ ...p, provider_name: e.target.value }))} />
                     </div>
-                    <div className="guided-field">
-                      <label>Denial Date</label>
-                      <input className="input" type="date" value={guided.denial_date} onChange={e => setGuided(p => ({ ...p, denial_date: e.target.value }))} />
+                    
+                    {/* Emergency Toggle */}
+                    <div className="guided-field" style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={guided.is_emergency} onChange={e => setGuided(p => ({ ...p, is_emergency: e.target.checked }))} style={{ accentColor: 'var(--accent)', transform: 'scale(1.2)' }} />
+                        <span style={{ fontWeight: 600 }}>Was this an emergency? (Crucial for No Surprises Act)</span>
+                      </label>
                     </div>
-                    <div className="guided-field">
-                      <label>Denial Reason</label>
-                      <select className="input" value={guided.denial_reason} onChange={e => setGuided(p => ({ ...p, denial_reason: e.target.value }))}>
-                        {DENIAL_REASONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                      </select>
+
+                    {/* Denied Toggle */}
+                    <div className="guided-field" style={{ gridColumn: '1 / -1', borderTop: '1px solid var(--border-secondary)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={guided.is_denied} onChange={e => setGuided(p => ({ ...p, is_denied: e.target.checked }))} style={{ accentColor: 'var(--danger)', transform: 'scale(1.2)' }} />
+                        <span style={{ fontWeight: 600, color: guided.is_denied ? 'var(--danger)' : 'var(--text-primary)' }}>Has this claim been denied?</span>
+                      </label>
                     </div>
-                    <div className="guided-field">
-                      <label>CARC / RARC Code</label>
-                      <input className="input" placeholder="e.g., CO-50" value={guided.carc_code} onChange={e => setGuided(p => ({ ...p, carc_code: e.target.value }))} />
-                    </div>
+
+                    {guided.is_denied && (
+                      <>
+                        <div className="guided-field">
+                          <label>Denial Date</label>
+                          <input className="input" type="date" value={guided.denial_date} onChange={e => setGuided(p => ({ ...p, denial_date: e.target.value }))} />
+                        </div>
+                        <div className="guided-field">
+                          <label>Denial Reason</label>
+                          <select className="input" value={guided.denial_reason} onChange={e => setGuided(p => ({ ...p, denial_reason: e.target.value }))}>
+                            {DENIAL_REASONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                          </select>
+                        </div>
+                        <div className="guided-field">
+                          <label>CARC / RARC Code</label>
+                          <input className="input" placeholder="e.g., CO-50" value={guided.carc_code} onChange={e => setGuided(p => ({ ...p, carc_code: e.target.value }))} />
+                        </div>
+                      </>
+                    )}
                     <div className="guided-form-build">
                       <button className="btn btn-outline" type="button" onClick={buildFromGuided}>Add to Claim Description →</button>
                     </div>
@@ -887,7 +935,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                 </div>
               )}
 
-              {/* ── AI Transparency Log (Phase 2 — XPRIZE Evidence) ── */}
+              {/* ── AI Transparency Log (Phase 2 - XPRIZE Evidence) ── */}
               {loading && (
                 <div style={{ marginTop: '1rem' }}>
                   <AILogViewer task="legal_writing" active={loading} />
@@ -909,7 +957,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {[
-                    ['CPT Code', `${result.claim_case.cpt_code} — ${result.claim_case.cpt_description}`],
+                    ['CPT Code', `${result.claim_case.cpt_code} - ${result.claim_case.cpt_description}`],
                     ['ICD-10', result.claim_case.icd_10_code],
                     ['Network', result.claim_case.network_status],
                     ['Emergency', result.claim_case.is_emergency ? '✅ Yes' : '❌ No'],
@@ -1062,7 +1110,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                             result.appeal_output.appeal_recommendation === 'UNLIKELY_TO_WIN' ? 'badge-warning' :
                             'badge-danger'
                           }`} style={{ fontSize: '0.75rem', padding: '0.375rem 1rem' }}>
-                            {result.appeal_output.appeal_recommendation === 'STRONG_APPEAL' ? '✅ File an Appeal — Strong Case' :
+                            {result.appeal_output.appeal_recommendation === 'STRONG_APPEAL' ? '✅ File an Appeal - Strong Case' :
                              result.appeal_output.appeal_recommendation === 'APPEAL' ? '📋 Appeal Recommended' :
                              result.appeal_output.appeal_recommendation === 'EXCEPTION_REQUEST' ? '🔄 Formulary Exception Request' :
                              result.appeal_output.appeal_recommendation === 'UNLIKELY_TO_WIN' ? '⚠️ Unlikely to Win' :
@@ -1139,7 +1187,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                       ) : (
                         <p style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
                           {result.appeal_output.contradiction_detected
-                            ? '⚙️ Analysis complete — see assessment above.'
+                            ? '⚙️ Analysis complete - see assessment above.'
                             : '📋 No direct policy contradictions detected. Appeal relies on regulatory grounds.'}
                         </p>
                       )}
@@ -1280,7 +1328,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{level.desc}</p>
                             {i === 0 && (
                               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--success)', background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: '999px', padding: '0.25rem 0.75rem', marginTop: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                                <IconCheckCircle size={14} /> Current — Letter Generated Above
+                                <IconCheckCircle size={14} /> Current - Letter Generated Above
                               </span>
                             )}
                             {(i === 1 || i === 2) && (

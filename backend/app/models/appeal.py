@@ -11,7 +11,7 @@ from app.models.enums import AppealFramework, DenialReason
 
 class PolicyCitation(BaseModel):
     """A specific clause from the patient's uploaded policy document, cited by exact page number."""
-    page_number: int = Field(..., description="Exact page number in the patient's policy PDF")
+    page_number: int | str | None = Field(None, description="Exact page number in the patient's policy PDF")
     exact_clause_text: str = Field(..., description="Verbatim text from the policy document")
     contradiction_explanation: str = Field(
         "", description="How this clause contradicts the insurer's denial reason"

@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
-   PolicyCrab — Credibility Design System v6
+   PolicyCrab - Credibility Design System v6
    Institutional red · Source Serif 4 · Solid white cards
-   Light mode — single theme for maximum trust signal
+   Light mode - single theme for maximum trust signal
    ═══════════════════════════════════════════════════════════ */
 
-/* ── Design Tokens — Light Mode Only ────────────────────── */
+/* ── Design Tokens - Light Mode Only ────────────────────── */
 :root {
   --bg-primary: #fafbfc;
   --bg-secondary: #f3f4f6;
@@ -27,7 +27,7 @@
   --text-muted: #a0aec0;
   --text-inverse: #ffffff;
 
-  /* Institutional Deep Red — PolicyCrab brand anchor */
+  /* Institutional Deep Red - PolicyCrab brand anchor */
   --accent: #9B2335;
   --accent-hover: #7A1A28;
   --accent-subtle: #fdf2f3;
@@ -36,7 +36,7 @@
   --accent-shadow: rgba(155, 35, 53, 0.22);
   --accent-gradient: linear-gradient(135deg, #9B2335 0%, #B02A3E 100%);
 
-  /* Authority Navy — pairs with red for institutional weight */
+  /* Authority Navy - pairs with red for institutional weight */
   --navy: #1B2A4A;
   --navy-light: #2D3F63;
   --navy-subtle: #EEF2F8;
@@ -80,7 +80,7 @@
   color-scheme: light;
 }
 
-/* ── Dark Theme — Locked off; platform uses light mode for credibility ── */
+/* ── Dark Theme - Locked off; platform uses light mode for credibility ── */
 /* Token overrides preserved here for non-home pages that may still reference them */
 [data-theme="dark"] {
   --bg-primary: #fafbfc;
@@ -150,7 +150,7 @@ body *, body *::before, body *::after {
   transition-timing-function: ease;
 }
 
-/* ── Accent Text — Deep Institutional Red ───────────────── */
+/* ── Accent Text - Deep Institutional Red ───────────────── */
 .gradient-text {
   color: var(--accent);
   display: inline-block;
@@ -370,7 +370,7 @@ body *, body *::before, body *::after {
   max-width: 42rem;
 }
 
-/* ── Cards — Solid white, no glassmorphism ───────────────── */
+/* ── Cards - Solid white, no glassmorphism ───────────────── */
 .card {
   background: #ffffff;
   border: 1px solid var(--border-primary);
@@ -671,7 +671,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
   padding-left: 1.5rem;
 }
 
-/* ── Chat Page Shell (Full Viewport — ChatGPT/Claude style) ── */
+/* ── Chat Page Shell (Full Viewport - ChatGPT/Claude style) ── */
 .chat-page-shell {
   height: calc(100vh - 72px);
   display: flex;
@@ -786,7 +786,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
   background: var(--bg-primary);
 }
 
-/* Messages feed — this is the ONLY thing that scrolls */
+/* Messages feed - this is the ONLY thing that scrolls */
 .chat-feed {
   flex: 1;
   overflow-y: auto;
@@ -1610,7 +1610,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
 
 
 /* ═══════════════════════════════════════════════════════════
-   PolicyCrab — Premium Home Revamp v2 (Video Hero + 3D)
+   PolicyCrab - Premium Home Revamp v2 (Video Hero + 3D)
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Hero Video ───────────────────────────────────────────── */

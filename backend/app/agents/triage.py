@@ -375,7 +375,7 @@ async def triage_node(state: AgentState) -> dict:
         llm = get_llm(TaskType.REASONING, temperature=0.0)
 
         messages = [
-            SystemMessage(content=TRIAGE_SYSTEM_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + TRIAGE_SYSTEM_PROMPT),
             HumanMessage(content=(
                 f"{claim_context}\n\n"
                 "Classify this denial and output ONLY the JSON object."

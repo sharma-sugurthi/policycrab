@@ -206,7 +206,7 @@ export default function BenchmarkDashboard() {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(20)
     doc.setTextColor(220, 38, 38)
-    doc.text('PolicyCrab AI — Official Medical Claim Reasoning Report', margin, y)
+    doc.text('PolicyCrab AI - Official Medical Claim Reasoning Report', margin, y)
     y += 24
     
     doc.setFontSize(12)
@@ -520,7 +520,7 @@ export default function BenchmarkDashboard() {
               <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center' }}>
                 <p style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em', marginBottom: '0.375rem' }}>Auto-Resolution Rate</p>
                 <div style={{ fontSize: '2.5rem', fontWeight: 900, color: !results ? 'var(--text-secondary)' : isTargetMet ? '#10b981' : '#ef4444', letterSpacing: '-0.03em' }}>
-                  {results ? `${accuracy.toFixed(1)}%` : '—'}
+                  {results ? `${accuracy.toFixed(1)}%` : '-'}
                 </div>
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isTargetMet ? '#10b981' : 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
                   {results ? (isTargetMet ? '✔ Verified Benchmark Standard' : '⚠️ Below Target') : 'Ready to verify'}
@@ -538,7 +538,7 @@ export default function BenchmarkDashboard() {
               <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center' }}>
                 <p style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em', marginBottom: '0.375rem' }}>Passed Validation</p>
                 <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#10b981', letterSpacing: '-0.03em' }}>
-                  {results ? summary.passed : '—'}
+                  {results ? summary.passed : '-'}
                 </div>
                 <span style={{ fontSize: '0.75rem', color: '#10b981' }}>Ground-truth matched</span>
               </div>
@@ -546,7 +546,7 @@ export default function BenchmarkDashboard() {
               <div style={{ padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-secondary)', textAlign: 'center' }}>
                 <p style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em', marginBottom: '0.375rem' }}>Failed / Ambiguous</p>
                 <div style={{ fontSize: '2.5rem', fontWeight: 900, color: results && summary.failed > 0 ? '#ef4444' : 'var(--text-tertiary)', letterSpacing: '-0.03em' }}>
-                  {results ? summary.failed : '—'}
+                  {results ? summary.failed : '-'}
                 </div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Requires intervention</span>
               </div>
@@ -641,8 +641,8 @@ export default function BenchmarkDashboard() {
                     {displayCases.map((item) => {
                       const isExpanded = expandedCaseId === item.case_id
                       const catLabel = categoriesList.find(c => c.id === item.category)?.name || item.category.replace(/_/g, ' ')
-                      const expRec = item.expected?.appeal_recommendation || '—'
-                      const actRec = item.actual?.appeal_recommendation || item.actual?.error || '—'
+                      const expRec = item.expected?.appeal_recommendation || '-'
+                      const actRec = item.actual?.appeal_recommendation || item.actual?.error || '-'
                       
                       return (
                         <Fragment key={item.case_id}>

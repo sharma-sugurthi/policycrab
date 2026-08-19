@@ -1,5 +1,5 @@
 /**
- * TaskStatusBar — Floating global task status bar.
+ * TaskStatusBar - Floating global task status bar.
  *
  * Appears at the bottom of the screen (like a browser download bar) when any
  * background task is running or recently completed. Shows per-task status with
@@ -136,7 +136,7 @@ export default function TaskStatusBar() {
               {/* Label */}
               <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {isRunning && task.label}
-                {isDone    && `${pageName} complete — click to view`}
+                {isDone    && `${pageName} complete - click to view`}
                 {isError   && `${pageName} failed: ${task.error?.slice(0, 60) || 'Unknown error'}`}
               </span>
 

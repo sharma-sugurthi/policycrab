@@ -147,7 +147,7 @@ export default function ProfilePage() {
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Current Age</label>
                   <div style={{ padding: '0.75rem 1rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem', border: '1px solid var(--border-secondary)', fontSize: '0.9375rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                    {age !== null && !isNaN(age) ? `${age} years old` : '—'}
+                    {age !== null && !isNaN(age) ? `${age} years old` : '-'}
                   </div>
                 </div>
               </div>

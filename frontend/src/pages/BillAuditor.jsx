@@ -75,7 +75,7 @@ export default function BillAuditor() {
         if (Array.isArray(extractedLines) && extractedLines.length > 0) setLines(extractedLines)
       } else if (task.status === 'running') {
         setLoading(true)
-        // Poll until done — task will resolve independently
+        // Poll until done - task will resolve independently
         const poll = setInterval(() => {
           const t = getLatestTask('bill_audit')
           if (!t || t.status !== 'running') {
@@ -256,7 +256,7 @@ export default function BillAuditor() {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(16)
     doc.setTextColor(220, 38, 38)
-    doc.text('PolicyCrab — Billing Dispute Letter', margin, y)
+    doc.text('PolicyCrab - Billing Dispute Letter', margin, y)
     y += 24
     doc.setDrawColor(220, 38, 38)
     doc.setLineWidth(1.5)

@@ -65,6 +65,49 @@ const FIELD_DEFS = [
 
 import '../legacy.css'
 
+// ── Parsed Claim Description Component ───────────────────────
+function ParsedClaimDescription({ text }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!text) return null
+  
+  // Attempt to parse key-value pairs (e.g. "Date of service: 2023-10-12. Provider: Dr. Smith.")
+  const items = text.split('.').map(s => s.trim()).filter(Boolean)
+  const isStructured = items.some(item => item.includes(':'))
+  
+  if (!isStructured || items.length <= 1) {
+    return <p className="dashboard-claim-description" style={{ fontStyle: 'italic', marginBottom: '1rem', color: 'var(--text-secondary)' }}>&quot;{text}&quot;</p>
+  }
+  
+  return (
+    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', borderRadius: '0.75rem', padding: '1rem', marginBottom: '1rem', transition: 'all 0.3s ease' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setExpanded(!expanded)}>
+        <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Claim Intake Summary</span>
+        <button type="button" className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{expanded ? '▲ Hide' : '▼ Show Details'}</button>
+      </div>
+      {expanded && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }} style={{ marginTop: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem' }}>
+            {items.map((item, i) => {
+              const idx = item.indexOf(':')
+              if (idx === -1) {
+                return <div key={i} style={{ gridColumn: '1 / -1', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{item}</div>
+              }
+              const key = item.substring(0, idx).trim()
+              const val = item.substring(idx + 1).trim()
+              return (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.5rem', background: 'var(--bg-card)', borderRadius: '0.5rem', border: '1px solid var(--border-primary)' }}>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{key}</span>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)', fontWeight: 600 }}>{val}</span>
+                </div>
+              )
+            })}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  )
+}
+
 // ── Document Vault Component ────────────────────────────────
 function DocumentVault({ onGoToClaim }) {
   const { session } = useAuth()
@@ -554,7 +597,7 @@ function exportPdf(claims, policyProfile) {
     y = heading('Overview', y)
     y = body(`Date: ${new Date(c.created_at).toLocaleDateString()}`, y)
     y = body(`Status: ${status}`, y)
-    if (cb.cpt_code) y = body(`CPT: ${cb.cpt_code}${cb.cpt_description ? ' — ' + cb.cpt_description : ''}`, y)
+    if (cb.cpt_code) y = body(`CPT: ${cb.cpt_code}${cb.cpt_description ? ' - ' + cb.cpt_description : ''}`, y)
     if (cb.network_status) y = body(`Network: ${cb.network_status}`, y)
     y += 8
 
@@ -588,7 +631,7 @@ function exportPdf(claims, policyProfile) {
     doc.setPage(p)
     doc.setFontSize(7).setFont(undefined, 'normal').setTextColor(180, 180, 180)
     doc.text(
-      'PolicyCrab — Informational use only. Not legal or medical advice. Verify with your insurer.',
+      'PolicyCrab - Informational use only. Not legal or medical advice. Verify with your insurer.',
       margin, doc.internal.pageSize.getHeight() - 24
     )
     doc.text(`Page ${p} of ${pageCount}`, W - margin, doc.internal.pageSize.getHeight() - 24, { align: 'right' })
@@ -1283,7 +1326,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                         today.setHours(0,0,0,0); dl.setHours(0,0,0,0)
                         daysLeft = Math.ceil((dl - today) / 86400000)
                         if (daysLeft <= 0) { urgencyClass = 'expired'; urgencyLabel = `⚫ Expired ${Math.abs(daysLeft)}d ago` }
-                        else if (daysLeft <= 7) { urgencyClass = 'critical'; urgencyLabel = `🔴 ${daysLeft}d — File NOW` }
+                        else if (daysLeft <= 7) { urgencyClass = 'critical'; urgencyLabel = `🔴 ${daysLeft}d - File NOW` }
                         else if (daysLeft <= 30) { urgencyClass = 'urgent'; urgencyLabel = `🟠 ${daysLeft}d remaining` }
                         else if (daysLeft <= 90) { urgencyClass = 'moderate'; urgencyLabel = `🟡 ${daysLeft}d remaining` }
                         else { urgencyClass = 'standard'; urgencyLabel = `🟢 ${daysLeft}d remaining` }
@@ -1297,7 +1340,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                             </span>
                             <span>{new Date(c.created_at).toLocaleDateString()}</span>
                           </div>
-                          <p className="dashboard-claim-description">&quot;{c.claim_description}&quot;</p>
+                          <ParsedClaimDescription text={c.claim_description} />
                           <div className="dashboard-cost-row">
                             <span>Patient responsibility</span>
                             <strong>${c.cost_breakdown?.total_patient_responsibility?.toLocaleString?.() || c.cost_breakdown?.total_patient_responsibility || 0}</strong>
@@ -1356,7 +1399,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                 Document Vault
               </h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '48rem' }}>
-                Upload any healthcare document — EOB, medical bill, or insurance policy. The AI reads it and extracts key fields automatically.
+                Upload any healthcare document - EOB, medical bill, or insurance policy. The AI reads it and extracts key fields automatically.
                 Use <strong>Fill Claim Form</strong> to pre-populate the Claim Evaluator without typing anything.
               </p>
             </div>

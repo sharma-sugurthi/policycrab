@@ -184,7 +184,7 @@ File Form CMS-20027 (Part A) or CMS-20011 (Part B), or write a letter to the Med
         body: `**Filing deadline:** 180 days from the MAC's Redetermination decision.
 **Response time:** QIC must decide within 60 days (non-urgent) or 72 hours (expedited).
 
-If the MAC upholds the denial, escalate to a Qualified Independent Contractor. The QIC is an independent body — they are not affiliated with your insurer. Include any new medical evidence not submitted at Level 1.`,
+If the MAC upholds the denial, escalate to a Qualified Independent Contractor. The QIC is an independent body - they are not affiliated with your insurer. Include any new medical evidence not submitted at Level 1.`,
       },
       {
         heading: "Frequently Asked Questions",
@@ -214,7 +214,7 @@ const PAGE_JSON_LD = {
     },
     {
       "@type": "Article",
-      "headline": "US Health Insurance Appeal Guide — ERISA, No Surprises Act, Medicare, State DOI",
+      "headline": "US Health Insurance Appeal Guide - ERISA, No Surprises Act, Medicare, State DOI",
       "description": "Complete guides for fighting denied health insurance claims under ERISA, the No Surprises Act, Medicare, and State DOI complaint processes.",
       "author": { "@type": "Organization", "name": "PolicyCrab" },
       "publisher": { "@type": "Organization", "name": "PolicyCrab", "url": "https://policycrab.tech" },
@@ -383,7 +383,7 @@ export default function ResourcesHub() {
                 Insurance Appeal Resources
               </motion.h1>
               <motion.p variants={fadeUp} transition={{ duration: 0.45 }} style={{ fontSize: '1.125rem', color: '#71717a', lineHeight: 1.65, marginBottom: '3.5rem', maxWidth: '600px' }}>
-                Free, expert-level guides on how to fight denied health insurance claims. Written for patients — no legal jargon.
+                Free, expert-level guides on how to fight denied health insurance claims. Written for patients - no legal jargon.
               </motion.p>
             </motion.div>
 

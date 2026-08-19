@@ -1,5 +1,5 @@
 /**
- * CPT_CODES — ~500 most-common US CPT procedure codes.
+ * CPT_CODES - ~500 most-common US CPT procedure codes.
  *
  * Covers: Office visits, ER, Surgery, Imaging, Lab, Anesthesia,
  *         Mental Health, Physical Therapy, Preventive, Maternity.

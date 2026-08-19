@@ -55,3 +55,6 @@ articles/
 *.png
 Architecture_*.png
 architecture_*.png
+screenshots/
+policycrab-benchmark-2026-08-10.json
+architectures/

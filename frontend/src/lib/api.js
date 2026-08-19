@@ -141,7 +141,7 @@ export function formatApiError(data, fallback = 'An unexpected technical issue o
     lower.includes('server crash') ||
     lower.includes('failed to fetch')
   ) {
-    return 'Our servers are currently loading or undergoing brief maintenance. Please try again shortly! Don\'t worry — the problem is entirely with us, not with your request or data.'
+    return 'Our servers are currently loading or undergoing brief maintenance. Please try again shortly! Don\'t worry - the problem is entirely with us, not with your request or data.'
   }
 
   return rawText || fallback

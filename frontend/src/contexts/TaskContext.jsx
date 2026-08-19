@@ -1,11 +1,11 @@
 /**
- * TaskContext — Global Background Task Manager
+ * TaskContext - Global Background Task Manager
  *
  * Keeps long-running AI operations (bill audit, policy upload, claim eval, chat)
  * alive across React page navigation. When a page unmounts, the fetch() request
  * keeps running; the result lands here and is restored when the user returns.
  *
- * Tasks auto-expire after 10 minutes (no extra AI cost — just clears cached results).
+ * Tasks auto-expire after 10 minutes (no extra AI cost - just clears cached results).
  */
 
 import { createContext, useContext, useReducer, useCallback, useRef } from 'react'
@@ -57,9 +57,9 @@ export function TaskProvider({ children }) {
 
   /**
    * Register a new background task.
-   * @param {string} type   — identifies which page owns this task (e.g. 'bill_audit')
-   * @param {string} label  — human-readable description shown in the status bar
-   * @param {() => Promise<any>} fn — async function that performs the work
+   * @param {string} type   - identifies which page owns this task (e.g. 'bill_audit')
+   * @param {string} label  - human-readable description shown in the status bar
+   * @param {() => Promise<any>} fn - async function that performs the work
    * @returns {string} taskId
    */
   const addTask = useCallback((type, label, fn) => {

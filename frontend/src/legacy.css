@@ -1,6 +1,6 @@
 .legacy-theme {
 /* ═══════════════════════════════════════════════════════════
-   PolicyCrab — Premium Design System v4 (Dual Theme)
+   PolicyCrab - Premium Design System v4 (Dual Theme)
    Light + Dark mode with glassmorphism, smooth transitions
    ═══════════════════════════════════════════════════════════ */
 
@@ -366,7 +366,7 @@ body *, body *::before, body *::after {
   max-width: 40rem;
 }
 /* ═══════════════════════════════════════════════════════════
-   PolicyCrab — Design System v4 Part 2
+   PolicyCrab - Design System v4 Part 2
    Cards, Buttons, Inputs, Badges, Chat, Dashboard
    ═══════════════════════════════════════════════════════════ */
 
@@ -843,7 +843,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
   font-size: 0.875rem;
 }
 /* ═══════════════════════════════════════════════════════════
-   PolicyCrab — Credibility Home Page Styles
+   PolicyCrab - Credibility Home Page Styles
    Institutional red · Serif headings · Solid white · No effects
    ═══════════════════════════════════════════════════════════ */
 
@@ -856,7 +856,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
 .section-zinc  { background: var(--bg-secondary); border-top: 1px solid var(--border-secondary); border-bottom: 1px solid var(--border-secondary); }
 .section-pad   { padding: 6rem 0; }
 
-/* ── HERO — Two-column editorial layout ──────────────────── */
+/* ── HERO - Two-column editorial layout ──────────────────── */
 .pc-hero {
   background: #fafbfc;
   border-bottom: 1px solid var(--border-secondary);
@@ -1439,7 +1439,7 @@ textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
   flex-wrap: wrap;
 }
 
-/* ── Navbar HIPAA pill — hide on mobile ───────────────────── */
+/* ── Navbar HIPAA pill - hide on mobile ───────────────────── */
 .navbar-hipaa-pill {
   flex-shrink: 0;
 }

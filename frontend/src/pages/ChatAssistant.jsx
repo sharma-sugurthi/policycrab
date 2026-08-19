@@ -200,7 +200,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
     }).catch(err => {
       const msg = err?.name === 'AbortError'
         ? 'The assistant took too long to respond. Please try again with a shorter question.'
-        : 'Connection error — please check your connection and try again.'
+        : 'Connection error - please check your connection and try again.'
       setMessages(prev => [...prev, { role: 'ai', content: msg }])
       setLoading(false)
     })
@@ -298,7 +298,7 @@ export default function ChatAssistant({ policyProfile, costBreakdown }) {
         {/* Message Feed */}
         <div className="chat-feed" ref={feedRef}>
           {isNewChat ? (
-            /* Welcome / empty state — suggestions only appear here */
+            /* Welcome / empty state - suggestions only appear here */
             <div className="chat-welcome">
               <div className="chat-welcome-icon">
                 <IconZap size={26} />

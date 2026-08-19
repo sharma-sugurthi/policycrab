@@ -121,7 +121,7 @@ async def chat_node(state: AgentState) -> dict:
         llm = get_llm(TaskType.CHAT, temperature=0.4).bind_tools(tools)
 
         # Build conversation history (keep last 10 messages for context)
-        chat_messages = [SystemMessage(content=CHAT_SYSTEM_PROMPT + rag_context + pipeline_context)]
+        chat_messages = [SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + CHAT_SYSTEM_PROMPT + rag_context + pipeline_context)]
         for msg in messages[-10:]:
             if hasattr(msg, 'type'):
                 if msg.type == "human":

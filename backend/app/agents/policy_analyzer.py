@@ -474,7 +474,7 @@ async def policy_analyzer_node(state: AgentState) -> dict:
         llm = get_llm(TaskType.REASONING, temperature=0.0)
 
         messages = [
-            SystemMessage(content=CONTRADICTION_ANALYSIS_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + CONTRADICTION_ANALYSIS_PROMPT),
             HumanMessage(content=(
                 f"{denial_context}\n\n"
                 f"POLICY DOCUMENT EXCERPTS (from patient's actual policy):\n"

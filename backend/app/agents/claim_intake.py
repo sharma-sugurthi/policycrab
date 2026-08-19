@@ -190,7 +190,7 @@ async def claim_intake_node(state: AgentState) -> dict:
             )
 
         messages = [
-            SystemMessage(content=CLAIM_INTAKE_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + CLAIM_INTAKE_PROMPT),
             HumanMessage(content=(
                 f"Extract claim details from this patient description:{policy_context}\n\n"
                 f"{raw_text}"

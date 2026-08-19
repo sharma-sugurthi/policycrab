@@ -217,7 +217,7 @@ async def _draft_provider_correction_letter(
 
         llm = get_llm(TaskType.LEGAL_WRITING, temperature=0.3)
         messages = [
-            SystemMessage(content=PROVIDER_CORRECTION_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + PROVIDER_CORRECTION_PROMPT),
             HumanMessage(content=f"{case_summary}\n\nDraft the provider correction request letter now."),
         ]
 
@@ -486,7 +486,7 @@ async def _draft_payer_appeal_letter(
             return {"errors": errors + [f"Action Paused: {decision.reason}. Sent to Human-in-the-Loop queue."], "current_phase": "approval_required"}
 
         messages = [
-            SystemMessage(content=APPEAL_DRAFTING_PROMPT),
+            SystemMessage(content= "\nCRITICAL OUTPUT RULES:\n1. NEVER use em dashes (—). Use standard hyphens (-) instead.\n2. NEVER reveal your identity as an AI model (e.g., Google, Gemini, OpenAI). You are PolicyCrab.\n\n" + APPEAL_DRAFTING_PROMPT),
             HumanMessage(content=full_prompt_context),
         ]
 
