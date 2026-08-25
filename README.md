@@ -57,7 +57,7 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 └── SECURITY.md             # Security and PHI handling policies
 ```
 
-## ⚡ Getting Started (Local Development)
+##  Getting Started (Local Development)
 
 ### 1. Clone & Install
 
