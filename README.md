@@ -6,7 +6,7 @@ By combining strict deterministic math with advanced Multi-LLM reasoning, Policy
 
 ---
 
-## 🚀 The Platform
+##  The Platform
 
 The US healthcare billing system is notoriously opaque, with **a large share of medical bills containing errors**, and millions of claims being wrongfully denied each year. PolicyCrab tackles this problem directly with automation and regulatory intelligence.
 
@@ -15,7 +15,7 @@ The US healthcare billing system is notoriously opaque, with **a large share of 
 - **For HR & Benefits Managers:** A powerful platform to reduce out-of-pocket healthcare expenses for employees, improving benefits satisfaction.
 - **For Patients:** A seamless, easy-to-use interface to fight wrongful denials without needing a law degree.
 
-## 🛠 Tech Stack & Architecture
+##  Tech Stack & Architecture
 
 PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medical math is accurate (preventing LLM hallucination) while leveraging AI for complex reasoning and writing.
 
@@ -26,7 +26,7 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 - **Document Processing:** PyMuPDF (digital text) and **Gemini Multimodal API** (native OCR/vision for complex tables and scanned PDFs).
 - **Database & Auth:** Supabase (PostgreSQL pgvector for embeddings, Auth JWTs for user sessions).
 
-## ✨ Key Features
+##  Key Features
 
 1. **AI Policy Ingestion (RAG):** Extracts complex SBC/EOB terms into a normalized deterministic schema. Includes Gemini Multimodal for pixel-perfect table extraction on scanned images.
 2. **Deterministic Adjudication Engine:** Accurately calculates patient responsibilities (deductibles, coinsurance, OOP maximums, NSA protections) with exact math, bypassing LLM limitations on numerical reasoning.
@@ -36,7 +36,7 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 6. **Enterprise AI Security Framework (EASF):** Employs strict "Agentic Zero Trust" boundaries. Includes local heuristic Prompt Injection Shields, a Deterministic Policy Engine to govern tool calls, and complete JSON Audit Logging for all AI decisions.
 7. **Privacy-First HIPAA Compliance:** Uses local scrubbing tools (Microsoft Presidio) before data leaves the server, and utilizes Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions after 30 days.
 
-## 📂 Repository Structure
+##  Repository Structure
 
 ```text
 ├── frontend/               # React + Vite user interface
@@ -98,7 +98,7 @@ npm run dev
 
 Visit: `http://localhost:5000`
 
-## 🤝 Support & Documentation
+##  Support & Documentation
 
 The codebase is clean, well-commented, and heavily modularized. See the following documents for more details:
 - [DEPLOYMENT.md](DEPLOYMENT.md) - For deploying to production (Vercel & Google Cloud Run).
