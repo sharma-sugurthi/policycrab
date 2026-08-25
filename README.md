@@ -1,6 +1,6 @@
 # PolicyCrab: AI-Powered US Healthcare Advocacy Engine
 
-**PolicyCrab** is an enterprise-grade AI platform designed to help medical advocates, HR benefits managers, and individual Americans navigate the complexities of US healthcare insurance. It automatically ingests complex policy documents (SBCs/EOBs), deterministically evaluates claims for over-billing or regulatory violations, and uses autonomous agents to generate legally sound appeal letters.
+**PolicyCrab** is an AI platform built with production practices designed to help medical advocates, HR benefits managers, and individual Americans navigate the complexities of US healthcare insurance. It automatically ingests complex policy documents (SBCs/EOBs), deterministically evaluates claims for over-billing or regulatory violations, and uses autonomous agents to generate legally sound appeal letters.
 
 By combining strict deterministic math with advanced Multi-LLM reasoning, PolicyCrab scales the expertise of a professional medical bill advocate.
 
@@ -8,7 +8,7 @@ By combining strict deterministic math with advanced Multi-LLM reasoning, Policy
 
 ## 🚀 The Platform
 
-The US healthcare billing system is notoriously opaque, with up to **80% of medical bills containing errors**, and millions of claims being wrongfully denied each year. PolicyCrab tackles this problem directly with automation and regulatory intelligence.
+The US healthcare billing system is notoriously opaque, with **a large share of medical bills containing errors**, and millions of claims being wrongfully denied each year. PolicyCrab tackles this problem directly with automation and regulatory intelligence.
 
 **Core Capabilities:**
 - **For Medical Advocates & Brokers:** A force-multiplier that analyzes denials, determines provider vs. payer fault, calculates deadlines, and drafts regulatory appeals.
