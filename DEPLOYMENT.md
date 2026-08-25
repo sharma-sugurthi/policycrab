@@ -1,4 +1,4 @@
-# 🚀 Deploying PolicyCrab
+#  Deploying PolicyCrab
 
 This guide explains how to deploy PolicyCrab to a production environment. The application consists of a **FastAPI backend** and a **React frontend**, plus a **Supabase** project for the database and authentication.
 
