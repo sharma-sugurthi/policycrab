@@ -94,11 +94,44 @@ async def evaluate_single_case(case: dict, sem: asyncio.Semaphore) -> dict:
         actual["contradiction_strength"] = appeal_out.get("contradiction_strength") or contradiction_out.get("contradiction_strength")
         actual["route_decision"] = result_state.get("route_decision")
         actual["triage_path"] = triage_out.get("path")
+        actual["triage_method"] = triage_out.get("triage_method")
         actual["nsa_violation_detected"] = cost_out.get("nsa_violation_detected", False)
-        
+
+        # Accuracy Core signals (additive — absent when the appeal path did not run).
+        # NOTE: in benchmark mode the grievance LLM is bypassed, so citation grounding
+        # here verifies PLUMBING (the QA node ran), not hallucination resistance. Real
+        # grounding distributions come from a non-CI "full" run with the LLM enabled.
+        gate_out = result_state.get("quality_gate") or {}
+        verification_out = result_state.get("citation_verification") or {}
+        actual["quality_gate_status"] = gate_out.get("status")
+        actual["citation_status"] = verification_out.get("status")
+        actual["grounding_score"] = verification_out.get("grounding_score")
+        actual["success_score"] = appeal_out.get("success_score")
+        actual["success_score_band"] = appeal_out.get("success_score_band")
+
         # Determine pass/fail based on category semantics
         passed = True
         reasons = []
+
+        # Optional Accuracy Core expectations (only asserted when present in the case file)
+        if "quality_gate_status" in expected and actual["quality_gate_status"] != expected["quality_gate_status"]:
+            passed = False
+            reasons.append(
+                f"Quality gate: expected {expected['quality_gate_status']}, got {actual['quality_gate_status']}"
+            )
+        if "min_grounding_score" in expected:
+            score = actual.get("grounding_score")
+            if score is None or score < float(expected["min_grounding_score"]):
+                passed = False
+                reasons.append(f"Grounding score {score} below expected minimum {expected['min_grounding_score']}")
+        if "success_score_band" in expected and actual["success_score_band"] != expected["success_score_band"]:
+            passed = False
+            reasons.append(
+                f"Success band: expected {expected['success_score_band']}, got {actual['success_score_band']}"
+            )
+        if "triage_method" in expected and actual["triage_method"] != expected["triage_method"]:
+            passed = False
+            reasons.append(f"Triage method: expected {expected['triage_method']}, got {actual['triage_method']}")
         
         expected_rec = expected.get("appeal_recommendation", "")
         actual_rec = str(actual.get("appeal_recommendation", "")).upper()

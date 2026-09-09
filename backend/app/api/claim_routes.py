@@ -48,6 +48,13 @@ class ClaimEvaluationRequest(BaseModel):
         False,
         description="Whether the selected policy has searchable document chunks.",
     )
+    eob_extraction: dict | None = Field(
+        None,
+        description=(
+            "Optional: the `extracted` object returned by POST /api/eob/parse. "
+            "Lets the extraction quality gate see per-field confidence and math validation results."
+        ),
+    )
 
 
 class ClaimEvaluationResponse(BaseModel):
@@ -59,6 +66,14 @@ class ClaimEvaluationResponse(BaseModel):
     explanation: str | None = None
     route_decision: str | None = None
     errors: list[str] = []
+    quality_gate: dict | None = Field(
+        None,
+        description="Extraction quality gate result: status PASS|WARN|BLOCK plus a missing-information checklist.",
+    )
+    citation_verification: dict | None = Field(
+        None,
+        description="Deterministic grounding check of the drafted letter's citations (denied claims only).",
+    )
 
 
 @router.post("/evaluate", response_model=ClaimEvaluationResponse)
@@ -103,6 +118,7 @@ async def evaluate_claim(
         "explanations": {},
         "session_id": request.session_id,
         "policy_indexed": request.policy_indexed,
+        "eob_extraction": request.eob_extraction,
     }
 
     try:
@@ -110,7 +126,12 @@ async def evaluate_claim(
 
         # Get the most relevant explanation
         explanations = result.get("explanations", {})
-        explanation = explanations.get("appeal") or explanations.get("calculation") or explanations.get("intake")
+        explanation = (
+            explanations.get("appeal")
+            or explanations.get("quality_gate")
+            or explanations.get("calculation")
+            or explanations.get("intake")
+        )
 
         response = ClaimEvaluationResponse(
             success=bool(result.get("claim_case")),
@@ -120,6 +141,8 @@ async def evaluate_claim(
             explanation=explanation,
             route_decision=result.get("route_decision"),
             errors=result.get("errors", []),
+            quality_gate=result.get("quality_gate"),
+            citation_verification=result.get("citation_verification"),
         )
 
         if response.success:
@@ -185,6 +208,7 @@ async def evaluate_claim_async(
         session_id=request.session_id,
         policy_indexed=request.policy_indexed,
         user_id=user.get("id"),
+        eob_extraction=request.eob_extraction,
     )
 
     logger.info(

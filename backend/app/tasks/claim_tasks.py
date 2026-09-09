@@ -25,6 +25,7 @@ async def run_claim_evaluation(
     session_id: str | None = None,
     policy_indexed: bool = False,
     user_id: str | None = None,
+    eob_extraction: dict | None = None,
 ) -> None:
     """
     Async background coroutine: run the full claim evaluation pipeline.
@@ -61,6 +62,7 @@ async def run_claim_evaluation(
             "explanations": {},
             "session_id": session_id,
             "policy_indexed": policy_indexed,
+            "eob_extraction": eob_extraction,
         }
 
         result = await graph.ainvoke(initial_state)
@@ -88,6 +90,7 @@ async def run_claim_evaluation(
         explanations = result.get("explanations", {})
         explanation = (
             explanations.get("appeal")
+            or explanations.get("quality_gate")
             or explanations.get("calculation")
             or explanations.get("intake")
         )
@@ -100,6 +103,8 @@ async def run_claim_evaluation(
             "explanation": explanation,
             "route_decision": result.get("route_decision"),
             "errors": result.get("errors", []),
+            "quality_gate": result.get("quality_gate"),
+            "citation_verification": result.get("citation_verification"),
         })
         logger.info(f"Claim evaluation task {task_id} completed successfully")
 

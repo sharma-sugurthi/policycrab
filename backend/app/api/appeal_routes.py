@@ -110,6 +110,8 @@ class DraftAppealResponse(BaseModel):
     recommended_next_steps: list[str] = []
     deadline_date: str | None = None
     errors: list[str] = []
+    citation_verification: dict | None = None   # deterministic grounding check (additive)
+    appeal_letter_unannotated: str | None = None
 
 
 @router.post("/draft-appeal", response_model=DraftAppealResponse)
@@ -224,14 +226,41 @@ async def draft_escalated_appeal(
         logger.info(f"Draft Appeal: Level {request.level} complete — "
                     f"{len(appeal_data.get('cited_regulations', []))} citations")
 
+        # Deterministic citation grounding against the KB chunks this route retrieved.
+        letter_text = appeal_data.get("appeal_letter", "")
+        cited = [c for c in appeal_data.get("cited_regulations", []) if isinstance(c, dict)]
+        citation_verification = None
+        letter_unannotated = None
+        try:
+            from app.engine.citation_verifier import run_citation_verification
+
+            citation_verification, checked = run_citation_verification(
+                appeal_output={
+                    "appeal_letter": letter_text,
+                    "letter_type": "payer_appeal",
+                    "cited_regulations": cited,
+                    "cited_knowledge_chunks": list(chunk_ids),
+                    "policy_citations": [],
+                },
+                knowledge_chunks=all_chunks[:6],
+                policy_chunks=[],
+            )
+            letter_text = checked.get("appeal_letter", letter_text)
+            cited = checked.get("cited_regulations", cited)
+            letter_unannotated = checked.get("appeal_letter_unannotated")
+        except Exception as e:  # pragma: no cover - QA must never break drafting
+            logger.warning(f"Draft Appeal: citation verification skipped: {e}")
+
         return DraftAppealResponse(
             success=True,
             level=request.level,
             level_name=config["name"],
-            appeal_letter=appeal_data.get("appeal_letter", ""),
-            cited_regulations=appeal_data.get("cited_regulations", []),
+            appeal_letter=letter_text,
+            cited_regulations=cited,
             recommended_next_steps=appeal_data.get("recommended_next_steps", []),
             deadline_date=deadline,
+            citation_verification=citation_verification,
+            appeal_letter_unannotated=letter_unannotated,
         )
 
     except LLMRateLimitError as e:

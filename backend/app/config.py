@@ -77,6 +77,22 @@ class Settings(BaseSettings):
             if x.strip()
         }
 
+    # ── Accuracy Core (appeal QA) ─────────────────────────────────
+    # How the citation verifier treats statutes the LLM cited that are not in
+    # the verified allowlist or the retrieved knowledge chunks:
+    #   "annotate" (default) — keep the letter, insert a visible [VERIFY: ...] marker
+    #   "strip"              — remove unverified citations from letter + list
+    #   "off"                — report only, do not touch the letter
+    citation_unverified_policy: str = "annotate"
+    # Minimum fuzzy-match ratio for a quoted policy clause to count as grounded
+    # in the retrieved policy chunks (0.0-1.0).
+    citation_policy_fuzzy_threshold: float = 0.85
+    # Extraction quality gate before drafting:
+    #   "off"   — never evaluate
+    #   "warn"  (default) — draft anyway, attach a missing-information checklist
+    #   "block" — return the checklist instead of a letter when critical data is missing
+    quality_gate_mode: str = "warn"
+
     # ── LLM Model Defaults ────────────────────────────────────────
     llm_fast_model: str = "gemini-2.5-flash"
     llm_quality_model: str = "gemini-2.5-pro"

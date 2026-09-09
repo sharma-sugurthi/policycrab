@@ -18,6 +18,7 @@ Supabase provides the managed PostgreSQL database (with `pgvector` for AI embedd
      5. `005_create_documents_and_audits.sql`
      6. `006_chat_history.sql`
      7. `007_hipaa_auto_purge.sql`
+     8. `008_create_appeal_outcomes.sql` — appeal outcome tracking for success-score calibration (`/api/outcomes`). Apply **before** deploying a backend that includes the Accuracy Core; the table holds no PHI and is deliberately excluded from the 30-day purge.
 4. **Authentication:**
    - Enable Email/Password authentication in the Supabase Auth Settings.
    - Disable "Confirm Email" if you want users to be able to sign up and immediately use the app during your initial launch.
@@ -35,6 +36,11 @@ The backend is a standard Python FastAPI application. We use **Google Cloud Run*
    - `GEMINI_API_KEY`
    - `GROQ_API_KEY` / `CEREBRAS_API_KEY` (Optional for LLM routing)
    - `REDIS_URL` (If you want background async tasks to use Redis)
+   - **Accuracy Core (optional — defaults shown are the safe production values):**
+     - `CITATION_UNVERIFIED_POLICY=annotate` — how statutes the LLM cited but PolicyCrab cannot verify are handled: `annotate` inserts a visible `[VERIFY: ...]` marker (original letter preserved), `strip` removes them, `off` reports only.
+     - `CITATION_POLICY_FUZZY_THRESHOLD=0.85` — minimum similarity for a quoted policy clause to count as found in the retrieved policy chunks.
+     - `QUALITY_GATE_MODE=warn` — `warn` drafts with bracketed placeholders and attaches a missing-information checklist; `block` refuses to draft when critical facts (denial date, billed amount, plan classification, unreconciled EOB math) are missing; `off` disables the gate.
+   - After deploying, run `python scripts/build_citation_allowlist.py --checklist` from `backend/` and have a maintainer open each listed source URL to set `verified_on` in `app/engine/citation_allowlist.py`. Until then every letter carries the flag `ALLOWLIST_NEEDS_HUMAN_VERIFICATION` (visible in the UI as "reference list pending review").
 4. The deployment is handled automatically by the GitHub Actions pipeline upon merging to the `main` branch. Note the live backend URL (e.g., `https://policycrab-api-xyz.a.run.app`).
 
 ## 3. Frontend Deployment (Vercel)

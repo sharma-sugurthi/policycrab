@@ -58,6 +58,13 @@ class RevisionResponse(BaseModel):
         description="Concrete change bullets for the UI diff panel.",
     )
     errors: list[str] = Field(default_factory=list)
+    citation_verification: dict | None = Field(
+        None,
+        description=(
+            "Deterministic re-check of statutes cited in the revised letter "
+            "(the LLM revision may introduce new citations). Additive; None on failure paths."
+        ),
+    )
 
 
 # ── Evidence Dossier ──────────────────────────────────────────────

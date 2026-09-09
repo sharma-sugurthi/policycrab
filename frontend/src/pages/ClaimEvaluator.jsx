@@ -7,6 +7,7 @@ import { useTasks } from '../contexts/TaskContext'
 import { jsPDF } from 'jspdf'
 import { CPT_CODES } from '../data/cpt_codes'
 import { IconSearch, IconFileText, IconUpload, IconCheckCircle, IconX, IconChevronDown, IconChevronUp, IconAlertTriangle, IconActivity, IconBriefcase, IconZap, IconMapPin, IconStethoscope, IconShield, IconCpu, IconServer, IconScale, IconEdit, IconDownload, IconCopy, IconMap, IconWand, IconArrowRight } from '../components/Icons'
+import { QualityGateCard, AccuracySummaryRow, LetterWithVerifyMarkers } from '../components/AccuracyPanel'
 
 // ── CPT Lookup widget ─────────────────────────────────────────────
 function CptLookup({ onSelect, disabled }) {
@@ -443,6 +444,9 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
     const capturedText   = claimText
     const capturedStatus = networkStatus
     const capturedAmount = normalizedAllowedAmount
+    // Raw EOB extraction (per-field confidence + math validation) lets the backend
+    // quality gate warn about low-confidence or unreconciled fields.
+    const capturedEob    = eobResult || null
 
     addTask('claim_eval', 'Evaluating your claim…', async () => {
       const res = await apiFetch('/claim/evaluate', {
@@ -453,6 +457,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
           allowed_amount: capturedAmount,
           session_id: policySession?.session_id || null,
           policy_indexed: Boolean(policySession?.policy_indexed),
+          eob_extraction: capturedEob,
         })
       })
       const data = await readApiResponse(res)
@@ -1017,6 +1022,9 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                   </div>
                 )}
 
+                {/* ── Extraction quality gate: what was missing when we drafted ── */}
+                <QualityGateCard gate={result.quality_gate} />
+
                 {result.explanation && (
                   <div className="explanation-box" style={{ marginBottom: result.appeal_output ? '1.5rem' : 0, background: 'var(--info-bg)', border: '1px solid var(--info-border)' }}>
                     <h4 style={{ color: 'var(--info)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><IconFileText size={18} /> Plain English Summary</h4>
@@ -1257,6 +1265,9 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                       </div>
                     </div>
 
+                    {/* ── Accuracy check: citation grounding + deterministic case strength ── */}
+                    <AccuracySummaryRow appeal={result.appeal_output} />
+
                     <div className="appeal-letter-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
                       <h4 style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Formal Appeal Letter</h4>
                       <div className="appeal-letter-actions" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -1281,7 +1292,7 @@ export default function ClaimEvaluator({ policyProfile, policySession, onResult 
                       </div>
                     </div>
                     <div className="appeal-letter" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', padding: '2rem', borderRadius: '1rem', fontFamily: "'Merriweather', 'Times New Roman', serif", fontSize: '0.9375rem', lineHeight: 1.8, color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
-                      {result.appeal_output.appeal_letter}
+                      <LetterWithVerifyMarkers text={result.appeal_output.appeal_letter} />
                     </div>
 
                     {/* ── Next Steps ────────── */}

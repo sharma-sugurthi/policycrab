@@ -21,6 +21,8 @@ from app.agents.claim_intake import claim_intake_node
 from app.agents.policy_analyzer import policy_analyzer_node
 from app.agents.triage import triage_node
 from app.agents.grievance import grievance_node
+from app.agents.appeal_qa import appeal_qa_node
+from app.agents.quality_gate import quality_gate_node, explain_blocked_node, route_after_quality_gate
 from app.agents.explanation import explanation_node
 from app.agents.chat import chat_node
 from app.engine.cost_calculator import calculate_cost
@@ -132,17 +134,22 @@ def build_claim_evaluation_graph() -> StateGraph:
     Build the claim evaluation pipeline graph.
 
     Flow:
-    claim_intake → cost_calculation → [denied?] → policy_analyzer → grievance → explain_appeal → END
-                                    → [approved?] → explain_cost → END
+    claim_intake → cost_calculation → quality_gate
+        → [denied?]   → policy_analyzer → triage → grievance → appeal_qa → explain_appeal → END
+        → [approved?] → explain_cost → END
+        → [BLOCK, mode=block only] → explain_blocked → END
     """
     graph = StateGraph(AgentState)
 
     # Add nodes
     graph.add_node("claim_intake", claim_intake_node)
     graph.add_node("cost_calculation", cost_calculation_node)
+    graph.add_node("quality_gate", quality_gate_node)         # Deterministic extraction completeness check
+    graph.add_node("explain_blocked", explain_blocked_node)   # Deterministic checklist (block mode only)
     graph.add_node("policy_analyzer", policy_analyzer_node)
     graph.add_node("triage", triage_node)                     # NEW: Triage agent
     graph.add_node("grievance", grievance_node)
+    graph.add_node("appeal_qa", appeal_qa_node)               # Deterministic QA (citations, score)
     graph.add_node("explain_cost", explanation_node)
     graph.add_node("explain_appeal", explanation_node)
 
@@ -151,17 +158,21 @@ def build_claim_evaluation_graph() -> StateGraph:
 
     # Add edges
     graph.add_edge("claim_intake", "cost_calculation")
+    graph.add_edge("cost_calculation", "quality_gate")
     graph.add_conditional_edges(
-        "cost_calculation",
-        route_after_cost,
+        "quality_gate",
+        route_after_quality_gate,
         {
-            "policy_analyzer": "policy_analyzer",  # denied path
-            "explain_cost": "explain_cost",         # approved path
+            "policy_analyzer": "policy_analyzer",    # denied path
+            "explain_cost": "explain_cost",           # approved path
+            "explain_blocked": "explain_blocked",     # gate BLOCK (mode=block only)
         }
     )
+    graph.add_edge("explain_blocked", END)
     graph.add_edge("policy_analyzer", "triage")     # Analyzer → Triage
     graph.add_edge("triage", "grievance")           # Triage → Grievance
-    graph.add_edge("grievance", "explain_appeal")
+    graph.add_edge("grievance", "appeal_qa")        # Grievance → deterministic QA
+    graph.add_edge("appeal_qa", "explain_appeal")
     graph.add_edge("explain_cost", END)
     graph.add_edge("explain_appeal", END)
 

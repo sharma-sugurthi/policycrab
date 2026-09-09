@@ -49,7 +49,10 @@ async def main() -> None:
 
     conn = await asyncpg.connect(dsn=dsn, statement_cache_size=0)
 
-    tables = ["knowledge_chunks", "policy_chunks", "user_policies", "user_claims", "user_chats", "user_documents", "user_audits"]
+    tables = [
+        "knowledge_chunks", "policy_chunks", "user_policies", "user_claims",
+        "user_chats", "user_documents", "user_audits", "appeal_outcomes",
+    ]
     print("== State before ==")
     for t in tables:
         try:

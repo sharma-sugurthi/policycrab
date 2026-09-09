@@ -115,6 +115,43 @@ def _parse_date_flexible(raw: str) -> str | None:
     return None
 
 
+def build_claim_from_overrides(overrides: dict, raw_text: str, allowed_amount: float | None = None) -> ClaimCase:
+    """
+    Benchmark-mode claim construction from ground-truth overrides (no LLM).
+
+    Pure function so the CI regression suite can build every benchmark case's
+    ClaimCase exactly the way the pipeline does.
+    """
+    claim_data = {
+        "cpt_code": overrides.get("cpt_code", "00000"),
+        "cpt_description": overrides.get("cpt_description", raw_text),
+        "icd_10_code": overrides.get("icd_10_code", "R00.0"),
+        "icd_10_description": overrides.get("icd_10_description", raw_text),
+        "date_of_service": "2026-05-10",
+        "billed_amount": float(overrides.get("billed_amount") or allowed_amount or 1000.0),
+        "provider_name": overrides.get("provider_name", "Benchmark Provider"),
+        "facility_name": overrides.get("facility_name", "Benchmark Facility"),
+        "network_status": overrides.get("network_status", "OUT_OF_NETWORK"),
+        "facility_network_status": overrides.get("facility_network_status"),
+        "ancillary_service_type": overrides.get("ancillary_service_type"),
+        "is_emergency": overrides.get("is_emergency", False),
+        "nsa_applies": overrides.get("nsa_applies", False),
+        "nsa_reason": overrides.get("nsa_reason"),
+        "prior_auth_required": overrides.get("prior_auth_required", False),
+        "prior_auth_obtained": overrides.get("prior_auth_obtained", None),
+        "pcp_referral_obtained": overrides.get("pcp_referral_obtained", None),
+        "is_denied": overrides.get("is_denied", True),
+        "denial_reason": overrides.get("denial_reason", "OTHER"),
+        "denial_date": "2026-06-01",
+        "denial_carc_code": overrides.get("denial_carc_code")
+    }
+    try:
+        return ClaimCase(**claim_data)
+    except Exception:
+        claim_data["billed_amount"] = 1000.0
+        return ClaimCase(**claim_data)
+
+
 async def claim_intake_node(state: AgentState) -> dict:
     """
     Parse the patient's description into a structured ClaimCase.
@@ -133,36 +170,8 @@ async def claim_intake_node(state: AgentState) -> dict:
 
     if state.get("claim_overrides") and isinstance(state["claim_overrides"], dict):
         logger.info("Agent 2 (Claim Intake): Benchmark mode active — constructing structured claim directly from overrides.")
-        overrides = state["claim_overrides"]
         raw_text = state.get("raw_claim_text") or state.get("claim_text") or "Benchmark scenario medical procedure"
-        claim_data = {
-            "cpt_code": overrides.get("cpt_code", "00000"),
-            "cpt_description": overrides.get("cpt_description", raw_text),
-            "icd_10_code": overrides.get("icd_10_code", "R00.0"),
-            "icd_10_description": overrides.get("icd_10_description", raw_text),
-            "date_of_service": "2026-05-10",
-            "billed_amount": float(overrides.get("billed_amount") or state.get("allowed_amount") or 1000.0),
-            "provider_name": overrides.get("provider_name", "Benchmark Provider"),
-            "facility_name": overrides.get("facility_name", "Benchmark Facility"),
-            "network_status": overrides.get("network_status", "OUT_OF_NETWORK"),
-            "facility_network_status": overrides.get("facility_network_status"),
-            "ancillary_service_type": overrides.get("ancillary_service_type"),
-            "is_emergency": overrides.get("is_emergency", False),
-            "nsa_applies": overrides.get("nsa_applies", False),
-            "nsa_reason": overrides.get("nsa_reason"),
-            "prior_auth_required": overrides.get("prior_auth_required", False),
-            "prior_auth_obtained": overrides.get("prior_auth_obtained", None),
-            "pcp_referral_obtained": overrides.get("pcp_referral_obtained", None),
-            "is_denied": overrides.get("is_denied", True),
-            "denial_reason": overrides.get("denial_reason", "OTHER"),
-            "denial_date": "2026-06-01",
-            "denial_carc_code": overrides.get("denial_carc_code")
-        }
-        try:
-            claim = ClaimCase(**claim_data)
-        except Exception:
-            claim_data["billed_amount"] = 1000.0
-            claim = ClaimCase(**claim_data)
+        claim = build_claim_from_overrides(state["claim_overrides"], raw_text, state.get("allowed_amount"))
         route = "denied" if claim.is_denied else "approved"
         return {
             "claim_case": claim.model_dump(mode="json"),

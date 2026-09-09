@@ -35,6 +35,11 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 5. **Interactive AI Advocate:** A contextual chat assistant with multi-thread persistent history that references the user's specific policy and claim to answer regulatory questions.
 6. **Enterprise AI Security Framework (EASF):** Employs strict "Agentic Zero Trust" boundaries. Includes local heuristic Prompt Injection Shields, a Deterministic Policy Engine to govern tool calls, and complete JSON Audit Logging for all AI decisions.
 7. **Privacy-First HIPAA Compliance:** Uses local scrubbing tools (Microsoft Presidio) before data leaves the server, and utilizes Supabase `pg_cron` to automatically delete raw, sensitive EOB extractions after 30 days.
+8. **Accuracy Core (deterministic appeal QA):** Every drafted letter passes through a no-LLM QA node before it reaches the user:
+   - **Citation Grounding Verifier** — each statute the letter cites is checked against a sourced allowlist (`app/engine/citation_allowlist.py`) and the knowledge chunks the model was actually shown; each quoted policy clause is matched against the retrieved policy pages (with page-drift detection). Anything unverifiable is marked `[VERIFY: …]` in the letter, never silently trusted.
+   - **Extraction Quality Gate** — detects the sentinel values intake substitutes when facts are missing (denial date, billed amount, CARC code, plan classification, unreconciled EOB math) and returns a where-to-find-it checklist; the drafting prompt is told to use bracketed placeholders instead of guessing. `QUALITY_GATE_MODE=block` refuses to draft on critical gaps.
+   - **Transparent Success Score + Outcome Calibration** — a factor-by-factor case-strength estimate shown alongside the model's own guess, and `/api/outcomes` to record what actually happened so the score can be calibrated against real overturn rates (`GET /api/outcomes/calibration`).
+   - **LLM-free regression suite** — `tests/test_benchmark_deterministic.py` runs the deterministic engines over all 200 benchmark cases plus 12 hand-written quality-gate cases in CI, with no model or database access.
 
 ##  Repository Structure
 

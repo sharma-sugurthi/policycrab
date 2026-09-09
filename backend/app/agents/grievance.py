@@ -97,6 +97,29 @@ Respond with a JSON object containing:
 """
 
 
+def _format_known_data_gaps(quality_gate: dict | None) -> str:
+    """
+    Render the quality gate's missing-information checklist as a prompt paragraph.
+    Returns "" when there is nothing to report so existing prompts are byte-identical.
+    """
+    if not isinstance(quality_gate, dict):
+        return ""
+    items = quality_gate.get("missing_information_checklist") or []
+    items = [i for i in items if isinstance(i, dict) and i.get("severity") in ("CRITICAL", "IMPORTANT")]
+    if not items:
+        return ""
+    lines = ["\nKNOWN DATA GAPS (from the extraction quality check):"]
+    for item in items:
+        placeholder = str(item.get("field", "FIELD")).upper().replace("_", " ")
+        lines.append(f"- {item.get('field')}: {item.get('why_it_matters', 'not available')}")
+        lines.append(f"  -> Do NOT invent this value. Write the placeholder [{placeholder}] where it is needed.")
+    lines.append(
+        "These facts were not present in the source documents. Never guess dates, codes or dollar amounts; "
+        "use the bracketed placeholders so the advocate can fill them in before submission.\n"
+    )
+    return "\n".join(lines) + "\n"
+
+
 async def grievance_node(state: AgentState) -> dict:
     """
     Draft a formal letter for a denied claim.
@@ -199,6 +222,8 @@ async def _draft_provider_correction_letter(
         if corrected_claim_instructions:
             case_summary += f"\nSUGGESTED CORRECTIVE ACTIONS:\n{corrected_claim_instructions}\n"
 
+        case_summary += _format_known_data_gaps(state.get("quality_gate"))
+
         # ── Security Gateway: Context Scanning & Policy Check ─────
         is_safe, violation = ai_gateway.inspect_input(case_summary)
         if not is_safe:
@@ -279,6 +304,7 @@ async def _draft_provider_correction_letter(
 
         return {
             "appeal_output": appeal_output.model_dump(mode="json"),
+            "knowledge_chunks_retrieved": [],  # provider path performs no RAG retrieval
             "current_phase": "appeal",
             "errors": errors,
         }
@@ -462,9 +488,15 @@ async def _draft_payer_appeal_letter(
             if honest_assessment:
                 contradiction_context += f"\nHONEST ASSESSMENT: {honest_assessment}\n"
 
+        # ── Step 4c: Known data gaps (from the quality gate) ─────────
+        # Tell the LLM exactly which facts are missing so it uses bracketed
+        # placeholders instead of inventing dates, codes or amounts.
+        data_gaps_context = _format_known_data_gaps(state.get("quality_gate"))
+
         full_prompt_context = (
             f"{case_summary}\n\n"
             f"{contradiction_context}\n"
+            f"{data_gaps_context}"
             f"RETRIEVED REGULATORY KNOWLEDGE:\n{rag_context}\n\n"
             f"Draft the formal appeal letter now."
         )
@@ -624,8 +656,20 @@ async def _draft_payer_appeal_letter(
             f"Estimated success: {estimated_success_probability:.0%}"
         )
 
+        # Surface exactly the knowledge chunks the LLM was shown (same cap as
+        # rag_context) so the appeal_qa node can verify citations against them.
+        knowledge_chunks_retrieved = [
+            {
+                "concept_id": r.get("concept_id"),
+                "title": r.get("title"),
+                "full_content": r.get("full_content", ""),
+            }
+            for r in all_chunks[:8]
+        ]
+
         return {
             "appeal_output": appeal_output.model_dump(mode="json"),
+            "knowledge_chunks_retrieved": knowledge_chunks_retrieved,
             "current_phase": "appeal",
             "errors": errors,
         }

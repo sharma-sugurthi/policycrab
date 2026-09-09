@@ -1,0 +1,37 @@
+{
+  "id": "GATE-003",
+  "category": "extraction_quality_gate",
+  "title": "Missing CARC code only",
+  "policy_profile": {
+    "plan_name": "Standard PPO",
+    "carrier_name": "BenchmarkHealth",
+    "plan_type": "PPO",
+    "legal_classification": "INDIVIDUAL_ACA",
+    "state": "CA",
+    "in_network_deductible_individual": 1000,
+    "in_network_oop_max_individual": 5000,
+    "in_network_coinsurance": 0.2
+  },
+  "claim_case": {
+    "cpt_code": "27447",
+    "cpt_description": "Knee replacement",
+    "icd_10_code": "M17.11",
+    "date_of_service": "2026-05-10",
+    "billed_amount": 45000.0,
+    "network_status": "IN_NETWORK",
+    "is_emergency": false,
+    "is_denied": true,
+    "denial_reason": "MEDICAL_NECESSITY",
+    "denial_date": "2026-06-01",
+    "denial_carc_code": null
+  },
+  "expected": {
+    "warn_status": "WARN",
+    "block_status": "WARN",
+    "critical_missing": [],
+    "checklist_fields": [
+      "denial_carc_code"
+    ]
+  },
+  "ground_truth_rationale": "IMPORTANT gap \u2014 never blocks drafting on its own."
+}

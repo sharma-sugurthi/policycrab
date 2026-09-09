@@ -154,6 +154,130 @@ CRITICAL RULES:
 - estimated_success_probability: 0.0-1.0 — be honest. NSA violations = 0.90+. Cosmetic = 0.05."""
 
 
+def deterministic_triage(
+    claim: ClaimCase,
+    cost: CostBreakdown | None,
+    contradiction_analysis: dict | None,
+    benchmark_mode: bool = False,
+) -> dict | None:
+    """
+    Step 1 of triage — the clear-cut, rule-based decisions that never need an LLM.
+
+    Returns a complete triage_decision dict when a rule fires, otherwise None
+    (the caller then falls through to LLM-based triage). Pure function so the
+    CI benchmark suite can exercise it without any model access.
+
+    Rules, in order:
+      1. Policy Analyzer already concluded CLAIM_CORRECTLY_DENIED / UNLIKELY_TO_WIN
+      2. NSA Scenario B — OON ancillary provider at an IN-NETWORK facility
+      3. Known provider-side CARC code → PROVIDER_CODING_ERROR
+      4. Known payer-violation CARC code → PAYER_ILLEGAL_DENIAL (benchmark mode only;
+         live runs fall through to the LLM for richer context)
+    """
+    # If policy analysis confirmed the claim was correctly denied (e.g. explicit exclusion, annual limit),
+    # return deterministically without misidentifying correct denials as coding errors or illegal payer actions.
+    if contradiction_analysis and contradiction_analysis.get("appeal_recommendation") in {"CLAIM_CORRECTLY_DENIED", "UNLIKELY_TO_WIN"}:
+        rec = contradiction_analysis["appeal_recommendation"]
+        honest_msg = contradiction_analysis.get("honest_assessment") or f"Policy analysis concluded: {rec}"
+        logger.info(f"Triage: Honoring policy analyzer determination ({rec}) — returning deterministically")
+        return {
+            "path": "PAYER_ILLEGAL_DENIAL",
+            "confidence": "HIGH",
+            "primary_reason": honest_msg,
+            "coding_errors_detected": [],
+            "legal_violations_detected": [],
+            "corrected_claim_instructions": None,
+            "action_summary": f"Claim was correctly denied per policy provisions ({rec}). No further appeal recommended.",
+            "estimated_success_probability": 0.05,
+            "triage_method": "deterministic_correct_denial"
+        }
+
+    # NSA ANCILLARY PROVIDER at INN FACILITY → always PAYER violation
+    if (
+        claim.facility_network_status == NetworkStatus.IN_NETWORK
+        and claim.ancillary_service_type is not None
+    ):
+        logger.info("Triage: DETERMINISTIC result — PAYER_ILLEGAL_DENIAL (NSA Scenario B)")
+        return {
+            "path": "PAYER_ILLEGAL_DENIAL",
+            "confidence": "HIGH",
+            "primary_reason": (
+                f"NSA Scenario B: {claim.ancillary_service_type.title()} provider "
+                f"('{claim.provider_name or 'Unknown'}') is OUT-OF-NETWORK at the "
+                f"IN-NETWORK facility '{claim.facility_name or 'Unknown'}'. "
+                "Balance billing is prohibited under 45 CFR § 149.410(b)."
+            ),
+            "coding_errors_detected": [],
+            "legal_violations_detected": [
+                "No Surprises Act (NSA) Scenario B — OON ancillary provider "
+                "at INN facility. Patient cannot be balance billed. "
+                "Provider must negotiate with plan via IDR process.",
+                f"Illegal balance billed: ${cost.illegal_balance_billed_amount:,.2f}" if (cost and cost.illegal_balance_billed_amount > 0) else "",
+            ],
+            "corrected_claim_instructions": None,
+            "action_summary": (
+                "File an NSA appeal with your insurance plan. The anesthesiologist/ancillary "
+                "provider cannot legally bill you for services rendered at an in-network hospital. "
+                "Your responsibility is capped at the in-network cost-sharing rate."
+            ),
+            "estimated_success_probability": 0.92,
+            "triage_method": "deterministic_nsa",
+        }
+
+    # CLEAR PROVIDER-SIDE CARC CODES → deterministic PROVIDER_CODING_ERROR
+    carc = (claim.denial_carc_code or "").upper().replace(" ", "")
+    if carc in PROVIDER_ERROR_CARC_CODES:
+        coding_error_desc = PROVIDER_ERROR_CARC_CODES[carc]
+        logger.info(f"Triage: DETERMINISTIC result — PROVIDER_CODING_ERROR (CARC {carc})")
+        return {
+            "path": "PROVIDER_CODING_ERROR",
+            "confidence": "HIGH",
+            "primary_reason": (
+                f"Denial code {carc} indicates a provider billing error: {coding_error_desc}. "
+                "The problem is with the claim submission, not the coverage decision."
+            ),
+            "coding_errors_detected": [coding_error_desc],
+            "legal_violations_detected": [],
+            "corrected_claim_instructions": (
+                f"1. Contact '{claim.provider_name or 'the billing department'}' at the facility.\n"
+                f"2. Reference Claim ID and Date of Service: {claim.date_of_service}.\n"
+                f"3. Request a CORRECTED CLAIM resubmission addressing CARC code {carc}: {coding_error_desc}.\n"
+                "4. Ask for a new claim number after resubmission.\n"
+                "5. Follow up in 30 days if no response."
+            ),
+            "action_summary": (
+                f"Contact the provider's billing department and request a corrected claim "
+                f"resubmission. The denial ({carc}) is due to a billing error, not a coverage issue."
+            ),
+            "estimated_success_probability": 0.75,
+            "triage_method": "deterministic_carc",
+        }
+
+    # CLEAR PAYER-VIOLATION CARC CODES → deterministic PAYER_ILLEGAL_DENIAL (benchmark only)
+    if carc in PAYER_VIOLATION_CARC_CODES:
+        violation_desc = PAYER_VIOLATION_CARC_CODES[carc]
+        if benchmark_mode:
+            logger.info(f"Triage: Benchmark mode & known payer violation (CARC {carc}) — returning deterministically")
+            return {
+                "path": "PAYER_ILLEGAL_DENIAL",
+                "confidence": "HIGH",
+                "primary_reason": f"Denial code {carc} indicates payer violation: {violation_desc}",
+                "coding_errors_detected": [],
+                "legal_violations_detected": [violation_desc],
+                "corrected_claim_instructions": None,
+                "action_summary": "File appeal with insurance carrier.",
+                "estimated_success_probability": 0.85,
+                "triage_method": "deterministic_payer_violation"
+            }
+        # Still run LLM for richer context in non-benchmark runs, but pre-seed the path
+        logger.info(
+            f"Triage: CARC {carc} is a known payer violation — "
+            "pre-seeding PAYER_ILLEGAL_DENIAL before LLM analysis"
+        )
+
+    return None
+
+
 async def triage_node(state: AgentState) -> dict:
     """
     Triage Agent: Determine whether the denial is a Provider Coding Error
@@ -186,128 +310,17 @@ async def triage_node(state: AgentState) -> dict:
 
         # ── Step 1: Run deterministic pre-checks first ────────────
         # These are clear-cut cases that don't need an LLM decision.
-
-        # If policy analysis confirmed the claim was correctly denied (e.g. explicit exclusion, annual limit),
-        # return deterministically without misidentifying correct denials as coding errors or illegal payer actions.
-        if contradiction_analysis and contradiction_analysis.get("appeal_recommendation") in {"CLAIM_CORRECTLY_DENIED", "UNLIKELY_TO_WIN"}:
-            rec = contradiction_analysis["appeal_recommendation"]
-            honest_msg = contradiction_analysis.get("honest_assessment") or f"Policy analysis concluded: {rec}"
-            logger.info(f"Triage: Honoring policy analyzer determination ({rec}) — returning deterministically")
+        deterministic_decision = deterministic_triage(
+            claim, cost, contradiction_analysis, benchmark_mode=bool(state.get("claim_overrides"))
+        )
+        if deterministic_decision is not None:
             return {
-                "triage_decision": {
-                    "path": "PAYER_ILLEGAL_DENIAL",
-                    "confidence": "HIGH",
-                    "primary_reason": honest_msg,
-                    "coding_errors_detected": [],
-                    "legal_violations_detected": [],
-                    "corrected_claim_instructions": None,
-                    "action_summary": f"Claim was correctly denied per policy provisions ({rec}). No further appeal recommended.",
-                    "estimated_success_probability": 0.05,
-                    "triage_method": "deterministic_correct_denial"
-                },
+                "triage_decision": deterministic_decision,
                 "current_phase": "triage",
                 "errors": errors,
             }
 
-        # NSA ANCILLARY PROVIDER at INN FACILITY → always PAYER violation
-        if (
-            claim.facility_network_status == NetworkStatus.IN_NETWORK
-            and claim.ancillary_service_type is not None
-        ):
-            nsa_decision = {
-                "path": "PAYER_ILLEGAL_DENIAL",
-                "confidence": "HIGH",
-                "primary_reason": (
-                    f"NSA Scenario B: {claim.ancillary_service_type.title()} provider "
-                    f"('{claim.provider_name or 'Unknown'}') is OUT-OF-NETWORK at the "
-                    f"IN-NETWORK facility '{claim.facility_name or 'Unknown'}'. "
-                    "Balance billing is prohibited under 45 CFR § 149.410(b)."
-                ),
-                "coding_errors_detected": [],
-                "legal_violations_detected": [
-                    "No Surprises Act (NSA) Scenario B — OON ancillary provider "
-                    "at INN facility. Patient cannot be balance billed. "
-                    "Provider must negotiate with plan via IDR process.",
-                    f"Illegal balance billed: ${cost.illegal_balance_billed_amount:,.2f}" if (cost and cost.illegal_balance_billed_amount > 0) else "",
-                ],
-                "corrected_claim_instructions": None,
-                "action_summary": (
-                    "File an NSA appeal with your insurance plan. The anesthesiologist/ancillary "
-                    "provider cannot legally bill you for services rendered at an in-network hospital. "
-                    "Your responsibility is capped at the in-network cost-sharing rate."
-                ),
-                "estimated_success_probability": 0.92,
-                "triage_method": "deterministic_nsa",
-            }
-            logger.info(
-                "Triage: DETERMINISTIC result — PAYER_ILLEGAL_DENIAL (NSA Scenario B)"
-            )
-            return {
-                "triage_decision": nsa_decision,
-                "current_phase": "triage",
-                "errors": errors,
-            }
-
-        # CLEAR PROVIDER-SIDE CARC CODES → deterministic PROVIDER_CODING_ERROR
-        carc = (claim.denial_carc_code or "").upper().replace(" ", "")
-        if carc in PROVIDER_ERROR_CARC_CODES:
-            coding_error_desc = PROVIDER_ERROR_CARC_CODES[carc]
-            provider_decision = {
-                "path": "PROVIDER_CODING_ERROR",
-                "confidence": "HIGH",
-                "primary_reason": (
-                    f"Denial code {carc} indicates a provider billing error: {coding_error_desc}. "
-                    "The problem is with the claim submission, not the coverage decision."
-                ),
-                "coding_errors_detected": [coding_error_desc],
-                "legal_violations_detected": [],
-                "corrected_claim_instructions": (
-                    f"1. Contact '{claim.provider_name or 'the billing department'}' at the facility.\n"
-                    f"2. Reference Claim ID and Date of Service: {claim.date_of_service}.\n"
-                    f"3. Request a CORRECTED CLAIM resubmission addressing CARC code {carc}: {coding_error_desc}.\n"
-                    "4. Ask for a new claim number after resubmission.\n"
-                    "5. Follow up in 30 days if no response."
-                ),
-                "action_summary": (
-                    f"Contact the provider's billing department and request a corrected claim "
-                    f"resubmission. The denial ({carc}) is due to a billing error, not a coverage issue."
-                ),
-                "estimated_success_probability": 0.75,
-                "triage_method": "deterministic_carc",
-            }
-            logger.info(f"Triage: DETERMINISTIC result — PROVIDER_CODING_ERROR (CARC {carc})")
-            return {
-                "triage_decision": provider_decision,
-                "current_phase": "triage",
-                "errors": errors,
-            }
-
-        # CLEAR PAYER-VIOLATION CARC CODES → deterministic PAYER_ILLEGAL_DENIAL
-        if carc in PAYER_VIOLATION_CARC_CODES:
-            violation_desc = PAYER_VIOLATION_CARC_CODES[carc]
-            if state.get("claim_overrides"):
-                logger.info(f"Triage: Benchmark mode & known payer violation (CARC {carc}) — returning deterministically")
-                return {
-                    "triage_decision": {
-                        "path": "PAYER_ILLEGAL_DENIAL",
-                        "confidence": "HIGH",
-                        "primary_reason": f"Denial code {carc} indicates payer violation: {violation_desc}",
-                        "coding_errors_detected": [],
-                        "legal_violations_detected": [violation_desc],
-                        "corrected_claim_instructions": None,
-                        "action_summary": "File appeal with insurance carrier.",
-                        "estimated_success_probability": 0.85,
-                        "triage_method": "deterministic_payer_violation"
-                    },
-                    "current_phase": "triage",
-                    "errors": errors,
-                }
-            # Still run LLM for richer context in non-benchmark runs, but pre-seed the path
-            logger.info(
-                f"Triage: CARC {carc} is a known payer violation — "
-                "pre-seeding PAYER_ILLEGAL_DENIAL before LLM analysis"
-            )
-            # Fall through to LLM with this context
+        # Fall through to LLM (a known payer-violation CARC, if any, is still surfaced in the context)
 
         # ── Step 2: LLM-based triage for ambiguous cases ──────────
         # Build a rich context for the LLM to reason over.

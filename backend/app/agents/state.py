@@ -56,3 +56,10 @@ class AgentState(TypedDict):
 
     # ── Explanations (populated by Explanation Agent) ─────────────
     explanations: dict[str, str]    # phase → plain English explanation
+
+    # ── Accuracy Core (appeal QA) — all optional, read via state.get() ──
+    policy_chunks_retrieved: list[dict] | None     # Policy PDF chunks the Policy Analyzer actually showed the LLM
+    knowledge_chunks_retrieved: list[dict] | None  # Knowledge-base chunks the Grievance agent actually showed the LLM
+    citation_verification: dict | None             # CitationVerification result from the appeal_qa node
+    quality_gate: dict | None                      # QualityGateResult from the quality_gate node
+    eob_extraction: dict | None                    # Optional raw EOB extraction (per-field confidence) supplied by the caller

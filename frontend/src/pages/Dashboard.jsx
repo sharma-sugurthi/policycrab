@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
+import { CitationGroundingBadge } from '../components/AccuracyPanel'
 
 // ── Session-scoped key for document extraction summaries ─────
 const SS_VAULT_KEY = 'policycrab_vault_docs'
@@ -977,11 +978,86 @@ function CostEstimator({ policy }) {
   )
 }
 
+// ── Appeal outcome recording (feeds success-score calibration) ──────────────
+const OUTCOME_OPTIONS = [
+  ['won', 'Won - overturned'],
+  ['partial', 'Partially won'],
+  ['lost', 'Lost - upheld'],
+  ['pending', 'Still pending'],
+  ['withdrawn', 'Withdrawn'],
+]
+const OUTCOME_BADGE = { won: 'badge-success', partial: 'badge-info', lost: 'badge-danger', pending: 'badge-warning', withdrawn: 'badge-zinc' }
+
+function RecordOutcome({ claimId, existing, onSaved }) {
+  const [open, setOpen] = useState(false)
+  const [outcome, setOutcome] = useState(existing?.outcome || 'won')
+  const [amount, setAmount] = useState(existing?.amount_recovered ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  const save = async () => {
+    setSaving(true); setError(null)
+    try {
+      const body = { claim_id: claimId, outcome }
+      if (amount !== '' && !Number.isNaN(Number(amount))) body.amount_recovered = Number(amount)
+      const res = await apiFetch('/outcomes', { method: 'POST', body: JSON.stringify(body) })
+      const data = await readApiResponse(res)
+      if (!res.ok || !data?.success) throw new Error(formatApiError(data, 'Could not save the outcome.'))
+      onSaved?.(data.outcome)
+      setOpen(false)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{ marginTop: '0.625rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {existing ? (
+          <span className={`badge ${OUTCOME_BADGE[existing.outcome] || 'badge-zinc'}`}>
+            Outcome: {existing.outcome}{existing.amount_recovered ? ` - $${Number(existing.amount_recovered).toLocaleString()} recovered` : ''}
+          </span>
+        ) : (
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>How did this appeal turn out?</span>
+        )}
+        <button type="button" className="btn btn-ghost" style={{ padding: '0.25rem 0.625rem', fontSize: '0.75rem' }} onClick={() => setOpen(o => !o)}>
+          {open ? 'Cancel' : existing ? 'Update outcome' : 'Record outcome'}
+        </button>
+      </div>
+      {open && (
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <select className="input" value={outcome} onChange={e => setOutcome(e.target.value)} style={{ maxWidth: '200px', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }} aria-label="Appeal outcome">
+            {OUTCOME_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          </select>
+          <input
+            className="input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="$ recovered (optional)"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            style={{ maxWidth: '190px', padding: '0.375rem 0.5rem', fontSize: '0.8125rem' }}
+            aria-label="Amount recovered"
+          />
+          <button type="button" className="btn btn-red" style={{ padding: '0.375rem 0.875rem', fontSize: '0.8125rem' }} onClick={save} disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          {error && <span style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>{error}</span>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Dashboard({ policyProfile, onPolicySelected }) {
   const { session } = useAuth()
   const navigate = useNavigate()
   const [policies, setPolicies] = useState([])
   const [claims, setClaims] = useState([])
+  const [outcomesByClaim, setOutcomesByClaim] = useState({})
   const [loading, setLoading] = useState(true)
   const [compareIds, setCompareIds] = useState(new Set())
   const [activeTab, setActiveTab] = useState('overview')
@@ -1012,6 +1088,19 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
         if (claimRes.ok) {
           const claimData = await readApiResponse(claimRes)
           setClaims(Array.isArray(claimData) ? claimData : [])
+        }
+
+        // Recorded appeal outcomes (best-effort; the dashboard works without them)
+        try {
+          const outRes = await apiFetch('/outcomes')
+          if (outRes.ok) {
+            const outData = await readApiResponse(outRes)
+            const map = {}
+            for (const o of (outData?.outcomes || [])) map[o.claim_id] = o
+            setOutcomesByClaim(map)
+          }
+        } catch (err) {
+          console.warn('Outcomes unavailable', err)
         }
       } catch (err) {
         console.error('Failed to load history', err)
@@ -1360,7 +1449,22 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                               <p style={{ fontSize: '0.8125rem', color: '#1e3a8a', fontWeight: 500 }}>
                                 {c.appeal_output.cited_regulations[0].statute}: {c.appeal_output.cited_regulations[0].description}
                               </p>
+                              <div style={{ marginTop: '0.375rem', display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+                                <CitationGroundingBadge verification={c.appeal_output.citation_verification} compact />
+                                {c.appeal_output.success_score_band && (
+                                  <span className="badge badge-zinc" style={{ fontSize: '0.6875rem' }}>
+                                    Case strength: {c.appeal_output.success_score_band}
+                                  </span>
+                                )}
+                              </div>
                             </div>
+                          )}
+                          {c.route_decision === 'denied' && c.appeal_output && (
+                            <RecordOutcome
+                              claimId={c.id}
+                              existing={outcomesByClaim[c.id]}
+                              onSaved={(o) => setOutcomesByClaim(prev => ({ ...prev, [c.id]: o }))}
+                            />
                           )}
                         </div>
                       )

@@ -96,6 +96,28 @@ STRUCTURAL_ANCHOR_SECTIONS = [
     "DEFINITIONS",   # Key terms used in the policy
 ]
 
+# Cap on policy chunks rendered into the LLM prompt (and surfaced to appeal_qa).
+POLICY_CHUNK_PROMPT_CAP = 18
+
+
+def _serialize_policy_chunks(chunks: list[dict] | None) -> list[dict]:
+    """
+    Reduce retrieved policy chunks to the plain fields the appeal_qa node needs
+    to verify quoted clauses. Mirrors the prompt cap so the verifier checks
+    against exactly what the LLM saw. Never raises.
+    """
+    out: list[dict] = []
+    for r in (chunks or [])[:POLICY_CHUNK_PROMPT_CAP]:
+        if not isinstance(r, dict):
+            continue
+        out.append({
+            "page_number": r.get("page_number"),
+            "chunk_index": r.get("chunk_index", 0),
+            "chunk_text": r.get("chunk_text", "") or "",
+            "section_heading": r.get("section_heading"),
+        })
+    return out
+
 
 # ── Denial-to-Query mapping ───────────────────────────────────────
 DENIAL_QUERIES: dict[str, list[str]] = {
@@ -264,6 +286,9 @@ async def policy_analyzer_node(state: AgentState) -> dict:
             "current_phase": "policy_analyzer",
             "errors": errors + ["Policy Analyzer: No claim case available"],
         }
+
+    # Defined before the try so the exception fallback can always reference it.
+    all_results: list[dict] = []
 
     try:
         claim_data = dict(state.get("claim_case") or {})
@@ -450,7 +475,7 @@ async def policy_analyzer_node(state: AgentState) -> dict:
                 # Format with section tags for the LLM
                 policy_excerpts = "\n\n".join([
                     f"[PAGE {r['page_number']}] [{r.get('section_heading', 'UNTAGGED')}]\n{r['chunk_text']}"
-                    for r in all_results[:18]  # Increased cap: 18 chunks (was 12)
+                    for r in all_results[:POLICY_CHUNK_PROMPT_CAP]  # 18 chunks (was 12)
                 ])
 
         denial_context = (
@@ -514,6 +539,7 @@ async def policy_analyzer_node(state: AgentState) -> dict:
 
         return {
             "contradiction_analysis": analysis_data,
+            "policy_chunks_retrieved": _serialize_policy_chunks(all_results),
             "current_phase": "policy_analyzer",
             "errors": errors,
         }
@@ -561,6 +587,7 @@ async def policy_analyzer_node(state: AgentState) -> dict:
             }
             return {
                 "contradiction_analysis": analysis_data,
+                "policy_chunks_retrieved": _serialize_policy_chunks(all_results),
                 "current_phase": "policy_analyzer",
                 "errors": errors + [error_msg],
             }
