@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from app.agents.graph import get_policy_ingestion_graph
 from app.services.pdf_extractor import extract_text_from_pdf
 from app.api.auth import get_current_user
+from app.api.org_context import get_org_context
 from app.security.rate_limit import rate_limit
 from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 from app.services.user_data import create_user_policy
@@ -109,6 +110,7 @@ async def _run_ingestion(
 async def upload_policy_text(
     request: PolicyUploadRequest, 
     user: dict = Depends(get_current_user),
+    org_ctx: dict | None = Depends(get_org_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT)
 ):
     """
@@ -122,6 +124,7 @@ async def upload_policy_text(
                     user["id"],
                     response.policy_profile,
                     session_id=response.session_id,
+                    org_id=(org_ctx or {}).get("org_id"),
                 )
             except ValueError as limit_error:
                 # Policy limit reached — still return the profile but warn the user
@@ -144,6 +147,7 @@ async def upload_policy_text(
 async def upload_policy_pdf(
     file: UploadFile = File(...), 
     user: dict = Depends(get_current_user),
+    org_ctx: dict | None = Depends(get_org_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT)
 ):
     """
@@ -250,6 +254,7 @@ async def upload_policy_pdf(
                     base_resp.policy_profile,
                     session_id=base_resp.session_id,
                     raw_text=extracted_text,   # preserve for audit / re-extraction
+                    org_id=(org_ctx or {}).get("org_id"),
                 )
             except ValueError as limit_error:
                 base_resp.errors = base_resp.errors + [str(limit_error)]
@@ -279,6 +284,7 @@ async def upload_policy_pdf_async(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user),
+    org_ctx: dict | None = Depends(get_org_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT),
 ):
     """
@@ -344,6 +350,7 @@ async def upload_policy_pdf_async(
         pdf_text=safe_text,
         session_id=session_id,
         user_id=user.get("id"),
+        org_id=(org_ctx or {}).get("org_id"),
     )
 
     logger.info(
@@ -365,6 +372,7 @@ async def upload_policy_text_async(
     background_tasks: BackgroundTasks,
     request: PolicyUploadRequest,
     user: dict = Depends(get_current_user),
+    org_ctx: dict | None = Depends(get_org_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT),
 ):
     """
@@ -388,6 +396,7 @@ async def upload_policy_text_async(
         pdf_text=safe_text,
         session_id=session_id,
         user_id=user.get("id"),
+        org_id=(org_ctx or {}).get("org_id"),
     )
 
     logger.info(

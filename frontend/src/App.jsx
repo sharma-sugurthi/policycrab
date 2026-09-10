@@ -1,4 +1,4 @@
-import { Routes, Route, NavLink, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, NavLink, useLocation, Navigate, useNavigate } from 'react-router-dom'
 import { lazy, Suspense, useEffect, useState, useRef } from 'react'
 import Home from './pages/Home'
 import ClaimEvaluator from './pages/ClaimEvaluator'
@@ -11,10 +11,14 @@ import AdminDashboard from './pages/AdminDashboard'
 import CarrierHub from './pages/CarrierHub'
 import AppealStudio from './pages/AppealStudio'
 import ResourcesHub from './pages/ResourcesHub'
+import OrganizationsPage from './pages/OrganizationsPage'
+import AcceptInvitePage from './pages/AcceptInvitePage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { TaskProvider } from './contexts/TaskContext'
+import { OrgProvider, useOrg } from './contexts/OrgContext'
+import { takePendingInvite } from './lib/orgs'
 import TaskStatusBar from './components/TaskStatusBar'
-import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity } from './components/Icons'
+import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity, IconUsers } from './components/Icons'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const BenchmarkDashboard = lazy(() => import('./pages/BenchmarkDashboard'))
@@ -242,7 +246,16 @@ function AppContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
   const { user, signOut, isAdmin } = useAuth()
+  const { enabled: orgsEnabled, activeOrg } = useOrg()
+  const navigate = useNavigate()
   useTheme() // Lock to light mode on mount
+
+  // An invitation link opened while signed out parks its token; resume it after sign-in.
+  useEffect(() => {
+    if (!user) return
+    const pending = takePendingInvite()
+    if (pending) navigate(`/invite?token=${encodeURIComponent(pending)}`, { replace: true })
+  }, [user, navigate])
 
   // User Dropdown State
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -403,10 +416,18 @@ function AppContent() {
                     <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border-secondary)', marginBottom: '0.5rem' }}>
                       <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.user_metadata?.full_name || 'User'}</p>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</p>
+                      {activeOrg && (
+                        <p style={{ fontSize: '0.6875rem', color: 'var(--accent)', fontWeight: 700, marginTop: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Workspace: {activeOrg.name}</p>
+                      )}
                     </div>
                     <NavLink to="/profile" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)', borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
                       <IconUser size={16} /> Profile
                     </NavLink>
+                    {orgsEnabled && (
+                      <NavLink to="/orgs" onClick={() => setDropdownOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)', borderRadius: '0.375rem', textDecoration: 'none' }} className="dropdown-item">
+                        <IconUsers size={16} /> Team workspaces
+                      </NavLink>
+                    )}
 
                     <button onClick={() => { setDropdownOpen(false); handleSignOut(); }} style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', fontSize: '0.875rem', color: 'var(--danger)', borderRadius: '0.375rem', background: 'transparent', border: 'none', cursor: 'pointer' }} className="dropdown-item">
                       <IconLogOut size={16} /> Sign Out
@@ -451,6 +472,9 @@ function AppContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.9375rem', fontWeight: 600 }}>{user.user_metadata?.full_name || user.email}</span>
                 <NavLink to="/profile" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setMobileMenuOpen(false)}><IconUser size={16} /> Profile</NavLink>
+                {orgsEnabled && (
+                  <NavLink to="/orgs" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center' }} onClick={() => setMobileMenuOpen(false)}><IconUsers size={16} /> Team workspaces</NavLink>
+                )}
 
                 <button onClick={handleSignOut} className="btn btn-ghost" style={{ display: 'flex', justifyContent: 'center' }}><IconLogOut size={16} /> Sign Out</button>
               </div>
@@ -468,6 +492,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home policyProfile={policyProfile} costBreakdown={costBreakdown} />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/invite" element={<AcceptInvitePage />} />
           
           {/* Protected Routes */}
           <Route path="/dashboard" element={
@@ -500,6 +525,11 @@ function AppContent() {
               <ProfilePage />
             </ProtectedRoute>
           } />
+          <Route path="/orgs" element={
+            <ProtectedRoute>
+              <OrganizationsPage />
+            </ProtectedRoute>
+          } />
           <Route path="/studio" element={
             <ProtectedRoute>
               <AppealStudio />
@@ -529,9 +559,11 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <TaskProvider>
-        <AppContent />
-      </TaskProvider>
+      <OrgProvider>
+        <TaskProvider>
+          <AppContent />
+        </TaskProvider>
+      </OrgProvider>
     </AuthProvider>
   )
 }

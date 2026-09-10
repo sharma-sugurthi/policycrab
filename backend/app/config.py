@@ -58,6 +58,15 @@ class Settings(BaseSettings):
     # ── Admin Authorization (configured via ADMIN_EMAILS environment variable) ──────────
     admin_emails: str = ""
 
+    # ── Organizations (team workspaces) ───────────────────────────
+    # Off by default: every /api/orgs endpoint returns 404 and the X-Org-Id
+    # header is ignored, so existing single-user behaviour is untouched.
+    # Requires supabase/migrations/009_create_organizations.sql.
+    orgs_enabled: bool = False
+    # Public URL of the frontend; used to build invitation links.
+    app_base_url: str = "https://policycrab.tech"
+    org_invitation_ttl_days: int = 7
+
     google_cloud_project: str = ""
     gcp_location: str = "us-east1"
 

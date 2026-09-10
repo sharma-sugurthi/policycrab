@@ -19,6 +19,7 @@ Supabase provides the managed PostgreSQL database (with `pgvector` for AI embedd
      6. `006_chat_history.sql`
      7. `007_hipaa_auto_purge.sql`
      8. `008_create_appeal_outcomes.sql` — appeal outcome tracking for success-score calibration (`/api/outcomes`). Apply **before** deploying a backend that includes the Accuracy Core; the table holds no PHI and is deliberately excluded from the 30-day purge.
+     9. `009_create_organizations.sql` — team workspaces (`organizations`, `org_members`, `org_invitations`) plus a nullable `org_id` on `user_claims` and `user_policies`. Inert until `ORGS_ENABLED=true`, so it is safe to apply at any time; existing rows are untouched.
 4. **Authentication:**
    - Enable Email/Password authentication in the Supabase Auth Settings.
    - Disable "Confirm Email" if you want users to be able to sign up and immediately use the app during your initial launch.
@@ -41,6 +42,11 @@ The backend is a standard Python FastAPI application. We use **Google Cloud Run*
      - `CITATION_POLICY_FUZZY_THRESHOLD=0.85` — minimum similarity for a quoted policy clause to count as found in the retrieved policy chunks.
      - `QUALITY_GATE_MODE=warn` — `warn` drafts with bracketed placeholders and attaches a missing-information checklist; `block` refuses to draft when critical facts (denial date, billed amount, plan classification, unreconciled EOB math) are missing; `off` disables the gate.
    - After deploying, run `python scripts/build_citation_allowlist.py --checklist` from `backend/` and have a maintainer open each listed source URL to set `verified_on` in `app/engine/citation_allowlist.py`. Until then every letter carries the flag `ALLOWLIST_NEEDS_HUMAN_VERIFICATION` (visible in the UI as "reference list pending review").
+   - **Team workspaces (optional — off by default):**
+     - `ORGS_ENABLED=false` — set to `true` to expose `/api/orgs` and the Team Workspaces UI. Requires migration 009. With it off, the frontend hides every team control and the backend ignores the `X-Org-Id` header, so single-user behaviour is unchanged.
+     - `APP_BASE_URL=https://policycrab.tech` — public frontend URL used to build invitation links (`/invite?token=...`).
+     - `ORG_INVITATION_TTL_DAYS=7` — how long an invitation link stays valid.
+     - Invitation emails go through the existing `RESEND_API_KEY`. When it is not set, the one-time link is returned to the inviting admin in the UI instead of being emailed.
 4. The deployment is handled automatically by the GitHub Actions pipeline upon merging to the `main` branch. Note the live backend URL (e.g., `https://policycrab-api-xyz.a.run.app`).
 
 ## 3. Frontend Deployment (Vercel)

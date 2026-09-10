@@ -18,6 +18,7 @@ def create_user_policy(
     policy_profile: dict,
     session_id: str | None = None,
     raw_text: str | None = None,
+    org_id: str | None = None,
 ) -> dict | None:
     client = get_supabase_client()
 
@@ -42,6 +43,9 @@ def create_user_policy(
         # None if the caller didn't supply it (text-paste path without raw PDF).
         "raw_text": raw_text[:5000] if raw_text else None,
     }
+    # Key omitted when unset so a database without migration 009 keeps working.
+    if org_id:
+        payload["org_id"] = org_id
     result = (
         client.table("user_policies")
         .insert(payload)
@@ -100,6 +104,7 @@ def create_user_claim(
     appeal_output: dict | None,
     route_decision: str | None,
     policy_id: str | None = None,
+    org_id: str | None = None,
 ) -> dict | None:
     # Scrub PHI from freetext before writing to DB
     clean_description, redaction_count = scrub_phi(claim_description)
@@ -119,6 +124,8 @@ def create_user_claim(
         "appeal_output_json": appeal_output,
         "route_decision": route_decision,
     }
+    if org_id:
+        payload["org_id"] = org_id
     result = client.table("user_claims").insert(payload).execute()
     return result.data[0] if result.data else None
 

@@ -26,6 +26,7 @@ async def run_claim_evaluation(
     policy_indexed: bool = False,
     user_id: str | None = None,
     eob_extraction: dict | None = None,
+    org_id: str | None = None,
 ) -> None:
     """
     Async background coroutine: run the full claim evaluation pipeline.
@@ -80,6 +81,7 @@ async def run_claim_evaluation(
                     cost_breakdown=result.get("cost_breakdown"),
                     appeal_output=result.get("appeal_output"),
                     route_decision=result.get("route_decision"),
+                    org_id=org_id,
                 )
             except Exception as db_err:
                 logger.error(f"Claim task: Failed to persist claim: {db_err}")

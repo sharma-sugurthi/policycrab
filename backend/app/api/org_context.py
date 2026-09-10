@@ -1,0 +1,63 @@
+"""
+Request-scoped organization context.
+
+`get_org_context` reads the optional X-Org-Id header and resolves it to the
+caller's membership. It is attached to the claim/policy save endpoints as an
+optional dependency: with no header (or ORGS_ENABLED=false) it returns None and
+those endpoints behave exactly as they always have.
+"""
+
+from uuid import UUID
+
+from fastapi import Depends, Header, HTTPException, status
+
+from app.api.auth import get_current_user
+from app.services import organizations as org_service
+from app.services.organizations import OrgError, OrgNotFound, OrgPermissionError
+
+
+def is_uuid(value: str | None) -> bool:
+    try:
+        UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def valid_uuid_or_404(value: str, what: str = "Organization") -> str:
+    if not is_uuid(value):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{what} not found.")
+    return str(value)
+
+
+def require_orgs_enabled() -> None:
+    if not org_service.orgs_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organizations are not enabled on this deployment.",
+        )
+
+
+def translate_org_error(exc: Exception) -> HTTPException:
+    if isinstance(exc, OrgNotFound):
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if isinstance(exc, OrgPermissionError):
+        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    if isinstance(exc, OrgError):
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Organization request failed.")
+
+
+def get_org_context(
+    user: dict = Depends(get_current_user),
+    x_org_id: str | None = Header(default=None, alias="X-Org-Id"),
+) -> dict | None:
+    """{"org_id", "role"} for the active workspace, or None for personal context."""
+    if not org_service.orgs_enabled() or not x_org_id:
+        return None
+    if not is_uuid(x_org_id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid X-Org-Id header.")
+    try:
+        return org_service.resolve_org_context(user["id"], x_org_id)
+    except (OrgNotFound, OrgPermissionError, OrgError) as exc:
+        raise translate_org_error(exc) from exc

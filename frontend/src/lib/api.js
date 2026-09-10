@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { getStoredActiveOrgId } from './orgs'
 
 const API_BASE_URL = '/api' // Rewritten by Vercel in production, or Vite proxy locally
 
@@ -14,6 +15,12 @@ export async function apiFetch(endpoint, options = {}) {
   const headers = {
     ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...options.headers,
+  }
+
+  // Team workspace scoping: only present once the user picked a workspace (OrgContext)
+  const activeOrgId = getStoredActiveOrgId()
+  if (activeOrgId && !headers['X-Org-Id']) {
+    headers['X-Org-Id'] = activeOrgId
   }
 
   // If we have a valid session, attach the Bearer token

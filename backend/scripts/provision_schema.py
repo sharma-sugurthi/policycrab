@@ -52,6 +52,7 @@ async def main() -> None:
     tables = [
         "knowledge_chunks", "policy_chunks", "user_policies", "user_claims",
         "user_chats", "user_documents", "user_audits", "appeal_outcomes",
+        "organizations", "org_members", "org_invitations",
     ]
     print("== State before ==")
     for t in tables:

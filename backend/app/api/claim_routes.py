@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 from pydantic import BaseModel, Field
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
+from app.api.org_context import get_org_context
 from app.security.rate_limit import rate_limit_user
 from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 from app.services.user_data import create_user_claim
@@ -80,6 +81,7 @@ class ClaimEvaluationResponse(BaseModel):
 async def evaluate_claim(
     request: ClaimEvaluationRequest,
     user: dict = Depends(get_current_user),
+    org_ctx: dict | None = Depends(get_org_context),
     _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT),
 ):
     """
@@ -153,6 +155,7 @@ async def evaluate_claim(
                     cost_breakdown=response.cost_breakdown,
                     appeal_output=response.appeal_output,
                     route_decision=response.route_decision,
+                    org_id=(org_ctx or {}).get("org_id"),
                 )
             except Exception:
                 logger.error("Failed to save claim evaluation to Supabase", exc_info=True)
@@ -177,6 +180,7 @@ async def evaluate_claim_async(
     background_tasks: BackgroundTasks,
     request: ClaimEvaluationRequest,
     user: dict = Depends(get_current_user),
+    org_ctx: dict | None = Depends(get_org_context),
     _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT),
 ):
     """
@@ -209,6 +213,7 @@ async def evaluate_claim_async(
         policy_indexed=request.policy_indexed,
         user_id=user.get("id"),
         eob_extraction=request.eob_extraction,
+        org_id=(org_ctx or {}).get("org_id"),
     )
 
     logger.info(

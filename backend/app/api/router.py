@@ -23,6 +23,7 @@ from app.api.carrier_routes import router as carrier_router
 from app.api.deadline_routes import router as deadline_router
 from app.api.studio_routes import router as studio_router
 from app.api.outcome_routes import router as outcome_router
+from app.api.org_routes import router as org_router
 from app.api.seo_routes import public_router, smart_email_router
 from app.security.rate_limit import rate_limit
 from app.api.auth import get_current_user
@@ -48,6 +49,7 @@ api_router.include_router(carrier_router)
 api_router.include_router(deadline_router)
 api_router.include_router(studio_router)
 api_router.include_router(outcome_router)
+api_router.include_router(org_router)
 api_router.include_router(public_router)
 api_router.include_router(smart_email_router)
 

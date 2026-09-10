@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
+import { useOrg } from '../contexts/OrgContext'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
@@ -1054,6 +1055,8 @@ function RecordOutcome({ claimId, existing, onSaved }) {
 
 export default function Dashboard({ policyProfile, onPolicySelected }) {
   const { session } = useAuth()
+  const { activeOrg } = useOrg()
+  const workspaceId = activeOrg?.id || null
   const navigate = useNavigate()
   const [policies, setPolicies] = useState([])
   const [claims, setClaims] = useState([])
@@ -1078,7 +1081,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
       try {
         const [polRes, claimRes] = await Promise.all([
           apiFetch('/history/policies'),
-          apiFetch('/history/claims')
+          apiFetch(workspaceId ? `/orgs/${workspaceId}/claims` : '/history/claims')
         ])
 
         if (polRes.ok) {
@@ -1119,7 +1122,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
     return () => {
       if (safetyTimer) clearTimeout(safetyTimer)
     }
-  }, [session])
+  }, [session, workspaceId])
 
   const hasPolicy = Boolean(policyProfile) || policies.length > 0
   const hasClaim = claims.length > 0
@@ -1220,6 +1223,15 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
             Start with your policy, evaluate a bill or denial, then use the appeal output when it applies.
           </motion.p>
         </motion.div>
+
+        {activeOrg && (
+          <div role="status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.75rem 1rem', marginBottom: '1.5rem', background: 'var(--info-bg)', border: '1px solid var(--info-border)', borderRadius: 'var(--radius-lg)' }}>
+            <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>
+              <strong>Workspace: {activeOrg.name}</strong> — the claims below were saved by your whole team, and new evaluations are saved here too.
+            </span>
+            <button type="button" className="btn btn-ghost" style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }} onClick={() => navigate('/orgs')}>Manage workspaces</button>
+          </div>
+        )}
 
         {/* ── Tab Strip ─────────────────────────────────────────── */}
         <div style={{
@@ -1400,7 +1412,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {claims.length === 0 ? (
                     <div className="dashboard-empty">
-                      <h3>No claims evaluated yet</h3>
+                      <h3>{activeOrg ? 'No claims in this workspace yet' : 'No claims evaluated yet'}</h3>
                       <p>{hasPolicy ? 'Use your loaded policy to evaluate a medical bill, EOB, or denial.' : 'Upload a policy first, then come back to evaluate a claim.'}</p>
                       <button className="btn btn-red" onClick={() => hasPolicy ? handleUsePolicyForClaim(activePolicy) : navigate('/policy')}>
                         {hasPolicy ? 'Evaluate Claim' : 'Upload Policy'}
@@ -1427,7 +1439,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                             <span className={`badge ${c.route_decision === 'denied' ? 'badge-danger' : 'badge-success'}`}>
                               {c.route_decision === 'denied' ? 'Denied' : 'Approved'}
                             </span>
-                            <span>{new Date(c.created_at).toLocaleDateString()}</span>
+                            <span>{c.created_by_email ? `${c.created_by_email} · ` : ''}{new Date(c.created_at).toLocaleDateString()}</span>
                           </div>
                           <ParsedClaimDescription text={c.claim_description} />
                           <div className="dashboard-cost-row">
@@ -1459,7 +1471,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                               </div>
                             </div>
                           )}
-                          {c.route_decision === 'denied' && c.appeal_output && (
+                          {c.route_decision === 'denied' && c.appeal_output && (!c.user_id || c.user_id === session?.user?.id) && (
                             <RecordOutcome
                               claimId={c.id}
                               existing={outcomesByClaim[c.id]}

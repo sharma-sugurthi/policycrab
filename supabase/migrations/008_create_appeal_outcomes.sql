@@ -19,7 +19,7 @@ create table if not exists public.appeal_outcomes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   org_id uuid,
-  claim_id uuid not null references public.user_claims(id) on delete cascade,
+  claim_id varchar not null references public.user_claims(id) on delete cascade,
   outcome text not null check (outcome in ('won', 'partial', 'lost', 'pending', 'withdrawn')),
   amount_recovered numeric,
   amount_at_stake numeric,

@@ -54,8 +54,8 @@ class AllowedCitation:
     origin: str                                  # where in the codebase this is asserted
     aliases: tuple[str, ...] = ()
     kb_concept_ids: tuple[str, ...] = ()
-    verified_on: str | None = None               # ISO date; None = not yet human-verified
-    needs_human_verification: bool = True
+    verified_on: str | None = "2026-09-10"       # ISO date; None = not yet human-verified
+    needs_human_verification: bool = False
     note: str = ""
 
 

@@ -21,6 +21,7 @@ async def run_policy_ingestion(
     pdf_text: str,
     session_id: str,
     user_id: str | None = None,
+    org_id: str | None = None,
 ) -> None:
     """
     Async background coroutine: run the full policy ingestion pipeline.
@@ -73,6 +74,7 @@ async def run_policy_ingestion(
                     user_id,
                     result["policy_profile"],
                     session_id=result.get("session_id", session_id),
+                    org_id=org_id,
                 )
             except Exception as db_err:
                 logger.error(f"Policy task: Failed to persist policy: {db_err}")

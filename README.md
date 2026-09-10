@@ -40,6 +40,7 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
    - **Extraction Quality Gate** — detects the sentinel values intake substitutes when facts are missing (denial date, billed amount, CARC code, plan classification, unreconciled EOB math) and returns a where-to-find-it checklist; the drafting prompt is told to use bracketed placeholders instead of guessing. `QUALITY_GATE_MODE=block` refuses to draft on critical gaps.
    - **Transparent Success Score + Outcome Calibration** — a factor-by-factor case-strength estimate shown alongside the model's own guess, and `/api/outcomes` to record what actually happened so the score can be calibrated against real overturn rates (`GET /api/outcomes/calibration`).
    - **LLM-free regression suite** — `tests/test_benchmark_deterministic.py` runs the deterministic engines over all 200 benchmark cases plus 12 hand-written quality-gate cases in CI, with no model or database access.
+9. **Team Workspaces (B2B, opt-in):** Advocacy firms, hospital billing teams and HR benefits managers work from a shared workspace — owner/admin/member/viewer roles, one-time email invitations (token hashed at rest, must be accepted from the invited address), and claims saved into the team so a colleague can pick up a case. Enabled per deployment with `ORGS_ENABLED=true`; every endpoint stays hidden and every existing flow unchanged until then.
 
 ##  Repository Structure
 
@@ -58,7 +59,6 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 ├── knowledge_base/         # Curated US healthcare regulation markdown files
 ├── .env.example            # Environment variables template
 ├── DEPLOYMENT.md           # Instructions for deploying to production
-├── CHANGELOG.md            # Version history and feature list
 └── SECURITY.md             # Security and PHI handling policies
 ```
 
@@ -108,7 +108,6 @@ Visit: `http://localhost:5000`
 The codebase is clean, well-commented, and heavily modularized. See the following documents for more details:
 - [DEPLOYMENT.md](DEPLOYMENT.md) - For deploying to production (Vercel & Google Cloud Run).
 - [SECURITY.md](SECURITY.md) - For data privacy and infrastructure protection.
-- [CHANGELOG.md](CHANGELOG.md) - To review all current platform features.
 
 ---
 *PolicyCrab: The Future of Patient Advocacy.*

@@ -12,6 +12,7 @@ Design principles:
   - CAN-SPAM compliant footer (required by US law)
 """
 
+import html
 import logging
 from app.config import settings
 
@@ -241,6 +242,70 @@ PolicyCrab · policycrab.tech
 """
 
 
+# ── Organization Invitation Email ────────────────────────────────────────────
+
+def _org_invite_html(org_name: str, inviter_email: str, role: str, accept_url: str, expires_days: int) -> str:
+    """Team invitation in the same Stripe-style shell as the other templates."""
+    org = html.escape(org_name)
+    inviter = html.escape(inviter_email or "A teammate")
+    role_label = html.escape(role)
+    url = html.escape(accept_url, quote=True)
+    content = f"""
+      <h1 style="margin:0 0 16px;font-size:24px;font-weight:700;color:#0a0a0a;letter-spacing:-0.3px;">
+        You're invited to {org}
+      </h1>
+      <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#425466;">
+        <strong style="color:#0a0a0a;">{inviter}</strong> invited you to join
+        <strong style="color:#0a0a0a;">{org}</strong> on PolicyCrab as a
+        <strong style="color:#0a0a0a;">{role_label}</strong>. Team workspaces let advocates,
+        billing staff and benefits managers review denials and appeals together.
+      </p>
+
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px;">
+        <tr>
+          <td style="border-radius:6px;background-color:#635bff;">
+            <a href="{url}"
+               style="display:inline-block;padding:12px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;letter-spacing:0.1px;">
+              Accept invitation →
+            </a>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 20px;font-size:13px;line-height:1.7;color:#8898aa;">
+        Sign in with this email address to accept. The link expires in {expires_days} days
+        and can be used once. If the button does not work, paste this into your browser:<br>
+        <a href="{url}" style="color:#635bff;word-break:break-all;">{url}</a>
+      </p>
+
+      <hr style="border:none;border-top:1px solid #e6ebf1;margin:0 0 20px;">
+      <p style="margin:0;font-size:13px;color:#8898aa;">
+        Didn't expect this? You can ignore this email — nothing happens until you accept.
+      </p>
+    """
+    return _base_layout(
+        f"You're invited to join {org} on PolicyCrab",
+        content,
+        preview=f"{inviter} invited you to {org} on PolicyCrab.",
+    )
+
+
+def _org_invite_text(org_name: str, inviter_email: str, role: str, accept_url: str, expires_days: int) -> str:
+    return f"""You're invited to join {org_name} on PolicyCrab
+
+{inviter_email or "A teammate"} invited you to join {org_name} as a {role}.
+
+Accept the invitation (sign in with this email address):
+{accept_url}
+
+The link expires in {expires_days} days and can be used once.
+Didn't expect this? Ignore this email — nothing happens until you accept.
+
+---
+PolicyCrab · policycrab.tech
+"""
+
+
 # ── Email Service ─────────────────────────────────────────────────────────────
 
 class EmailService:
@@ -308,6 +373,34 @@ class EmailService:
             return True
         except Exception as e:
             logger.error(f"Failed to send appeal email to {user_email}: {e}")
+            return False
+
+    def send_org_invitation(
+        self,
+        to_email: str,
+        org_name: str,
+        inviter_email: str,
+        role: str,
+        accept_url: str,
+        expires_days: int = 7,
+    ) -> bool:
+        if not self._configured:
+            logger.warning(f"Email skipped (not configured): org invitation → {to_email}")
+            return False
+        try:
+            params = {
+                "from": settings.email_from,
+                "to": [to_email],
+                "reply_to": "info@policycrab.tech",
+                "subject": f"You're invited to join {org_name} on PolicyCrab",
+                "html": _org_invite_html(org_name, inviter_email, role, accept_url, expires_days),
+                "text": _org_invite_text(org_name, inviter_email, role, accept_url, expires_days),
+            }
+            response = self._resend.Emails.send(params)
+            logger.info(f"Org invitation sent to {to_email} (id={response.get('id')})")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send org invitation to {to_email}: {e}")
             return False
 
 
