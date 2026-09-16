@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 from pydantic import BaseModel, Field
 from app.agents.graph import get_claim_evaluation_graph
 from app.api.auth import get_current_user
-from app.api.org_context import get_org_context
+from app.api.org_context import get_org_write_context
 from app.security.rate_limit import rate_limit_user
 from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 from app.services.user_data import create_user_claim
@@ -81,7 +81,7 @@ class ClaimEvaluationResponse(BaseModel):
 async def evaluate_claim(
     request: ClaimEvaluationRequest,
     user: dict = Depends(get_current_user),
-    org_ctx: dict | None = Depends(get_org_context),
+    org_ctx: dict | None = Depends(get_org_write_context),
     _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT),
 ):
     """
@@ -180,7 +180,7 @@ async def evaluate_claim_async(
     background_tasks: BackgroundTasks,
     request: ClaimEvaluationRequest,
     user: dict = Depends(get_current_user),
-    org_ctx: dict | None = Depends(get_org_context),
+    org_ctx: dict | None = Depends(get_org_write_context),
     _: None = Depends(CLAIM_EVALUATE_RATE_LIMIT),
 ):
     """

@@ -328,9 +328,14 @@ def test_resolve_org_context_rules(store, orgs_on):
     assert resolve_org_context(MEMBER, None) is None
     with pytest.raises(OrgNotFound):
         resolve_org_context(OUTSIDER, org["id"])
-    with pytest.raises(OrgPermissionError):        # viewers are read-only
-        resolve_org_context(VIEWER, org["id"])
+    assert resolve_org_context(VIEWER, org["id"]) == {"org_id": org["id"], "role": "viewer"}   # read access
     assert resolve_org_context(MEMBER, org["id"]) == {"org_id": org["id"], "role": "member"}
+    from app.api.org_context import get_org_write_context
+    with pytest.raises(HTTPException) as denied:                                                # ...but no saving
+        get_org_write_context({"org_id": org["id"], "role": "viewer"})
+    assert denied.value.status_code == 403
+    assert get_org_write_context({"org_id": org["id"], "role": "member"})["role"] == "member"
+    assert get_org_write_context(None) is None
 
 
 def test_get_org_context_dependency(store, orgs_on):

@@ -579,11 +579,11 @@ def resolve_org_context(user_id: str, org_id: str | None) -> dict | None:
 
     Returns None (personal context) when the feature is disabled or no header was
     sent, so callers behave exactly as before. A header naming an organization
-    the user does not belong to raises OrgNotFound.
+    the user does not belong to raises OrgNotFound. Any member (viewers included)
+    gets a context; endpoints that write into the workspace apply
+    `get_org_write_context`, which requires the member role.
     """
     if not orgs_enabled() or not org_id:
         return None
     membership = require_membership(org_id, user_id, minimum="viewer")
-    if not role_at_least(membership.get("role"), "member"):
-        raise OrgPermissionError("Viewers cannot create claims or policies in this workspace.")
     return {"org_id": org_id, "role": membership.get("role")}

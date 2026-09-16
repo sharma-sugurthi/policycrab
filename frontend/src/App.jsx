@@ -16,12 +16,14 @@ import AcceptInvitePage from './pages/AcceptInvitePage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { TaskProvider } from './contexts/TaskContext'
 import { OrgProvider, useOrg } from './contexts/OrgContext'
+import { FeaturesProvider, useFeatures } from './contexts/FeaturesContext'
 import { takePendingInvite } from './lib/orgs'
 import TaskStatusBar from './components/TaskStatusBar'
 import { IconAlertTriangle, IconFileText, IconCheckCircle, IconGavel, IconMoon, IconSun, IconMonitor, IconMenu, IconX, IconLogOut, IconUser, IconChevronDown, IconActivity, IconUsers } from './components/Icons'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const BenchmarkDashboard = lazy(() => import('./pages/BenchmarkDashboard'))
+const CasesPage = lazy(() => import('./pages/CasesPage'))
 
 // ── Browser storage keys ─────────────────────────────────────
 const SS_POLICY_KEY = 'policycrab_policy_profile'
@@ -247,6 +249,7 @@ function AppContent() {
   const location = useLocation()
   const { user, signOut, isAdmin } = useAuth()
   const { enabled: orgsEnabled, activeOrg } = useOrg()
+  const { features } = useFeatures()
   const navigate = useNavigate()
   useTheme() // Lock to light mode on mount
 
@@ -304,6 +307,7 @@ function AppContent() {
     ['/claim', 'Evaluate'],
     ['/routing', 'Appeal'],
     ['/chat', 'Chat'],
+    ...(features.cases ? [['/cases', 'Cases']] : []),
   ]
 
   const handleSignOut = async () => {
@@ -530,6 +534,11 @@ function AppContent() {
               <OrganizationsPage />
             </ProtectedRoute>
           } />
+          <Route path="/cases" element={
+            <ProtectedRoute>
+              <CasesPage />
+            </ProtectedRoute>
+          } />
           <Route path="/studio" element={
             <ProtectedRoute>
               <AppealStudio />
@@ -559,11 +568,13 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <OrgProvider>
-        <TaskProvider>
-          <AppContent />
-        </TaskProvider>
-      </OrgProvider>
+      <FeaturesProvider>
+        <OrgProvider>
+          <TaskProvider>
+            <AppContent />
+          </TaskProvider>
+        </OrgProvider>
+      </FeaturesProvider>
     </AuthProvider>
   )
 }

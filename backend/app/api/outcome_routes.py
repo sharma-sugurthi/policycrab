@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.api.auth import get_current_user
 from app.services.audit_trail import record_audit
+from app.services.cases import close_case_from_outcome
 from app.api.admin_routes import require_admin
 from app.security.rate_limit import rate_limit_user
 from app.services.outcomes import (
@@ -71,6 +72,7 @@ async def create_outcome(
     except Exception:
         logger.error("Failed to record appeal outcome", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not save the outcome. Please try again.")
+    close_case_from_outcome(body.claim_id, body.outcome.lower(), {"id": user["id"], "email": user.get("email")})
     record_audit("outcome.recorded", user_id=user["id"], resource_type="claim", resource_id=body.claim_id,
                  metadata={"outcome": body.outcome.lower(), "appeal_level": body.appeal_level}, request=request)
     return {"success": True, "outcome": saved}

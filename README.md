@@ -42,6 +42,7 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
    - **LLM-free regression suite** — `tests/test_benchmark_deterministic.py` runs the deterministic engines over all 200 benchmark cases plus 12 hand-written quality-gate cases in CI, with no model or database access.
 9. **Team Workspaces (B2B, opt-in):** Advocacy firms, hospital billing teams and HR benefits managers work from a shared workspace — owner/admin/member/viewer roles, one-time email invitations (token hashed at rest, must be accepted from the invited address), and claims saved into the team so a colleague can pick up a case. Enabled per deployment with `ORGS_ENABLED=true`; every endpoint stays hidden and every existing flow unchanged until then.
 10. **Usage Metering & Append-only Audit Trail (opt-in):** One `usage_events` row per billable action, attributed to user and workspace — the provider-agnostic meter that billing (Dodo/Stripe/Paddle) reads from — plus a tamper-evident `audit_events` table (UPDATE/DELETE refused at the database) recording team changes, deletions, admin access and every EASF policy decision with hashed IPs. Surfaced to workspace admins as an *Activity & usage* panel and to platform admins via `/api/admin/usage` and `/api/admin/audit-log`. Enabled with `USAGE_METERING_ENABLED=true` / `AUDIT_TRAIL_ENABLED=true`.
+11. **Case Management (B2B, opt-in):** Turn an evaluated claim into a tracked case — assignee, status through the appeal lifecycle (new → in review → appeal filed → awaiting decision → won/partial/lost/withdrawn), priority, due date defaulted from the computed appeal deadline, PHI-scrubbed notes and comments, and a full activity log. A workspace pipeline view shows open/overdue/due-soon counts, dollars at stake and recovered, overturn rate and average days to close; recording an outcome closes the case automatically. Enabled with `CASES_ENABLED=true`.
 
 ##  API Access (B2B integrations)
 
@@ -73,6 +74,7 @@ Keys carry explicit scopes; a call outside the key's scopes returns `403`, a rev
 | `usage:read` | `GET /api/usage/*` |
 | `providers:read`, `carriers:read` | provider search / network status, carrier routing |
 | `deadlines:read` / `deadlines:write` | appeal deadline tracking and breach letters |
+| `cases:read` / `cases:write` | case management: list/summary, create, update, assign, comment |
 
 Never key-callable: workspace management, API-key management, admin endpoints, chat, deletions from History. Every key request is rate-limited per owner, metered into `usage_events` (with the key id) and, when rejected, written to the audit trail with only the key prefix.
 

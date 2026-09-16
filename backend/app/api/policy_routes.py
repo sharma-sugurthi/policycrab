@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from app.agents.graph import get_policy_ingestion_graph
 from app.services.pdf_extractor import extract_text_from_pdf
 from app.api.auth import get_current_user
-from app.api.org_context import get_org_context
+from app.api.org_context import get_org_write_context
 from app.security.rate_limit import rate_limit
 from app.security.presidio_scrubber import PHIScrubbingError, scrub_phi
 from app.services.user_data import create_user_policy
@@ -110,7 +110,7 @@ async def _run_ingestion(
 async def upload_policy_text(
     request: PolicyUploadRequest, 
     user: dict = Depends(get_current_user),
-    org_ctx: dict | None = Depends(get_org_context),
+    org_ctx: dict | None = Depends(get_org_write_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT)
 ):
     """
@@ -147,7 +147,7 @@ async def upload_policy_text(
 async def upload_policy_pdf(
     file: UploadFile = File(...), 
     user: dict = Depends(get_current_user),
-    org_ctx: dict | None = Depends(get_org_context),
+    org_ctx: dict | None = Depends(get_org_write_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT)
 ):
     """
@@ -284,7 +284,7 @@ async def upload_policy_pdf_async(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     user: dict = Depends(get_current_user),
-    org_ctx: dict | None = Depends(get_org_context),
+    org_ctx: dict | None = Depends(get_org_write_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT),
 ):
     """
@@ -372,7 +372,7 @@ async def upload_policy_text_async(
     background_tasks: BackgroundTasks,
     request: PolicyUploadRequest,
     user: dict = Depends(get_current_user),
-    org_ctx: dict | None = Depends(get_org_context),
+    org_ctx: dict | None = Depends(get_org_write_context),
     _: None = Depends(POLICY_UPLOAD_RATE_LIMIT),
 ):
     """

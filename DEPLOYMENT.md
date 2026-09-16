@@ -22,6 +22,8 @@ Supabase provides the managed PostgreSQL database (with `pgvector` for AI embedd
      9. `009_create_organizations.sql` — team workspaces (`organizations`, `org_members`, `org_invitations`) plus a nullable `org_id` on `user_claims` and `user_policies`. Inert until `ORGS_ENABLED=true`, so it is safe to apply at any time; existing rows are untouched.
      10. `010_create_usage_and_audit.sql` — `usage_events` (billing/usage meter) and append-only `audit_events` (a database trigger refuses UPDATE/DELETE). Requires 009. No PHI is stored and neither table is part of the 30-day purge. Inert until the flags below are enabled.
      11. `011_create_api_keys.sql` — `api_keys` for programmatic access (SHA-256 of the key, explicit scopes, personal or workspace-bound, revocable). Requires 009. Inert until `API_KEYS_ENABLED=true`.
+     12. `012_create_appeal_deadlines.sql` — makes the hand-created `appeal_deadlines` table reproducible (idempotent; adds missing columns/policies on an existing table).
+     13. `013_create_cases.sql` — case management (`cases`, `case_events`): a claim's appeal lifecycle with assignee, status, priority, due date and an activity log. Requires 009. Inert until `CASES_ENABLED=true`.
 4. **Authentication:**
    - Enable Email/Password authentication in the Supabase Auth Settings.
    - Disable "Confirm Email" if you want users to be able to sign up and immediately use the app during your initial launch.
@@ -54,6 +56,8 @@ The backend is a standard Python FastAPI application. We use **Google Cloud Run*
      - `AUDIT_TRAIL_ENABLED=false` — set to `true` to append `audit_events` rows for team actions (workspace created/renamed/deleted, invitations, role changes, removals), data deletions from History, recorded appeal outcomes, admin-console access (allowed and denied) and every EASF policy decision. IP addresses are stored only as a truncated SHA-256. Read via `GET /api/audit-log/me`, `GET /api/audit-log/org/{org_id}` (workspace admins) and `GET /api/admin/audit-log?action=<prefix>` (platform admins).
    - **API keys (optional — off by default; requires migration 011):**
      - `API_KEYS_ENABLED=false` — set to `true` to let a bearer token beginning `pc_live_`/`pc_test_` authenticate as an API key. Keys run as their owner (personal) or inside a workspace (created by a workspace owner/admin), carry explicit route scopes, and are refused on every endpoint outside the allowlist in `app/services/api_keys.py` (workspace, key and admin management are never key-callable). Revocation takes effect within 60 seconds (per-process cache). Users manage keys on the Team Workspaces page; see README → *API Access*.
+   - **Case management (optional — off by default; requires migration 013):**
+     - `CASES_ENABLED=false` — set to `true` to enable `/api/cases` and the *Cases* page. Cases belong to the active workspace (`X-Org-Id`) or, without one, to the user. Viewers read; members and above create/update/comment; admins (or the creator) delete. Notes and comments are PHI-scrubbed before storage. Recording an appeal outcome moves the claim's case to the matching status automatically.
 4. The deployment is handled automatically by the GitHub Actions pipeline upon merging to the `main` branch. Note the live backend URL (e.g., `https://policycrab-api-xyz.a.run.app`).
 
 ## 3. Frontend Deployment (Vercel)

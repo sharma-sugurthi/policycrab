@@ -45,6 +45,8 @@ SCOPE_DESCRIPTIONS: dict[str, str] = {
     "carriers:read": "Carrier routing intelligence.",
     "deadlines:read": "Read appeal deadlines.",
     "deadlines:write": "Create, update and delete appeal deadlines; generate breach letters.",
+    "cases:read": "Read cases, their activity and the pipeline summary.",
+    "cases:write": "Create and update cases, assign them and add comments.",
 }
 ALL_SCOPES = tuple(SCOPE_DESCRIPTIONS)
 
@@ -75,6 +77,10 @@ ROUTE_SCOPES: tuple[tuple[str, str, str], ...] = (
     ("POST", "/api/deadlines*", "deadlines:write"),
     ("PATCH", "/api/deadlines*", "deadlines:write"),
     ("DELETE", "/api/deadlines*", "deadlines:write"),
+    ("GET", "/api/cases*", "cases:read"),
+    ("POST", "/api/cases*", "cases:write"),
+    ("PATCH", "/api/cases*", "cases:write"),
+    ("DELETE", "/api/cases*", "cases:write"),
 )
 
 

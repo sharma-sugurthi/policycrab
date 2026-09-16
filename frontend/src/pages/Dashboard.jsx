@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import { useOrg } from '../contexts/OrgContext'
+import { useFeatures } from '../contexts/FeaturesContext'
 import { useNavigate } from 'react-router-dom'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { jsPDF } from 'jspdf'
@@ -989,6 +990,38 @@ const OUTCOME_OPTIONS = [
 ]
 const OUTCOME_BADGE = { won: 'badge-success', partial: 'badge-info', lost: 'badge-danger', pending: 'badge-warning', withdrawn: 'badge-zinc' }
 
+function OpenCaseButton({ claimId }) {
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const open = async () => {
+    setBusy(true)
+    setError('')
+    try {
+      const res = await apiFetch('/cases', { method: 'POST', body: JSON.stringify({ claim_id: claimId }) })
+      const data = await readApiResponse(res)
+      // 400 here means a case already exists for this claim — that is still where the user wants to go.
+      if (res.ok || (res.status === 400 && /already exists/i.test(data?.detail || ''))) {
+        navigate('/cases')
+        return
+      }
+      setError(formatApiError(data, 'Could not open a case for this claim.'))
+    } catch (err) {
+      setError(err.message || 'Could not open a case for this claim.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div style={{ marginTop: '0.625rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <button type="button" className="btn btn-outline" style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }} onClick={open} disabled={busy}>
+        {busy ? <><span className="spinner" /> Opening…</> : 'Open case'}
+      </button>
+      {error && <span style={{ fontSize: '0.75rem', color: 'var(--danger)' }}>{error}</span>}
+    </div>
+  )
+}
+
 function RecordOutcome({ claimId, existing, onSaved }) {
   const [open, setOpen] = useState(false)
   const [outcome, setOutcome] = useState(existing?.outcome || 'won')
@@ -1056,6 +1089,7 @@ function RecordOutcome({ claimId, existing, onSaved }) {
 export default function Dashboard({ policyProfile, onPolicySelected }) {
   const { session } = useAuth()
   const { activeOrg } = useOrg()
+  const { features } = useFeatures()
   const workspaceId = activeOrg?.id || null
   const navigate = useNavigate()
   const [policies, setPolicies] = useState([])
@@ -1471,6 +1505,7 @@ export default function Dashboard({ policyProfile, onPolicySelected }) {
                               </div>
                             </div>
                           )}
+                          {features.cases && <OpenCaseButton claimId={c.id} />}
                           {c.route_decision === 'denied' && c.appeal_output && (!c.user_id || c.user_id === session?.user?.id) && (
                             <RecordOutcome
                               claimId={c.id}

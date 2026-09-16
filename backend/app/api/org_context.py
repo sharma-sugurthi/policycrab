@@ -75,3 +75,11 @@ def get_org_context(
     if request is not None:
         request.state.org_ctx = ctx
     return ctx
+
+
+def get_org_write_context(org_ctx: dict | None = Depends(get_org_context)) -> dict | None:
+    """Same as get_org_context, but viewers may not save claims or policies into the workspace."""
+    if org_ctx and not org_service.role_at_least(org_ctx.get("role"), "member"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Viewers cannot create claims or policies in this workspace.")
+    return org_ctx

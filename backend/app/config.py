@@ -81,6 +81,11 @@ class Settings(BaseSettings):
     # explicit route scopes (see app/services/api_keys.py).
     api_keys_enabled: bool = False
 
+    # ── Case management (off by default) ──────────────────────────
+    # Requires supabase/migrations/013_create_cases.sql. Tracks claims through
+    # the appeal lifecycle inside a workspace (assignee, status, due date, notes).
+    cases_enabled: bool = False
+
     google_cloud_project: str = ""
     gcp_location: str = "us-east1"
 
