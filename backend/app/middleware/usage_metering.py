@@ -99,15 +99,19 @@ def record_request_usage(
     org_ctx: dict | None,
     header_org_id: str | None,
     is_async: bool,
+    api_key_id: str | None = None,
 ) -> dict | None:
     """Synchronous worker; runs in a thread via `_schedule`."""
     org_id = _attribute_org(user_id, org_ctx, header_org_id)
+    metadata = {"status": int(status_code), "async": bool(is_async)}
+    if api_key_id:
+        metadata["api_key_id"] = str(api_key_id)
     return usage_service.record_usage(
         user_id,
         event_type,
         org_id=org_id,
         route=route,
-        metadata={"status": int(status_code), "async": bool(is_async)},
+        metadata=metadata,
     )
 
 
@@ -143,9 +147,10 @@ class UsageMeteringMiddleware(BaseHTTPMiddleware):
         org_ctx = getattr(request.state, "org_ctx", None)
         header_org_id = request.headers.get("x-org-id")
         status_code = response.status_code
+        api_key_id = ((user.get("api_key") or {}).get("id")) if isinstance(user.get("api_key"), dict) else None
         _schedule(lambda: record_request_usage(
             user_id=str(user_id), event_type=event_type, route=matched, status_code=status_code,
             org_ctx=org_ctx if isinstance(org_ctx, dict) else None, header_org_id=header_org_id,
-            is_async=matched.endswith("/async"),
+            is_async=matched.endswith("/async"), api_key_id=api_key_id,
         ))
         return response

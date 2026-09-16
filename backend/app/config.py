@@ -75,6 +75,12 @@ class Settings(BaseSettings):
     usage_metering_enabled: bool = False
     audit_trail_enabled: bool = False
 
+    # ── API keys (off by default) ─────────────────────────────────
+    # Requires supabase/migrations/011_create_api_keys.sql. When on, a bearer
+    # token starting with pc_live_/pc_test_ is resolved as an API key with
+    # explicit route scopes (see app/services/api_keys.py).
+    api_keys_enabled: bool = False
+
     google_cloud_project: str = ""
     gcp_location: str = "us-east1"
 

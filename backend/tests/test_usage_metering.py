@@ -212,9 +212,14 @@ def client(store, monkeypatch):
 
 def test_usage_routes_require_auth(store):
     from app.main import app
-    http = TestClient(app)
-    for path in ("/api/usage/me", f"/api/usage/org/{ORG}", "/api/admin/usage"):
-        assert http.get(path).status_code in (401, 403), path
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides.clear()
+    try:
+        http = TestClient(app)
+        for path in ("/api/usage/me", f"/api/usage/org/{ORG}", "/api/admin/usage"):
+            assert http.get(path).status_code in (401, 403), path
+    finally:
+        app.dependency_overrides.update(saved)
 
 
 def test_usage_routes_report_disabled(client):

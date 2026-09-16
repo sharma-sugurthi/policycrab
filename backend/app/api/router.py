@@ -26,6 +26,7 @@ from app.api.outcome_routes import router as outcome_router
 from app.api.org_routes import router as org_router
 from app.api.usage_routes import router as usage_router, admin_router as admin_usage_router
 from app.api.audit_log_routes import router as audit_log_router, admin_router as admin_audit_router
+from app.api.api_key_routes import router as api_key_router, org_router as org_api_key_router
 from app.api.seo_routes import public_router, smart_email_router
 from app.security.rate_limit import rate_limit
 from app.api.auth import get_current_user
@@ -56,6 +57,8 @@ api_router.include_router(usage_router)
 api_router.include_router(admin_usage_router)
 api_router.include_router(audit_log_router)
 api_router.include_router(admin_audit_router)
+api_router.include_router(api_key_router)
+api_router.include_router(org_api_key_router)
 api_router.include_router(public_router)
 api_router.include_router(smart_email_router)
 

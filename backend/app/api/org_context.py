@@ -54,6 +54,16 @@ def get_org_context(
     request: Request = None,
 ) -> dict | None:
     """{"org_id", "role"} for the active workspace, or None for personal context."""
+    key = user.get("api_key") if isinstance(user, dict) else None
+    if key and key.get("org_id"):
+        # A workspace-bound key always acts inside its workspace (membership verified at auth time).
+        if x_org_id and x_org_id != key["org_id"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="X-Org-Id does not match the workspace this API key belongs to.")
+        ctx = {"org_id": key["org_id"], "role": key.get("role")}
+        if request is not None:
+            request.state.org_ctx = ctx
+        return ctx
     if not org_service.orgs_enabled() or not x_org_id:
         return None
     if not is_uuid(x_org_id):

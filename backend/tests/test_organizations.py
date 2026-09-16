@@ -401,10 +401,16 @@ def client(store, monkeypatch):
 def test_routes_require_authentication(store):
     from fastapi.testclient import TestClient
     from app.main import app
-    http = TestClient(app)
-    for method, path in (("get", "/api/orgs"), ("post", "/api/orgs"), ("get", "/api/orgs/status"),
-                         ("get", f"/api/orgs/{uuid4()}/members"), ("post", "/api/orgs/invitations/accept")):
-        assert http.request(method.upper(), path, json={"name": "x", "token": "t" * 20}).status_code in (401, 403), path
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides.clear()
+    try:
+        http = TestClient(app)
+        for method, path in (("get", "/api/orgs"), ("post", "/api/orgs"), ("get", "/api/orgs/status"),
+                             ("get", f"/api/orgs/{uuid4()}/members"), ("post", "/api/orgs/invitations/accept")):
+            res = http.request(method.upper(), path, json={"name": "x", "token": "t" * 20})
+            assert res.status_code in (401, 403), path
+    finally:
+        app.dependency_overrides.update(saved)
 
 
 def test_routes_are_invisible_when_disabled(client, store, monkeypatch):

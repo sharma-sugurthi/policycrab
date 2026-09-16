@@ -43,6 +43,39 @@ PolicyCrab uses a cutting-edge, highly deterministic architecture to ensure medi
 9. **Team Workspaces (B2B, opt-in):** Advocacy firms, hospital billing teams and HR benefits managers work from a shared workspace — owner/admin/member/viewer roles, one-time email invitations (token hashed at rest, must be accepted from the invited address), and claims saved into the team so a colleague can pick up a case. Enabled per deployment with `ORGS_ENABLED=true`; every endpoint stays hidden and every existing flow unchanged until then.
 10. **Usage Metering & Append-only Audit Trail (opt-in):** One `usage_events` row per billable action, attributed to user and workspace — the provider-agnostic meter that billing (Dodo/Stripe/Paddle) reads from — plus a tamper-evident `audit_events` table (UPDATE/DELETE refused at the database) recording team changes, deletions, admin access and every EASF policy decision with hashed IPs. Surfaced to workspace admins as an *Activity & usage* panel and to platform admins via `/api/admin/usage` and `/api/admin/audit-log`. Enabled with `USAGE_METERING_ENABLED=true` / `AUDIT_TRAIL_ENABLED=true`.
 
+##  API Access (B2B integrations)
+
+PolicyCrab exposes the same engine that powers the UI as an authenticated REST API for RCM systems, advocacy case-management tools and internal scripts. Interactive OpenAPI docs live at `/docs` on the backend.
+
+1. Enable the feature: apply `supabase/migrations/011_create_api_keys.sql` and set `API_KEYS_ENABLED=true`.
+2. Create a key on **Team Workspaces → API keys** — personal (runs as you) or workspace-bound (runs as you, inside that workspace, so every evaluation is saved to the team). The full key is shown once.
+3. Call the API with `Authorization: Bearer pc_live_…`. Workspace keys need no `X-Org-Id` header.
+
+```bash
+curl -X POST https://<backend>/api/claim/evaluate \
+  -H "Authorization: Bearer pc_live_..." -H "Content-Type: application/json" \
+  -d '{"claim_description": "...", "policy_profile": {...}, "allowed_amount": 1200}'
+# Long-running work: POST /api/claim/evaluate/async → poll GET /api/tasks/{task_id} (scope tasks:read)
+```
+
+Keys carry explicit scopes; a call outside the key's scopes returns `403`, a revoked/expired key `401`.
+
+| Scope | Grants |
+|---|---|
+| `claims:evaluate` | `POST /api/claim/evaluate[/async]` — full pipeline: cost calculation, triage, appeal drafting, Accuracy Core QA |
+| `appeals:draft` | `POST /api/claim/draft-appeal`, `POST /studio/revise`, `POST /studio/dossier` |
+| `policies:upload` | `POST /api/policy/upload*` — SBC/EOB text or PDF extraction and indexing |
+| `eob:parse` | `POST /api/eob/parse` |
+| `bills:audit` | `POST /api/audit/scan`, `/upload`, `/dispute-letter` |
+| `history:read` | `GET /api/history/*`, `GET /api/orgs/{org_id}/claims|policies` |
+| `tasks:read` | `GET /api/tasks/*` (async job status) |
+| `outcomes:read` / `outcomes:write` | `GET`/`POST /api/outcomes` |
+| `usage:read` | `GET /api/usage/*` |
+| `providers:read`, `carriers:read` | provider search / network status, carrier routing |
+| `deadlines:read` / `deadlines:write` | appeal deadline tracking and breach letters |
+
+Never key-callable: workspace management, API-key management, admin endpoints, chat, deletions from History. Every key request is rate-limited per owner, metered into `usage_events` (with the key id) and, when rejected, written to the audit trail with only the key prefix.
+
 ##  Repository Structure
 
 ```text

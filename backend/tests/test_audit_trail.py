@@ -160,9 +160,14 @@ def test_hooks_are_silent_when_disabled(client, store, monkeypatch):
 
 def test_audit_log_routes_require_auth(store):
     from app.main import app
-    http = TestClient(app)
-    for path in ("/api/audit-log/me", f"/api/audit-log/org/{ORG}", "/api/admin/audit-log"):
-        assert http.get(path).status_code in (401, 403), path
+    saved = dict(app.dependency_overrides)
+    app.dependency_overrides.clear()
+    try:
+        http = TestClient(app)
+        for path in ("/api/audit-log/me", f"/api/audit-log/org/{ORG}", "/api/admin/audit-log"):
+            assert http.get(path).status_code in (401, 403), path
+    finally:
+        app.dependency_overrides.update(saved)
 
 
 def test_audit_log_routes(client, store, monkeypatch):

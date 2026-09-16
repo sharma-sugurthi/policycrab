@@ -4,7 +4,7 @@ import { useOrg } from '../contexts/OrgContext'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { ROLE_BADGE, ROLE_HELP, ROLE_LABEL, canManageMember, grantableRoles, roleAtLeast } from '../lib/orgs'
 import {
-  IconActivity, IconAlertTriangle, IconCheckCircle, IconCopy, IconMail, IconPlus, IconSettings, IconTrash, IconUsers,
+  IconActivity, IconAlertTriangle, IconCheckCircle, IconCopy, IconLock, IconMail, IconPlus, IconSettings, IconTrash, IconUsers,
 } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }
@@ -42,6 +42,15 @@ export default function OrganizationsPage() {
   const [newName, setNewName] = useState('')
   const [creating, setCreating] = useState(false)
   const [createStatus, setCreateStatus] = useState(null)
+  const [apiKeyScopes, setApiKeyScopes] = useState(null)   // null = API keys disabled on this deployment
+
+  useEffect(() => {
+    let cancelled = false
+    apiFetch('/api-keys/scopes').then(readApiResponse)
+      .then(d => { if (!cancelled) setApiKeyScopes(d && d.enabled ? d.scopes : null) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   const selected = orgs.find(o => o.id === selectedId) || activeOrg || orgs[0] || null
 
@@ -136,11 +145,23 @@ export default function OrganizationsPage() {
               <WorkspaceManager
                 key={selected.id}
                 org={selected}
+                apiKeyScopes={apiKeyScopes}
                 isActive={activeOrg?.id === selected.id}
                 onChanged={refresh}
                 onGone={async () => { if (activeOrg?.id === selected.id) setActiveOrgId(null); setSelectedId(null); await refresh() }}
               />
             )}
+          </div>
+        )}
+
+        {apiKeyScopes && (
+          <div style={{ marginTop: '2rem' }}>
+            <ApiKeysCard
+              title="Personal API keys"
+              subtitle="Call PolicyCrab from your own tools as yourself. Workspace keys live under each workspace above."
+              endpoint="/api-keys"
+              scopes={apiKeyScopes}
+            />
           </div>
         )}
       </div>
@@ -175,7 +196,7 @@ function WorkspaceRow({ name, hint, role, isActive, isSelected, onActivate, onMa
   )
 }
 
-function WorkspaceManager({ org, isActive, onChanged, onGone }) {
+function WorkspaceManager({ org, isActive, onChanged, onGone, apiKeyScopes }) {
   const myRole = org.role
   const isAdmin = roleAtLeast(myRole, 'admin')
   const isOwner = myRole === 'owner'
@@ -433,6 +454,16 @@ function WorkspaceManager({ org, isActive, onChanged, onGone }) {
         </>
       )}
 
+      {isAdmin && apiKeyScopes && (
+        <ApiKeysCard
+          embedded
+          title="Workspace API keys"
+          subtitle="For integrations (RCM systems, case-management tools). Requests run as you, inside this workspace, limited to the scopes you grant."
+          endpoint={`/orgs/${org.id}/api-keys`}
+          scopes={apiKeyScopes}
+        />
+      )}
+
       {isAdmin && <WorkspaceActivity org={org} members={members} />}
 
       {isOwner && (
@@ -548,6 +579,191 @@ function WorkspaceActivity({ org, members }) {
               </ul>
             )}
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const ENV_BADGE = { live: 'badge-success', test: 'badge-zinc' }
+const EXPIRY_OPTIONS = [['', 'Never expires'], ['30', '30 days'], ['90', '90 days'], ['365', '1 year']]
+const EMPTY_KEY_FORM = { name: '', environment: 'live', expires_in_days: '', scopes: [] }
+
+function ApiKeysCard({ title, subtitle, endpoint, scopes, embedded = false }) {
+  const scopeNames = Object.keys(scopes || {})
+  const [keys, setKeys] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState(null)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState(EMPTY_KEY_FORM)
+  const [creating, setCreating] = useState(false)
+  const [revealed, setRevealed] = useState(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const rows = await call(endpoint, undefined, 'Could not load API keys.')
+      setKeys(Array.isArray(rows) ? rows : [])
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }, [endpoint])
+
+  useEffect(() => { load() }, [load])
+
+  const toggleScope = (scope) => setForm(f => ({
+    ...f, scopes: f.scopes.includes(scope) ? f.scopes.filter(s => s !== scope) : [...f.scopes, scope],
+  }))
+
+  const create = async (e) => {
+    e.preventDefault()
+    setCreating(true)
+    setStatus(null)
+    try {
+      const body = { name: form.name, environment: form.environment, scopes: form.scopes }
+      if (form.expires_in_days) body.expires_in_days = Number(form.expires_in_days)
+      const res = await call(endpoint, { method: 'POST', body: JSON.stringify(body) }, 'Could not create the API key.')
+      setRevealed({ key: res.key, name: res.api_key?.name })
+      setForm(EMPTY_KEY_FORM)
+      setShowForm(false)
+      await load()
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message })
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const revoke = async (k) => {
+    if (!window.confirm(`Revoke "${k.name}"? Anything using this key stops working immediately.`)) return
+    try {
+      await call(`${endpoint}/${k.id}`, { method: 'DELETE' }, 'Could not revoke the key.')
+      setStatus({ type: 'success', message: `"${k.name}" revoked.` })
+      await load()
+    } catch (err) {
+      setStatus({ type: 'error', message: err.message })
+    }
+  }
+
+  const copyKey = async () => {
+    try {
+      await navigator.clipboard.writeText(revealed.key)
+      setStatus({ type: 'success', message: 'API key copied to the clipboard.' })
+    } catch {
+      setStatus({ type: 'error', message: 'Copy failed — select the key and copy it manually.' })
+    }
+  }
+
+  const muted = { fontSize: '0.75rem', color: 'var(--text-tertiary)' }
+  const fmt = (v) => (v ? new Date(v).toLocaleDateString() : '—')
+
+  return (
+    <div className={embedded ? undefined : 'card'} style={embedded ? { marginBottom: '1.75rem' } : { padding: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {!embedded && <div className="feature-icon" style={{ background: '#f3f4f6', color: '#4b5563' }}><IconLock size={20} /></div>}
+          <div>
+            {embedded
+              ? <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0, display: 'flex', alignItems: 'center', gap: '0.375rem' }}><IconLock size={14} /> {title}</h4>
+              : <h3 style={{ fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-primary)' }}>{title}</h3>}
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: embedded ? '0.25rem 0 0' : 0 }}>{subtitle}</p>
+          </div>
+        </div>
+        {!showForm && !revealed && (
+          <button type="button" className="btn btn-outline" style={{ padding: '0.375rem 0.875rem', fontSize: '0.8125rem' }} onClick={() => setShowForm(true)}>
+            <IconPlus size={14} /> New key
+          </button>
+        )}
+      </div>
+
+      {status && <div style={{ marginBottom: '0.75rem' }}><Status status={status} /></div>}
+
+      {revealed && (
+        <div role="alert" style={{ padding: '0.875rem 1rem', borderRadius: '0.75rem', border: '1px solid var(--warning-border)', background: 'var(--warning-bg)', marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 0.375rem' }}>
+            Copy your new key “{revealed.name}” now — it will not be shown again.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input className="input" readOnly value={revealed.key} onFocus={e => e.target.select()} style={{ flex: '1 1 320px', fontFamily: 'monospace', fontSize: '0.75rem' }} aria-label="New API key" />
+            <button type="button" className="btn btn-red" onClick={copyKey} style={{ padding: '0.5rem 0.875rem', fontSize: '0.8125rem' }}><IconCopy size={14} /> Copy</button>
+            <button type="button" className="btn btn-ghost" onClick={() => setRevealed(null)} style={{ padding: '0.5rem 0.875rem', fontSize: '0.8125rem' }}>Done</button>
+          </div>
+          <p style={{ ...muted, marginTop: '0.5rem' }}>Send it as <code>Authorization: Bearer {'<key>'}</code>. Workspace keys need no <code>X-Org-Id</code> header.</p>
+        </div>
+      )}
+
+      {showForm && (
+        <form onSubmit={create} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-secondary)', background: 'var(--bg-secondary)', marginBottom: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+            <div>
+              <label style={labelStyle} htmlFor={`key-name-${endpoint}`}>Name</label>
+              <input id={`key-name-${endpoint}`} className="input" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Epic RCM bridge" maxLength={80} required />
+            </div>
+            <div>
+              <label style={labelStyle} htmlFor={`key-env-${endpoint}`}>Environment</label>
+              <select id={`key-env-${endpoint}`} className="input" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })}>
+                <option value="live">Live (pc_live_…)</option>
+                <option value="test">Test (pc_test_…)</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle} htmlFor={`key-exp-${endpoint}`}>Expires</label>
+              <select id={`key-exp-${endpoint}`} className="input" value={form.expires_in_days} onChange={e => setForm({ ...form, expires_in_days: e.target.value })}>
+                {EXPIRY_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <p style={labelStyle}>Scopes <span style={{ fontWeight: 400, color: 'var(--text-tertiary)' }}>— grant only what the integration needs</span></p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.375rem 1rem' }}>
+              {scopeNames.map(scope => (
+                <label key={scope} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={form.scopes.includes(scope)} onChange={() => toggleScope(scope)} style={{ marginTop: '3px' }} />
+                  <span><code style={{ fontSize: '0.75rem' }}>{scope}</code><br /><span style={muted}>{scopes[scope]}</span></span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="submit" className="btn btn-red" disabled={creating || !form.name.trim() || form.scopes.length === 0}>
+              {creating ? <><span className="spinner" /> Creating...</> : 'Create key'}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => { setShowForm(false); setForm(EMPTY_KEY_FORM) }} disabled={creating}>Cancel</button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}><span className="spinner" /></div>
+      ) : keys.length === 0 ? (
+        <p style={{ ...muted, fontSize: '0.8125rem' }}>No API keys yet.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {keys.map(k => (
+            <div key={k.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.625rem 0.875rem', borderRadius: '0.625rem', border: '1px solid var(--border-secondary)', opacity: k.active ? 1 : 0.6 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <strong style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{k.name}</strong>
+                  <code style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{k.key_prefix}…</code>
+                  <span className={`badge ${ENV_BADGE[k.environment] || 'badge-zinc'}`} style={{ fontSize: '0.625rem' }}>{k.environment}</span>
+                  {!k.active && <span className="badge badge-danger" style={{ fontSize: '0.625rem' }}>{k.revoked_at ? 'revoked' : 'expired'}</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                  {(k.scopes || []).map(s => <span key={s} className="badge badge-info" style={{ fontSize: '0.625rem' }}>{s}</span>)}
+                </div>
+                <p style={{ ...muted, marginTop: '0.25rem' }}>
+                  Created {fmt(k.created_at)} · Last used {fmt(k.last_used_at)} · Expires {k.expires_at ? fmt(k.expires_at) : 'never'}{k.owner_email ? ` · by ${k.owner_email}` : ''}
+                </p>
+              </div>
+              {k.active && (
+                <button type="button" className="btn btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => revoke(k)}>
+                  <IconTrash size={14} /> Revoke
+                </button>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
