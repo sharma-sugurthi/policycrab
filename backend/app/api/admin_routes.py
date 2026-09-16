@@ -4,26 +4,34 @@ Admin Analytics & Platform Usage Console — role-gated endpoints for platform t
 
 import logging
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Response
 
 from app.config import settings
 from app.api.auth import get_current_user
 from app.services.supabase_client import get_supabase_client
+from app.services.audit_trail import record_audit
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["Admin Analytics"])
 
 
-def require_admin(user: dict = Depends(get_current_user)) -> dict:
+def require_admin(user: dict = Depends(get_current_user), request: Request = None) -> dict:
     """Validate that the authenticated user is an authorized admin."""
     user_email = user.get("email", "").strip().lower()
+    route = None
+    if request is not None:
+        route = getattr(request.scope.get("route"), "path", None) or request.url.path
     if not user_email or user_email not in settings.parsed_admin_emails:
         logger.warning(f"Unauthorized admin access attempt by user: {user_email or user.get('id')}")
+        record_audit("admin.access", user_id=user.get("id"), resource_type="route", resource_id=route,
+                     outcome="denied", reason="not in ADMIN_EMAILS", request=request)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied. Admin privileges required.",
         )
+    record_audit("admin.access", user_id=user.get("id"), resource_type="route", resource_id=route,
+                 outcome="allowed", request=request)
     return user
 
 

@@ -20,6 +20,7 @@ Supabase provides the managed PostgreSQL database (with `pgvector` for AI embedd
      7. `007_hipaa_auto_purge.sql`
      8. `008_create_appeal_outcomes.sql` — appeal outcome tracking for success-score calibration (`/api/outcomes`). Apply **before** deploying a backend that includes the Accuracy Core; the table holds no PHI and is deliberately excluded from the 30-day purge.
      9. `009_create_organizations.sql` — team workspaces (`organizations`, `org_members`, `org_invitations`) plus a nullable `org_id` on `user_claims` and `user_policies`. Inert until `ORGS_ENABLED=true`, so it is safe to apply at any time; existing rows are untouched.
+     10. `010_create_usage_and_audit.sql` — `usage_events` (billing/usage meter) and append-only `audit_events` (a database trigger refuses UPDATE/DELETE). Requires 009. No PHI is stored and neither table is part of the 30-day purge. Inert until the flags below are enabled.
 4. **Authentication:**
    - Enable Email/Password authentication in the Supabase Auth Settings.
    - Disable "Confirm Email" if you want users to be able to sign up and immediately use the app during your initial launch.
@@ -47,6 +48,9 @@ The backend is a standard Python FastAPI application. We use **Google Cloud Run*
      - `APP_BASE_URL=https://policycrab.tech` — public frontend URL used to build invitation links (`/invite?token=...`).
      - `ORG_INVITATION_TTL_DAYS=7` — how long an invitation link stays valid.
      - Invitation emails go through the existing `RESEND_API_KEY`. When it is not set, the one-time link is returned to the inviting admin in the UI instead of being emailed.
+   - **Usage metering & audit trail (optional — off by default; require migration 010):**
+     - `USAGE_METERING_ENABLED=false` — set to `true` to record one `usage_events` row per successful billable request (claim evaluations, policy uploads, appeal drafts/revisions, dossiers, EOB parses, bill audits, chat messages, breach letters, provider/carrier lookups). Attributed to the user and, when an `X-Org-Id` workspace is active and verified, to the organization. Recorded off the response path; a failure never affects the request. Read via `GET /api/usage/me`, `GET /api/usage/org/{org_id}` (workspace admins) and `GET /api/admin/usage?group=org|user` (platform admins). This is the provider-agnostic source for invoicing (Dodo/Stripe/Paddle adapters read from it).
+     - `AUDIT_TRAIL_ENABLED=false` — set to `true` to append `audit_events` rows for team actions (workspace created/renamed/deleted, invitations, role changes, removals), data deletions from History, recorded appeal outcomes, admin-console access (allowed and denied) and every EASF policy decision. IP addresses are stored only as a truncated SHA-256. Read via `GET /api/audit-log/me`, `GET /api/audit-log/org/{org_id}` (workspace admins) and `GET /api/admin/audit-log?action=<prefix>` (platform admins).
 4. The deployment is handled automatically by the GitHub Actions pipeline upon merging to the `main` branch. Note the live backend URL (e.g., `https://policycrab-api-xyz.a.run.app`).
 
 ## 3. Frontend Deployment (Vercel)

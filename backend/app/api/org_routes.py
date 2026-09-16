@@ -9,7 +9,7 @@ exceptions onto HTTP status codes.
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from app.api.auth import get_current_user
 from app.api.org_context import require_orgs_enabled, translate_org_error, valid_uuid_or_404
@@ -28,6 +28,7 @@ from app.models.organization import (
 )
 from app.security.rate_limit import rate_limit_user
 from app.services import organizations as org_service
+from app.services.audit_trail import record_audit
 from app.services.email_service import get_email_service
 from app.services.organizations import OrgError, OrgNotFound, OrgPermissionError
 
@@ -108,6 +109,7 @@ async def preview_invitation(
 
 @router.post("/invitations/accept", response_model=OrganizationOut)
 async def accept_invitation(
+    request: Request,
     body: InvitationAccept,
     user: dict = Depends(get_current_user),
     _flag: None = Depends(require_orgs_enabled),
@@ -119,6 +121,9 @@ async def accept_invitation(
     except _ORG_ERRORS as exc:
         raise translate_org_error(exc) from exc
     org = org_service.get_organization(membership["org_id"]) or {"id": membership["org_id"]}
+    record_audit("org.invitation.accepted", user_id=user["id"], org_id=membership["org_id"],
+                 resource_type="organization", resource_id=membership["org_id"],
+                 metadata={"role": membership.get("role")}, request=request)
     return _org_out(org, role=membership.get("role"))
 
 
@@ -126,6 +131,7 @@ async def accept_invitation(
 
 @router.post("", response_model=OrganizationOut, status_code=status.HTTP_201_CREATED)
 async def create_organization(
+    request: Request,
     body: OrganizationCreate,
     user: dict = Depends(get_current_user),
     _flag: None = Depends(require_orgs_enabled),
@@ -136,6 +142,8 @@ async def create_organization(
         org = org_service.create_organization(user["id"], user.get("email"), body.name)
     except _ORG_ERRORS as exc:
         raise translate_org_error(exc) from exc
+    record_audit("org.created", user_id=user["id"], org_id=org.get("id"), resource_type="organization",
+                 resource_id=org.get("id"), request=request)
     return _org_out(org, role="owner", member_count=1)
 
 
@@ -162,6 +170,7 @@ async def get_organization(
 
 @router.patch("/{org_id}", response_model=OrganizationOut)
 async def rename_organization(
+    request: Request,
     org_id: str,
     body: OrganizationRename,
     user: dict = Depends(get_current_user),
@@ -172,11 +181,14 @@ async def rename_organization(
         org = org_service.rename_organization(org_id, membership, body.name)
     except _ORG_ERRORS as exc:
         raise translate_org_error(exc) from exc
+    record_audit("org.renamed", user_id=user["id"], org_id=org_id, resource_type="organization",
+                 resource_id=org_id, request=request)
     return _org_out(org, role=membership.get("role"))
 
 
 @router.delete("/{org_id}")
 async def delete_organization(
+    request: Request,
     org_id: str,
     user: dict = Depends(get_current_user),
     _flag: None = Depends(require_orgs_enabled),
@@ -189,6 +201,8 @@ async def delete_organization(
         raise translate_org_error(exc) from exc
     if not deleted:
         raise HTTPException(status_code=404, detail="Organization not found.")
+    record_audit("org.deleted", user_id=user["id"], org_id=org_id, resource_type="organization",
+                 resource_id=org_id, request=request)
     return {"success": True, "deleted_id": org_id}
 
 
@@ -206,6 +220,7 @@ async def list_members(
 
 @router.patch("/{org_id}/members/{member_user_id}", response_model=MemberOut)
 async def update_member_role(
+    request: Request,
     org_id: str,
     member_user_id: str,
     body: MemberRoleUpdate,
@@ -218,11 +233,14 @@ async def update_member_role(
         row = org_service.update_member_role(org_id, membership, member_user_id, body.role)
     except _ORG_ERRORS as exc:
         raise translate_org_error(exc) from exc
+    record_audit("org.member.role_changed", user_id=user["id"], org_id=org_id, resource_type="member",
+                 resource_id=member_user_id, metadata={"role": body.role}, request=request)
     return _member_out(row, user["id"])
 
 
 @router.delete("/{org_id}/members/{member_user_id}")
 async def remove_member(
+    request: Request,
     org_id: str,
     member_user_id: str,
     user: dict = Depends(get_current_user),
@@ -237,6 +255,9 @@ async def remove_member(
         raise translate_org_error(exc) from exc
     if not removed:
         raise HTTPException(status_code=404, detail="Member not found.")
+    record_audit("org.member.left" if member_user_id == user["id"] else "org.member.removed",
+                 user_id=user["id"], org_id=org_id, resource_type="member", resource_id=member_user_id,
+                 request=request)
     return {"success": True, "removed_user_id": member_user_id}
 
 
@@ -254,6 +275,7 @@ async def list_invitations(
 
 @router.post("/{org_id}/invitations", response_model=InvitationOut, status_code=status.HTTP_201_CREATED)
 async def create_invitation(
+    request: Request,
     org_id: str,
     body: InvitationCreate,
     user: dict = Depends(get_current_user),
@@ -280,11 +302,14 @@ async def create_invitation(
         accept_url=accept_url,
         expires_days=max(1, int(settings.org_invitation_ttl_days or 7)),
     )
+    record_audit("org.invitation.created", user_id=user["id"], org_id=org_id, resource_type="invitation",
+                 resource_id=row.get("id"), metadata={"role": body.role, "email_sent": bool(sent)}, request=request)
     return _invitation_out(row, email_sent=sent, accept_url=None if sent else accept_url)
 
 
 @router.delete("/{org_id}/invitations/{invitation_id}")
 async def revoke_invitation(
+    request: Request,
     org_id: str,
     invitation_id: str,
     user: dict = Depends(get_current_user),
@@ -298,6 +323,8 @@ async def revoke_invitation(
         raise translate_org_error(exc) from exc
     if not revoked:
         raise HTTPException(status_code=404, detail="Invitation not found.")
+    record_audit("org.invitation.revoked", user_id=user["id"], org_id=org_id, resource_type="invitation",
+                 resource_id=invitation_id, request=request)
     return {"success": True, "revoked_id": invitation_id}
 
 

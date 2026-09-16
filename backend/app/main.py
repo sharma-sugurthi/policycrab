@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.middleware.logging import RequestLoggingMiddleware
 from app.middleware.cloudflare import CloudflareMiddleware
+from app.middleware.usage_metering import UsageMeteringMiddleware
 
 # LangSmith tracing is only useful when a valid API key is configured.
 # If tracing is enabled without credentials, the client will emit 403 noise on every request.
@@ -134,6 +135,11 @@ app.add_middleware(
 # ── Request Logging Middleware ────────────────────────────────────
 # Registered after CORS so status codes reflect the actual response.
 app.add_middleware(RequestLoggingMiddleware)
+
+# ── Usage Metering Middleware ─────────────────────────────────────
+# No-op unless USAGE_METERING_ENABLED=true; records billable 2xx requests
+# off the response path (see app/middleware/usage_metering.py).
+app.add_middleware(UsageMeteringMiddleware)
 
 # ── Include API Routes ────────────────────────────────────────────
 app.include_router(api_router)

@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 from app.models.security import AuditRecord
+from app.services.audit_trail import record_audit
 
 # Create a dedicated logger for security audits
 audit_logger_instance = logging.getLogger("security_audit")
@@ -35,5 +36,17 @@ class AuditLogger:
         
         # Log as a single JSON string
         audit_logger_instance.info(json.dumps(log_data))
+
+        # Also append to the queryable audit trail (no-op unless AUDIT_TRAIL_ENABLED).
+        record_audit(
+            "easf.decision",
+            user_id=audit_record.user_id,
+            actor_type="agent",
+            resource_type="action",
+            resource_id=audit_record.resource,
+            outcome=str(audit_record.decision.value).lower(),
+            reason=audit_record.policy_reason,
+            metadata={"agent_id": audit_record.agent_id, "requested_action": audit_record.requested_action},
+        )
 
 audit_logger = AuditLogger()

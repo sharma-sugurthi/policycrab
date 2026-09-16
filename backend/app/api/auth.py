@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, WebSocket, status
+from fastapi import Depends, HTTPException, Request, WebSocket, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.config import settings
 from app.services.supabase_client import get_supabase_client
@@ -47,9 +47,15 @@ def verify_supabase_token(token: str) -> dict:
     )
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+def get_current_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
     """FastAPI dependency that validates a Bearer token."""
-    return verify_supabase_token(credentials.credentials)
+    user = verify_supabase_token(credentials.credentials)
+    # Lets middleware (usage metering) attribute the request without re-validating the token.
+    request.state.auth_user = user
+    return user
 
 
 def get_websocket_token(websocket: WebSocket) -> str | None:

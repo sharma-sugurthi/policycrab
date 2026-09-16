@@ -10,10 +10,11 @@ GET  /api/outcomes/calibration?scope=global   platform-wide (admin allowlist onl
 import logging
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from app.api.auth import get_current_user
+from app.services.audit_trail import record_audit
 from app.api.admin_routes import require_admin
 from app.security.rate_limit import rate_limit_user
 from app.services.outcomes import (
@@ -45,6 +46,7 @@ class OutcomeCreate(BaseModel):
 @router.post("", status_code=201)
 async def create_outcome(
     body: OutcomeCreate,
+    request: Request,
     user: dict = Depends(get_current_user),
     _: None = Depends(OUTCOME_WRITE_RATE_LIMIT),
 ):
@@ -69,6 +71,8 @@ async def create_outcome(
     except Exception:
         logger.error("Failed to record appeal outcome", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not save the outcome. Please try again.")
+    record_audit("outcome.recorded", user_id=user["id"], resource_type="claim", resource_id=body.claim_id,
+                 metadata={"outcome": body.outcome.lower(), "appeal_level": body.appeal_level}, request=request)
     return {"success": True, "outcome": saved}
 
 

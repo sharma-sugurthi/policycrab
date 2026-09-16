@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.api.auth import get_current_user
+from app.services.audit_trail import record_audit
 from app.services.user_data import (
     list_user_claims,
     list_user_policies,
@@ -45,11 +46,12 @@ async def get_user_claims(user: dict = Depends(get_current_user)):
 
 
 @router.delete("/policies/{policy_id}")
-async def remove_user_policy(policy_id: str, user: dict = Depends(get_current_user)):
+async def remove_user_policy(policy_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Delete a saved policy by ID (scoped to current user)."""
     deleted = delete_user_policy(user["id"], policy_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Policy not found or not owned by you.")
+    record_audit("history.policy.deleted", user_id=user["id"], resource_type="policy", resource_id=policy_id, request=request)
     return {"success": True, "deleted_id": policy_id}
 
 
@@ -60,11 +62,12 @@ async def get_user_documents(user: dict = Depends(get_current_user)):
 
 
 @router.delete("/documents/{document_id}")
-async def remove_user_document(document_id: str, user: dict = Depends(get_current_user)):
+async def remove_user_document(document_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Delete a saved document by ID (scoped to current user)."""
     deleted = delete_user_document(user["id"], document_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Document not found or not owned by you.")
+    record_audit("history.document.deleted", user_id=user["id"], resource_type="document", resource_id=document_id, request=request)
     return {"success": True, "deleted_id": document_id}
 
 
@@ -75,10 +78,11 @@ async def get_user_audits(user: dict = Depends(get_current_user)):
 
 
 @router.delete("/audits/{audit_id}")
-async def remove_user_audit(audit_id: str, user: dict = Depends(get_current_user)):
+async def remove_user_audit(audit_id: str, request: Request, user: dict = Depends(get_current_user)):
     """Delete a saved bill audit by ID (scoped to current user)."""
     deleted = delete_user_audit(user["id"], audit_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Audit report not found or not owned by you.")
+    record_audit("history.audit.deleted", user_id=user["id"], resource_type="bill_audit", resource_id=audit_id, request=request)
     return {"success": True, "deleted_id": audit_id}
 

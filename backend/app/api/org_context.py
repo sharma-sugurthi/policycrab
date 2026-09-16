@@ -9,7 +9,7 @@ those endpoints behave exactly as they always have.
 
 from uuid import UUID
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 
 from app.api.auth import get_current_user
 from app.services import organizations as org_service
@@ -51,6 +51,7 @@ def translate_org_error(exc: Exception) -> HTTPException:
 def get_org_context(
     user: dict = Depends(get_current_user),
     x_org_id: str | None = Header(default=None, alias="X-Org-Id"),
+    request: Request = None,
 ) -> dict | None:
     """{"org_id", "role"} for the active workspace, or None for personal context."""
     if not org_service.orgs_enabled() or not x_org_id:
@@ -58,6 +59,9 @@ def get_org_context(
     if not is_uuid(x_org_id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid X-Org-Id header.")
     try:
-        return org_service.resolve_org_context(user["id"], x_org_id)
+        ctx = org_service.resolve_org_context(user["id"], x_org_id)
     except (OrgNotFound, OrgPermissionError, OrgError) as exc:
         raise translate_org_error(exc) from exc
+    if request is not None:
+        request.state.org_ctx = ctx
+    return ctx

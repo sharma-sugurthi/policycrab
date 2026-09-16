@@ -1,7 +1,13 @@
 """
 Tests for pytest configuration.
 """
+import os
+import sys
+
 import pytest
+
+# Make shared helpers in tests/ (e.g. fake_supabase.py) importable in any pytest import mode.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 @pytest.fixture

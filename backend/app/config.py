@@ -67,6 +67,14 @@ class Settings(BaseSettings):
     app_base_url: str = "https://policycrab.tech"
     org_invitation_ttl_days: int = 7
 
+    # ── Usage metering & audit trail (both off by default) ────────
+    # Require supabase/migrations/010_create_usage_and_audit.sql.
+    # Metering records one usage_events row per successful billable request
+    # (claim evaluations, policy uploads, appeal drafts, EOB parses, ...);
+    # the audit trail appends who-did-what rows for team, deletion and admin actions.
+    usage_metering_enabled: bool = False
+    audit_trail_enabled: bool = False
+
     google_cloud_project: str = ""
     gcp_location: str = "us-east1"
 

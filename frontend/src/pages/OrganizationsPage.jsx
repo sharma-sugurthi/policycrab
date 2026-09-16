@@ -4,7 +4,7 @@ import { useOrg } from '../contexts/OrgContext'
 import { apiFetch, formatApiError, readApiResponse } from '../lib/api'
 import { ROLE_BADGE, ROLE_HELP, ROLE_LABEL, canManageMember, grantableRoles, roleAtLeast } from '../lib/orgs'
 import {
-  IconAlertTriangle, IconCheckCircle, IconCopy, IconMail, IconPlus, IconSettings, IconTrash, IconUsers,
+  IconActivity, IconAlertTriangle, IconCheckCircle, IconCopy, IconMail, IconPlus, IconSettings, IconTrash, IconUsers,
 } from '../components/Icons'
 
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }
@@ -433,6 +433,8 @@ function WorkspaceManager({ org, isActive, onChanged, onGone }) {
         </>
       )}
 
+      {isAdmin && <WorkspaceActivity org={org} members={members} />}
+
       {isOwner && (
         <div style={{ padding: '1rem 1.25rem', borderRadius: '0.75rem', border: '1px solid var(--danger-border)', background: 'var(--danger-bg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div>
@@ -443,5 +445,111 @@ function WorkspaceManager({ org, isActive, onChanged, onGone }) {
         </div>
       )}
     </motion.div>
+  )
+}
+
+const humanizeAction = (action) => String(action || '').split('.').join(' › ')
+
+function WorkspaceActivity({ org, members }) {
+  const [usage, setUsage] = useState(null)
+  const [events, setEvents] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const emailFor = (uid) => {
+    if (!uid) return 'system'
+    const match = (members || []).find(m => m.user_id === uid)
+    return match?.email || `${String(uid).slice(0, 8)}…`
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      try {
+        const [u, a] = await Promise.all([
+          apiFetch(`/usage/org/${org.id}?days=30`).then(readApiResponse).catch(() => null),
+          apiFetch(`/audit-log/org/${org.id}?days=30&limit=20`).then(readApiResponse).catch(() => null),
+        ])
+        if (cancelled) return
+        setUsage(u && u.enabled ? u : null)
+        setEvents(a && a.enabled ? (a.events || []) : null)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [org.id])
+
+  const nothingEnabled = !loading && usage === null && events === null
+  const muted = { fontSize: '0.8125rem', color: 'var(--text-tertiary)', margin: 0 }
+  const panelLabel = { fontSize: '0.6875rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.625rem' }
+
+  return (
+    <div style={{ marginBottom: '1.75rem' }}>
+      <h4 style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+        <IconActivity size={14} /> Activity &amp; usage · last 30 days
+      </h4>
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}><span className="spinner" /></div>
+      ) : nothingEnabled ? (
+        <p style={muted}>Usage metering and the audit trail are not enabled on this deployment (<code>USAGE_METERING_ENABLED</code>, <code>AUDIT_TRAIL_ENABLED</code>).</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+          <div className="card-zinc" style={{ padding: '1rem 1.125rem' }}>
+            <p style={panelLabel}>Usage</p>
+            {!usage ? (
+              <p style={muted}>Metering is not enabled.</p>
+            ) : usage.total === 0 ? (
+              <p style={muted}>No billable actions recorded yet.</p>
+            ) : (
+              <>
+                <p style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.625rem', lineHeight: 1 }}>
+                  {usage.total} <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>actions</span>
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                  {Object.entries(usage.by_type || {}).map(([type, count]) => (
+                    <div key={type}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <span>{humanizeAction(type)}</span><strong>{count}</strong>
+                      </div>
+                      <div style={{ height: '4px', background: 'var(--border-secondary)', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.max(4, Math.round((count / usage.total) * 100))}%`, height: '100%', background: 'var(--accent)' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {usage.by_user && Object.keys(usage.by_user).length > 0 && (
+                  <p style={{ ...muted, marginTop: '0.625rem' }}>
+                    Most active: {Object.entries(usage.by_user).slice(0, 3).map(([uid, n]) => `${emailFor(uid)} (${n})`).join(', ')}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="card-zinc" style={{ padding: '1rem 1.125rem' }}>
+            <p style={panelLabel}>Recent activity</p>
+            {!events ? (
+              <p style={muted}>The audit trail is not enabled.</p>
+            ) : events.length === 0 ? (
+              <p style={muted}>No recorded activity yet.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '260px', overflowY: 'auto' }}>
+                {events.map(e => (
+                  <li key={e.id} style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    <span style={{ color: 'var(--text-tertiary)' }}>{e.created_at ? new Date(e.created_at).toLocaleString() : ''}</span>
+                    {' · '}<strong style={{ color: 'var(--text-primary)' }}>{emailFor(e.user_id)}</strong>{' '}
+                    {humanizeAction(e.action)}
+                    {e.outcome && e.outcome !== 'success' && (
+                      <span className={`badge ${e.outcome === 'denied' ? 'badge-danger' : 'badge-warning'}`} style={{ marginLeft: '0.375rem', fontSize: '0.625rem' }}>{e.outcome}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
