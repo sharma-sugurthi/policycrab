@@ -10,7 +10,7 @@ create extension if not exists pgcrypto;
 create table if not exists public.cases (
   id uuid primary key default gen_random_uuid(),
   org_id uuid references public.organizations(id) on delete cascade,      -- NULL = personal case
-  claim_id uuid not null references public.user_claims(id) on delete cascade,
+  claim_id varchar not null references public.user_claims(id) on delete cascade,
   created_by uuid not null references auth.users(id) on delete cascade,
   assignee_id uuid references auth.users(id) on delete set null,
   title text not null check (char_length(title) between 1 and 140),
