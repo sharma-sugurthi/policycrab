@@ -74,14 +74,21 @@ async def update_deadline(deadline_id: str, req: DeadlineUpdate, user: dict = De
         return {"success": True}
         
     try:
-        # RLS ensures they can only update their own
-        result = client.table("appeal_deadlines").update(data).eq("id", deadline_id).execute()
-        if not result.data:
-            raise HTTPException(status_code=404, detail="Deadline not found")
-        return {"success": True, "deadline": result.data[0]}
+        # The backend uses the service-role client, so RLS does not apply here:
+        # ownership has to be part of the query itself.
+        result = (
+            client.table("appeal_deadlines")
+            .update(data)
+            .eq("id", deadline_id)
+            .eq("user_id", user["id"])
+            .execute()
+        )
     except Exception as e:
         logger.error(f"Error updating deadline: {e}")
         raise HTTPException(status_code=500, detail="Failed to update deadline")
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Deadline not found")
+    return {"success": True, "deadline": result.data[0]}
 
 
 @router.delete("/{deadline_id}")
@@ -89,13 +96,19 @@ async def delete_deadline(deadline_id: str, user: dict = Depends(get_current_use
     """Delete a deadline."""
     client = get_supabase_client()
     try:
-        result = client.table("appeal_deadlines").delete().eq("id", deadline_id).execute()
-        if not result.data:
-            raise HTTPException(status_code=404, detail="Deadline not found")
-        return {"success": True}
+        result = (
+            client.table("appeal_deadlines")
+            .delete()
+            .eq("id", deadline_id)
+            .eq("user_id", user["id"])
+            .execute()
+        )
     except Exception as e:
         logger.error(f"Error deleting deadline: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete deadline")
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Deadline not found")
+    return {"success": True}
 
 
 @router.post("/{deadline_id}/breach-letter")
@@ -103,13 +116,19 @@ async def generate_breach_letter(deadline_id: str, user: dict = Depends(get_curr
     """Generate a formal DOI complaint letter for an overdue insurer response."""
     client = get_supabase_client()
     try:
-        result = client.table("appeal_deadlines").select("*").eq("id", deadline_id).execute()
-        if not result.data:
-            raise HTTPException(status_code=404, detail="Deadline not found")
-        deadline = result.data[0]
+        result = (
+            client.table("appeal_deadlines")
+            .select("*")
+            .eq("id", deadline_id)
+            .eq("user_id", user["id"])
+            .execute()
+        )
     except Exception as e:
         logger.error(f"Error fetching deadline for breach letter: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch deadline")
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Deadline not found")
+    deadline = result.data[0]
 
     # Ensure it's actually breached
     if not deadline.get("insurer_response_deadline"):
